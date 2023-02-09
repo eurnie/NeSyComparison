@@ -3,7 +3,7 @@ import torch
 import random
 import numpy
 import sys
-from import_data import MNIST_train, MNIST_test, import_dataset
+from import_data import MNIST_train, MNIST_val, MNIST_test, import_datasets
 from deepproblog.dataset import DataLoader
 from deepproblog.engines import ApproximateEngine, ExactEngine
 from deepproblog.model import Model
@@ -15,7 +15,7 @@ sys.path.append("..")
 from data.generate_dataset import generate_dataset
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(train_set, test_set, method, max_nb_epochs, batch_size, learning_rate, use_dropout):
+def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, learning_rate, use_dropout):
     if use_dropout:
         network = Net_Dropout()
     else:
@@ -28,27 +28,44 @@ def train_and_test(train_set, test_set, method, max_nb_epochs, batch_size, learn
         model.set_engine(ExactEngine(model), cache=True)
     elif method == "geometric_mean":
         model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, exploration=False))
-
     model.add_tensor_source("train", MNIST_train)
+    model.add_tensor_source("val", MNIST_val)
     model.add_tensor_source("test", MNIST_test)
     loader = DataLoader(train_set, batch_size, False)
 
-    # training
-    start_time = time.time()
-    train = train_model(model, loader, max_nb_epochs, log_iter=100000, profile=0)
-    training_time = time.time() - start_time
+    # training (with early stopping)
+    total_training_time = 0
+    best_accuracy = 0
+    counter = 0
+    for _ in range(nb_epochs):
+        start_time = time.time()
+        train = train_model(model, loader, 1, log_iter=100000, profile=0)
+        total_training_time += time.time() - start_time
+        val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
+        if val_accuracy > best_accuracy:
+            best_accuracy = val_accuracy
+            train.model.save_state("model/state", complete=True)
+            counter = 0
+        else:
+            if counter >= 1:
+                break
+            counter += 1
+    model.load_state("model/state")
 
     # testing
-    accuracy = get_confusion_matrix(train.model, test_set).accuracy()
+    start_time = time.time()
+    accuracy = get_confusion_matrix(model, test_set).accuracy()
+    testing_time = time.time() - start_time
 
-    return accuracy, training_time
+    return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
-nb_epochs = 1
+nb_epochs = 10
 batch_size = 2
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
+size_val = 0.1
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -61,15 +78,14 @@ for seed in range(0, 10):
     generate_dataset(seed)
 
     # import train, val and test set
-    train_set = import_dataset("train")
-    # TODO: import val set
-    test_set = import_dataset("test")
+    train_set, val_set, test_set = import_datasets(size_val)
 
     # train and test
-    accuracy, training_time = train_and_test(train_set, test_set, method, nb_epochs, batch_size, 
-        learning_rate, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, method, nb_epochs, 
+        batch_size, learning_rate, use_dropout)
 
     # print results
     print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {}".format(seed, accuracy, training_time))
+    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+        training_time, testing_time))
     print("############################################")

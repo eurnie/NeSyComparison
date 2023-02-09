@@ -61,7 +61,10 @@ class MNIST_Images(object):
         self.subset = subset
 
     def __getitem__(self, item):
-        return datasets[self.subset][int(item[0])][0]
+        if self.subset == "val":
+            return datasets["train"][int(item[0]+2700)][0]
+        else:
+            return datasets[self.subset][int(item[0])][0]
 
 class MNIST(Dataset):
     def __len__(self):
@@ -78,7 +81,7 @@ class MNIST(Dataset):
         self.dataset = dataset
         self.data = datasets[dataset]
 
-def addition_log_iter(n: int, dataset: str, log_iter=10):
+def import_dataset_log_iter(n: int, dataset: str, log_iter=10):
     MNISTOperator_list = []
 
     if dataset == "train":
@@ -102,14 +105,34 @@ def addition_log_iter(n: int, dataset: str, log_iter=10):
             arity=2
         )
 
-def import_dataset(dataset: str):
-    return MNISTOperator(
-        dataset_name=dataset,
+def import_datasets(size_val):
+    split_index = round(size_val * 30000)
+    train_set = MNISTOperator(
+        dataset_name="train",
+        function_name="addition",
+        operator=sum,
+        size=1,
+        arity=2,
+        start_index=split_index,
+        end_index=30001
+    )
+    val_set = MNISTOperator(
+        dataset_name="train",
+        function_name="addition",
+        operator=sum,
+        size=1,
+        arity=2,
+        start_index=0,
+        end_index=split_index
+    )
+    test_set = MNISTOperator(
+        dataset_name="test",
         function_name="addition",
         operator=sum,
         size=1,
         arity=2
     )
+    return train_set, val_set, test_set
 
 class MNISTOperator(Dataset, TorchDataset):
     def __getitem__(self, index: int) -> Tuple[list, list, int]:
@@ -217,4 +240,5 @@ class MNISTOperator(Dataset, TorchDataset):
         return len(self.data)
 
 MNIST_train = MNIST_Images("train")
+MNIST_val = MNIST_Images("val")
 MNIST_test = MNIST_Images("test")

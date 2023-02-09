@@ -6,7 +6,7 @@ random.seed(33)
 possible_nb_epochs = [1, 2, 3]
 possible_batch_size = [2, 4, 8, 16, 32, 64]
 possible_learning_rate = [0.001]
-possible_dropout = [0, 1]
+possible_dropout = [True, False]
 
 possible_combinations = []
 
