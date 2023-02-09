@@ -4,6 +4,7 @@ import time
 import sys
 import torch
 import torchvision
+import pickle
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torch import nn
@@ -13,9 +14,9 @@ from pathlib import Path
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
-from data.network_torch import Net_SL
+from data.network_torch import Net_SL, Net_SL_Dropout
 
-def parse_data(filename, dataset_name):
+def parse_data(filename, dataset_name, size_val):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 
     transform = transforms.Compose(
@@ -31,20 +32,34 @@ def parse_data(filename, dataset_name):
         ),
     }
 
+    split_index = round(size_val * 30000)
+    if dataset_name == "train":
+        dataset_used = "train"
+        start = split_index
+        end = 4500
+    elif dataset_name == "val":
+        dataset_used = "train"
+        start = 0
+        end = 500
+    elif dataset_name == "test":
+        dataset_used = "test"
+        start = 0
+        end = 500
+
     with open(filename) as f:
         entries = f.readlines()
 
     dataset = []
 
-    for entry in entries:
-        index_digit_1 = int(entry.split(" ")[0])
-        index_digit_2 = int(entry.split(" ")[1])
-        new_tensor = [torch.cat((datasets[dataset_name][index_digit_1][0][0], datasets[dataset_name][index_digit_2][0][0]), 0).numpy()]
+    for i in range(start, end):
+        index_digit_1 = int(entries[i].split(" ")[0])
+        index_digit_2 = int(entries[i].split(" ")[1])
+        new_tensor = [torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()]
 
         if (dataset_name == "train"):
             dataset.append((torch.tensor(new_tensor), [datasets[dataset_name][index_digit_1][1], datasets[dataset_name][index_digit_2][1]+10]))
-        elif (dataset_name == "test"):
-            sum = int(entry.split(" ")[2])
+        elif ((dataset_name == "test") or (dataset_name == "val")):
+            sum = int(entries[i].split(" ")[2])
             dataset.append((torch.tensor(new_tensor), sum))
 
     return dataset
@@ -83,16 +98,20 @@ def test(dataloader, model):
     correct /= size
     return 100*correct
 
-def train_and_test(train_set, test_set, nb_epochs, batch_size, learning_rate):
-    model = Net_SL()
+def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, use_dropout):
+    if use_dropout:
+        model = Net_SL_Dropout()
+    else:
+        model = Net_SL()
     sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
     loss_fn = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size)
+    val_dataloader = DataLoader(val_set, batch_size=1)
     test_dataloader = DataLoader(test_set, batch_size=1)
 
-    # Display image and label.
+    # display image and label
     # train_features, train_labels = next(iter(train_dataloader))
     # print(f"Feature batch shape: {train_features.size()}")
     # print(f"Labels batch shape: {train_labels.size()}")
@@ -102,21 +121,41 @@ def train_and_test(train_set, test_set, nb_epochs, batch_size, learning_rate):
     # plt.show()
     # print(f"Label: {label}")
 
-    # training
-    start_time = time.time()
-    for _ in range(0, nb_epochs):          
+    # training (with early stopping)
+    total_training_time = 0
+    best_accuracy = 0
+    counter = 0
+    for epoch in range(nb_epochs):
+        start_time = time.time()
         train(train_dataloader, model, sl, loss_fn, optimizer)
-    training_time = time.time() - start_time
+        total_training_time += time.time() - start_time
+        val_accuracy = test(val_dataloader, model)
+        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+        if val_accuracy > best_accuracy:
+            best_accuracy = val_accuracy
+            with open("best_model.pickle", "wb") as handle:
+                pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            counter = 0
+        else:
+            if counter >= 0:
+                break
+            counter += 1
+    with open("best_model.pickle", "rb") as handle:
+        model = pickle.load(handle)
             
     # testing
+    start_time = time.time()
     accuracy = test(test_dataloader, model)
+    testing_time = time.time() - start_time
 
-    return accuracy, training_time
+    return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
-batch_size = 8
+nb_epochs = 10
+batch_size = 1
 learning_rate = 0.001
+use_dropout = True
+size_val = 0.1
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -125,13 +164,17 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # import train and test set (shuffled)
+    # shuffle dataset
     generate_dataset(seed)
-    train_set = parse_data("../data/MNIST/processed/train.txt", "train")
-    test_set = parse_data("../data/MNIST/processed/test.txt", "test")
 
-    # train and test the method on the MNIST addition dataset
-    accuracy, training_time = train_and_test(train_set, test_set, nb_epochs, batch_size, learning_rate)
+    # import train, val and test set
+    train_set = parse_data("../data/MNIST/processed/train.txt", "train", size_val)
+    val_set = parse_data("../data/MNIST/processed/train.txt", "val", size_val)
+    test_set = parse_data("../data/MNIST/processed/test.txt", "test", size_val)
+
+    # train and test
+    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, nb_epochs, 
+        batch_size, learning_rate, use_dropout)
 
     # print results
     print("############################################")
