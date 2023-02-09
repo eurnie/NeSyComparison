@@ -13,10 +13,13 @@ from deepproblog.evaluate import get_confusion_matrix
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
-from data.network_torch import Net
+from data.network_torch import Net, Net_Dropout
 
-def train_and_test(train_set, test_set, method, max_nb_epochs, batch_size, learning_rate):
-    network = Net()
+def train_and_test(train_set, test_set, method, max_nb_epochs, batch_size, learning_rate, use_dropout):
+    if use_dropout:
+        network = Net_Dropout()
+    else:
+        network = Net()
     net = Network(network, "mnist_net", batching=True)
     net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
@@ -42,9 +45,10 @@ def train_and_test(train_set, test_set, method, max_nb_epochs, batch_size, learn
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
-max_nb_epochs = 1
+nb_epochs = 1
 batch_size = 2
 learning_rate = 0.001
+use_dropout = True
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -53,14 +57,17 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # import train and test set (shuffled)
+    # shuffle dataset
     generate_dataset(seed)
+
+    # import train, val and test set
     train_set = import_dataset("train")
+    # TODO: import val set
     test_set = import_dataset("test")
 
-    # train and test the method on the MNIST addition dataset
-    accuracy, training_time = train_and_test(train_set, test_set, method, max_nb_epochs, batch_size, 
-        learning_rate)
+    # train and test
+    accuracy, training_time = train_and_test(train_set, test_set, method, nb_epochs, batch_size, 
+        learning_rate, use_dropout)
 
     # print results
     print("############################################")
