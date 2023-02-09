@@ -29,13 +29,13 @@ datasets = {
 }
 
 class SimpleAdditionDataset(Sequence):
-    def __init__(self, dataset_name, digit_length=1, size: int = None):
+    def __init__(self, dataset_name, start_index, end_index, digit_length=1, size: int = None):
         self.mnist_dataset = get_mnist_data(dataset_name)
         self.ct_term_dataset = []
         if (dataset_name == "train"):
-            dataset, labels = parse_data("../data/MNIST/processed/train.txt")
+            dataset, labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
         elif (dataset_name == "test"):
-            dataset, labels = parse_data("../data/MNIST/processed/test.txt")
+            dataset, labels = parse_data("../data/MNIST/processed/test.txt", start_index, end_index)
         for idx in range(0, len(dataset)):
             mnist_datapoint_1 = self.mnist_dataset[dataset[idx][0]][0]
             mnist_datapoint_2 = self.mnist_dataset[dataset[idx][1]][0]
@@ -66,17 +66,20 @@ class SimpleAdditionDataset(Sequence):
 def get_mnist_data(dataset) -> MNIST:
     return datasets[dataset]
 
-def parse_data(filename):
+def parse_data(filename, start, end):
     with open(filename) as f:
         entries = f.readlines()
+
+    if (end >= len(entries)):
+        end = len(entries)
 
     dataset = []
     labels = []
 
-    for entry in entries:
-        index_digit_1 = int(entry.split(" ")[0])
-        index_digit_2 = int(entry.split(" ")[1])
-        sum = int(entry.split(" ")[2])
+    for i in range(start, end):
+        index_digit_1 = int(entries[i].split(" ")[0])
+        index_digit_2 = int(entries[i].split(" ")[1])
+        sum = int(entries[i].split(" ")[2])
 
         new_entry = []
         new_entry.append(index_digit_1)
@@ -118,3 +121,11 @@ def get_next(idx: int, elements: typing.MutableSequence) -> Tuple[any, int]:
     result = elements[idx]
     idx += 1
     return result, idx
+
+def import_datasets(size_val):
+    split_index = round(size_val * 30000)
+    train_set = SimpleAdditionDataset("train", split_index, 30001)
+    val_set = SimpleAdditionDataset("train", 0, split_index)
+    test_set = SimpleAdditionDataset("test", 0, 5001)
+
+    return train_set, val_set, test_set

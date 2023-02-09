@@ -37,11 +37,12 @@ def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, 
     total_training_time = 0
     best_accuracy = 0
     counter = 0
-    for _ in range(nb_epochs):
+    for epoch in range(nb_epochs):
         start_time = time.time()
         train = train_model(model, loader, 1, log_iter=100000, profile=0)
         total_training_time += time.time() - start_time
         val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
+        print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
             train.model.save_state("model/state", complete=True)

@@ -2,10 +2,11 @@ import torch
 import random
 import numpy
 import sys
+import time
+import pickle
 from pathlib import Path
 from torch.optim import Adam
-from time import time
-from import_data import SimpleAdditionDataset
+from import_data import import_datasets
 from deepstochlog.dataloader import DataLoader
 from deepstochlog.model import DeepStochLogModel
 from deepstochlog.term import Term, List
@@ -15,11 +16,14 @@ from deepstochlog.utils import create_model_accuracy_calculator, calculate_accur
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
-from data.network_torch import Net
+from data.network_torch import Net, Net_Dropout
 
-def train_and_test(train_set, test_set, max_nb_epochs, batch_size, learning_rate, epsilon):
+def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, epsilon, use_dropout):
     # create a network object containing the MNIST network and the index list
-    mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
+    if use_dropout:
+        mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
+    else:
+        mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     networks = NetworkStore(mnist_classifier)
 
@@ -42,63 +46,75 @@ def train_and_test(train_set, test_set, max_nb_epochs, batch_size, learning_rate
     # DataLoader that can deal with proof trees and tensors (replicates the pytorch dataloader interface)
     # if shuffle is set to True, also give the seed: the seed of the random package had only effect on this file
     train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
+    val_dataloader = DataLoader(val_set, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_set, batch_size=1, shuffle=False)
     dummy_dataloader = DataLoader([], batch_size=1, shuffle=False)
 
-    # for batch in train_dataloader:
-    #     test_value = model.predict_sum_product(batch)
-    #     print(test_value)
-    #     break
-
     # create test functions
-    calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time())
+    calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
 
-    # training
+    # training (with early stopping)
     trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
-    training_time = trainer.train(model, optimizer, train_dataloader, max_nb_epochs, epsilon)
+    total_training_time = 0
+    best_accuracy = 0
+    counter = 0
+    for epoch in range(nb_epochs):
+        total_training_time += trainer.train(model, optimizer, train_dataloader, 1, epsilon)
+        val_accuracy = calculate_accuracy(model, val_dataloader)[0]
+        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+        if val_accuracy > best_accuracy:
+            best_accuracy = val_accuracy
+            with open("best_model.pickle", "wb") as handle:
+                pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            counter = 0
+        else:
+            if counter >= 1:
+                break
+            counter += 1
+    with open("best_model.pickle", "rb") as handle:
+        neural_networks = pickle.load(handle)
+    model.neural_networks = neural_networks
 
-    # # testing
-    # accuracy = calculate_accuracy(model, test_dataloader)[0]
+    # testing
+    start_time = time.time()
+    accuracy = calculate_accuracy(model, test_dataloader)[0]
+    testing_time = time.time() - start_time
 
-    accuracy = 0
-    training_time = 0
-    test_value = 0
-
-    return accuracy, training_time, test_value
+    return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-max_nb_epochs = 1
-batch_size = 16
+nb_epochs = 10
+batch_size = 2
 learning_rate = 0.001
 epsilon = 0.00000001
+use_dropout = False
+size_val = 0.1
 #########################################################################################################
 
-for seed in range(0, 2):
+for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
+    # TODO: find out why method is not deterministic
     set_fixed_seed(seed)
     torch.use_deterministic_algorithms(True)
-
-    # Set the computation mode to be deterministic
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # import train and test set (shuffled)
-    # generate_dataset(seed)
-    train_set = SimpleAdditionDataset("train")
-    test_set = SimpleAdditionDataset("test")
+    # shuffle dataset
+    generate_dataset(seed)
 
-    assert len(train_set) == 30000
-    assert len(test_set) == 5000
+    # import train, val and test set
+    train_set, val_set, test_set = import_datasets(size_val)
 
-    # train and test the method on the MNIST addition dataset
-    accuracy, training_time, test_value = train_and_test(train_set, test_set, max_nb_epochs, batch_size,
-        learning_rate, epsilon)
+    # train and test
+    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, nb_epochs, 
+        batch_size, learning_rate, epsilon, use_dropout)
 
     # print results
     print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {}".format(seed, accuracy, training_time))
+    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+        training_time, testing_time))
     print("############################################")
