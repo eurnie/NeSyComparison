@@ -5,6 +5,7 @@ import random
 import numpy
 import torch
 import torchvision
+import pickle
 from pathlib import Path
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
@@ -12,16 +13,18 @@ from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
-from data.network_torch import Net
+from data.network_torch import Net, Net_Dropout
 
 class MNIST_Addition(Dataset):
-    def __init__(self, dataset, examples):
+    def __init__(self, dataset, examples, start_index, end_index):
         self.data = list()
         self.dataset = dataset
         with open(examples) as f:
-            for line in f:
-                line = line.strip().split(' ')
-                self.data.append(tuple([int(i) for i in line]))
+            entries = f.readlines()
+        for i in range(start_index, end_index):
+            line = entries[i]
+            line = line.strip().split(' ')
+            self.data.append(tuple([int(i) for i in line]))
 
     def __len__(self):
         return len(self.data)
@@ -30,18 +33,45 @@ class MNIST_Addition(Dataset):
         i1, i2, l = self.data[index]
         return self.dataset[i1][0], self.dataset[i2][0], l
 
-def train_and_test(dataList_train, obsList_train, dataList_test, obsList_test, nb_epochs):
+def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dataList_test, obsList_test, 
+    nb_epochs):
+    
+    # training (with early stopping)
+    total_training_time = 0
+    best_accuracy = 0
+    counter = 0
+
+    for epoch in range(nb_epochs):
+        start_time = time.time()
+        NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=1, smPickle=None, 
+            bar=True)
+        total_training_time += time.time() - start_time
+        val_accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
+        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+        if val_accuracy > best_accuracy:
+            best_accuracy = val_accuracy
+            with open("best_model.pickle", "wb") as handle:
+                pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            counter = 0
+        else:
+            if counter >= 1:
+                break
+            counter += 1
+    with open("best_model.pickle", "rb") as handle:
+        BestNeurASPobj = pickle.load(handle)
+
+    # testing
     start_time = time.time()
-    NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=nb_epochs, smPickle=None, bar=True)
-    training_time = time.time() - start_time
+    accuracy = BestNeurASPobj.testInferenceResults(dataList_test, obsList_test) / 100
+    testing_time = time.time() - start_time
 
-    accuracy = NeurASPobj.testInferenceResults(dataList_test, obsList_test) / 100
-
-    return accuracy, training_time
+    return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 1
+nb_epochs = 3
 learning_rate = 0.001
+use_dropout = False
+size_val = 0.1
 #########################################################################################################
 
 path = os.path.abspath(__file__)
@@ -74,17 +104,30 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # import train and test set (shuffled)
+    # shuffle dataset
     generate_dataset(seed)
 
-    trainDataset = MNIST_Addition(datasets["train"], dir_path + "/../data/MNIST/processed/train.txt")
+    # import train, val and test set
+    split_index = round(size_val * 30000)
+
+    trainDataset = MNIST_Addition(datasets["train"], dir_path + "/../data/MNIST/processed/train.txt",
+        start_index=split_index, end_index=30000)
     dataList_train = []
     obsList_train = []
     for i1, i2, l in trainDataset:
         dataList_train.append({'i1': i1[0].unsqueeze(0), 'i2': i2[0].unsqueeze(0)})
         obsList_train.append(':- not addition(i1, i2, {}).'.format(l))
 
-    testDataset = MNIST_Addition(datasets["test"], dir_path + "/../data/MNIST/processed/test.txt")
+    valDataset = MNIST_Addition(datasets["train"], dir_path + "/../data/MNIST/processed/train.txt",
+        start_index=0, end_index=split_index)
+    dataList_val = []
+    obsList_val = []
+    for i1, i2, l in valDataset:
+        dataList_val.append({'i1': i1[0].unsqueeze(0), 'i2': i2[0].unsqueeze(0)})
+        obsList_val.append(':- not addition(i1, i2, {}).'.format(l))
+
+    testDataset = MNIST_Addition(datasets["test"], dir_path + "/../data/MNIST/processed/test.txt",
+        start_index=0, end_index=5000)
     dataList_test = []
     obsList_test = []
     for i1, i2, l in testDataset:
@@ -92,16 +135,20 @@ for seed in range(0, 10):
         obsList_test.append(':- not addition(i1, i2, {}).'.format(l))
 
     # define nnMapping and optimizers, initialze NeurASP object
-    m = Net()
+    if use_dropout:
+        m = Net_Dropout()
+    else:
+        m = Net()
     nnMapping = {'digit': m}
     optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
     NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
 
     # train and test the method on the MNIST addition dataset
-    accuracy, training_time = train_and_test(dataList_train, obsList_train, dataList_test, obsList_test,
-        nb_epochs)
+    accuracy, training_time, testing_time = train_and_test(dataList_train, obsList_train, dataList_val, 
+    obsList_val, dataList_test, obsList_test, nb_epochs)
 
     # print results
     print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {}".format(seed, accuracy, training_time))
+    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+        training_time, testing_time))
     print("############################################")

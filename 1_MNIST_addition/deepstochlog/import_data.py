@@ -124,8 +124,8 @@ def get_next(idx: int, elements: typing.MutableSequence) -> Tuple[any, int]:
 
 def import_datasets(size_val):
     split_index = round(size_val * 30000)
-    train_set = SimpleAdditionDataset("train", split_index, 30001)
+    train_set = SimpleAdditionDataset("train", split_index, 30000)
     val_set = SimpleAdditionDataset("train", 0, split_index)
-    test_set = SimpleAdditionDataset("test", 0, 5001)
+    test_set = SimpleAdditionDataset("test", 0, 5000)
 
     return train_set, val_set, test_set

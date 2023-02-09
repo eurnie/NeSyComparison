@@ -114,7 +114,7 @@ def import_datasets(size_val):
         size=1,
         arity=2,
         start_index=split_index,
-        end_index=30001
+        end_index=30000
     )
     val_set = MNISTOperator(
         dataset_name="train",
@@ -173,7 +173,7 @@ class MNISTOperator(Dataset, TorchDataset):
         if dataset_name == "train":
             self.data, self.labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
         elif dataset_name == "test":
-            self.data, self.labels = parse_data("../data/MNIST/processed/test.txt", 0, 5001)
+            self.data, self.labels = parse_data("../data/MNIST/processed/test.txt", 0, 5000)
 
     def to_file_repr(self, i):
         """Old file represenation dump. Not a very clear format as multi-digit arguments are not separated"""
