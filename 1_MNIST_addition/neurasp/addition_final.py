@@ -68,7 +68,7 @@ def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dat
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
+nb_epochs = 1
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1

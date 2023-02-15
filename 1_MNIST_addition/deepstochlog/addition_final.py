@@ -83,7 +83,7 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 10
+nb_epochs = 1
 batch_size = 2
 learning_rate = 0.001
 epsilon = 0.00000001

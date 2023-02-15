@@ -38,12 +38,11 @@ class Net_Dropout(nn.Module):
             nn.ReLU(True) 
         )
         self.classifier =  nn.Sequential(
+            nn.Dropout(p=0.2),
             nn.Linear(16 * 4 * 4, 120),
             nn.ReLU(),
-            nn.Dropout(p=0.2),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Dropout(p=0.2),
             nn.Linear(84, 10),
             nn.Softmax(1)
         )
@@ -92,12 +91,11 @@ class Net_NN_Dropout(nn.Module):
             nn.ReLU(True) 
         )
         self.classifier =  nn.Sequential(
+            nn.Dropout(p=0.2),
             nn.Linear(16 * 11 * 4, 120), # the input size is larger, because images are stacked
             nn.ReLU(),
-            nn.Dropout(p=0.2),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Dropout(p=0.2),
             nn.Linear(84, 19), # second parameter is 19, because 19 different results possible
             nn.Softmax(1)
         )
@@ -163,12 +161,11 @@ class Net_SL_Dropout(nn.Module):
             nn.ReLU(True) 
         )
         self.classifier =  nn.Sequential(
+            nn.Dropout(p=0.2),
             nn.Linear(16 * 11 * 4, 120), # the input size is larger, because images are stacked
             nn.ReLU(),
-            nn.Dropout(p=0.2),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Dropout(p=0.2),
             nn.Linear(84, 20), # second parameter is 20, because label of 2 images are predicted
             nn.Softmax(1)
         )

@@ -82,7 +82,7 @@ def test(dataloader, model):
             pred = model(x)
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     correct /= size
-    return 100*correct
+    return correct
 
 def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, use_dropout):
     if use_dropout:
@@ -137,7 +137,7 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 10
+nb_epochs = 3
 batch_size = 1
 learning_rate = 0.001
 use_dropout = True
@@ -164,5 +164,6 @@ for seed in range(0, 10):
 
     # print results
     print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {}".format(seed, accuracy, training_time))
+    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+        training_time, testing_time))
     print("############################################")

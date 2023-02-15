@@ -84,6 +84,33 @@ def get_mnist_op_dataset(batch_size):
 
     return ds_train, ds_test
 
+def get_mnist_op_dataset_val(size_val, batch_size):
+    img_train, _, img_test, _ = get_mnist_data_as_numpy()
+    train_data_processed, train_labels = parse_data("../data/MNIST/processed/train.txt")
+    test_data_processed, label_result_test = parse_data("../data/MNIST/processed/test.txt")
+    
+    split_index = round(size_val * 30000)
+    label_result_val = train_labels[:split_index]
+    label_result_train = train_labels[split_index:]
+
+    img_per_operand_val_1 = [img_train[train_data_processed[i][0]] for i in range(0, split_index)]
+    img_per_operand_val_2 = [img_train[train_data_processed[i][1]] for i in range(0, split_index)]
+    img_per_operand_val = [img_per_operand_val_1, img_per_operand_val_2]
+
+    img_per_operand_train_1 = [img_train[train_data_processed[i][0]] for i in range(split_index, len(train_data_processed))]
+    img_per_operand_train_2 = [img_train[train_data_processed[i][1]] for i in range(split_index, len(train_data_processed))]
+    img_per_operand_train = [img_per_operand_train_1, img_per_operand_train_2]
+
+    img_per_operand_test_1 = [img_test[i[0]] for i in test_data_processed]
+    img_per_operand_test_2 = [img_test[i[1]] for i in test_data_processed]
+    img_per_operand_test = [img_per_operand_test_1, img_per_operand_test_2]
+
+    ds_train = tf.data.Dataset.from_tensor_slices(tuple(img_per_operand_train)+(label_result_train,)).batch(batch_size)
+    ds_val = tf.data.Dataset.from_tensor_slices(tuple(img_per_operand_val)+(label_result_val,)).batch(1)
+    ds_test = tf.data.Dataset.from_tensor_slices(tuple(img_per_operand_test)+(label_result_test,)).batch(1)
+
+    return ds_train, ds_val, ds_test
+
 def get_mnist_op_dataset_k_fold():
     img_train, _, _, _ = get_mnist_data_as_numpy()
     train_data_processed, label_result_train = parse_data("../data/MNIST/processed/train.txt")

@@ -62,7 +62,7 @@ def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
-nb_epochs = 10
+nb_epochs = 3
 batch_size = 2
 learning_rate = 0.001
 use_dropout = False

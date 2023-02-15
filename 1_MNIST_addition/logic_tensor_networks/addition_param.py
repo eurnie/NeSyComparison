@@ -109,13 +109,13 @@ def train_and_test(train_set, val_set, nb_epochs, learning_rate, p_schedule):
 
 ############################################### PARAMETERS ##############################################
 possible_nb_epochs = [3]
-possible_batch_size = [32, 64, 128]
-possible_learning_rate = [0.001]
+possible_batch_size = [64]
+possible_learning_rate = [0.01, 0.0001]
 possible_p_schedule = [1.]
 k = 10
 #########################################################################################################
 
-for seed in range(9, 10):
+for seed in range(3, 9):
     for param in product(possible_nb_epochs, possible_batch_size, possible_learning_rate, possible_p_schedule):
         nb_epochs, batch_size, learning_rate, p_schedule = param
         

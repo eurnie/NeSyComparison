@@ -3,19 +3,24 @@ import sys
 import random
 import numpy
 import torch
-import baselines
+import pickle
+import time
 import tensorflow as tf
 from tensorflow.keras import layers
 from collections import defaultdict
-from import_data import get_mnist_op_dataset
+from import_data import get_mnist_op_dataset_val
 from commons import train_modified, test_modified
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
+from data.network_tensorflow import Net, Net_Dropout, Net_Original
 
-def train_and_test(train_set, test_set, nb_epochs, learning_rate, p_schedule):
+def train_and_test(train_set, val_set, test_set, nb_epochs, learning_rate, p_schedule, use_dropout):
     # predicates
-    logits_model = baselines.SingleDigit()
+    if use_dropout:
+        logits_model = Net_Dropout()
+    else:
+        logits_model = Net()
     Digit = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
 
     # variables
@@ -75,8 +80,8 @@ def train_and_test(train_set, test_set, nb_epochs, learning_rate, p_schedule):
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
         metrics_dict['train_loss'](loss)
         # accuracy
-        predictions_x = tf.argmax(logits_model(images_x),axis=-1)
-        predictions_y = tf.argmax(logits_model(images_y),axis=-1)
+        predictions_x = tf.argmax(logits_model(images_x, True),axis=-1)
+        predictions_y = tf.argmax(logits_model(images_y, True),axis=-1)
         predictions_z = predictions_x + predictions_y
         match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
         metrics_dict['train_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
@@ -98,19 +103,40 @@ def train_and_test(train_set, test_set, nb_epochs, learning_rate, p_schedule):
     for epoch in range(0, nb_epochs):
         scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
 
-    # training
-    training_time = train_modified(train_set, train_step, scheduled_parameters, nb_epochs)
-
+    # training (with early stopping)
+    total_training_time = 0
+    best_accuracy = 0
+    counter = 0
+    for epoch in range(nb_epochs):
+        total_training_time += train_modified(train_set, train_step, scheduled_parameters, 1)
+        val_accuracy = test_modified(val_set, test_step, metrics_dict, scheduled_parameters)
+        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+        if val_accuracy > best_accuracy:
+            best_accuracy = val_accuracy
+            with open("best_model.pickle", "wb") as handle:
+                pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            counter = 0
+        else:
+            if counter >= 0:
+                break
+            counter += 1
+    with open("best_model.pickle", "rb") as handle:
+        logits_model = pickle.load(handle)
+            
     # testing
+    start_time = time.time()
     accuracy = test_modified(test_set, test_step, metrics_dict, scheduled_parameters)
+    testing_time = time.time() - start_time
 
-    return accuracy, training_time
+    return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
-batch_size = 16
-learning_rate = 0.01
+nb_epochs = 2
+batch_size = 64
+learning_rate = 0.001
 p_schedule = 1.
+use_dropout = False
+size_val = 0.1
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -119,15 +145,18 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # import train and test set (shuffled)
+    # shuffle dataset
     generate_dataset(seed)
-    train_set, test_set = get_mnist_op_dataset(batch_size)
 
-    # train and test the method on the MNIST addition dataset
-    accuracy, training_time = train_and_test(train_set, test_set, nb_epochs, learning_rate, 
-        p_schedule)
+    # import train, val and test set
+    train_set, val_set, test_set = get_mnist_op_dataset_val(size_val, batch_size)
+
+    # train and test
+    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, nb_epochs, 
+        learning_rate, p_schedule, use_dropout)
 
     # print results
     print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {}".format(seed, accuracy, training_time))
+    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+        training_time, testing_time))
     print("############################################")
