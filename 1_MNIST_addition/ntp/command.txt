@@ -1,1 +1,0 @@
-./bin/hoppy-cli.py --train data/nations/train.tsv --dev data/nations/dev.tsv --test data/nations/test.tsv -k 50 -K 4 -b 16 -e 3 -f 0 -l 0.1 -o adagrad -I standard -V 3 -q --hops 0 2 1R --nb-negatives 3 -r linear -R 0 --init uniform --ref-init random --refresh 100 --index nms

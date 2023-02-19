@@ -99,6 +99,7 @@ for seed in range(0, 10):
 
     # TODO: find out why method is not deterministic
     set_fixed_seed(seed)
+    torch.cuda.empty_cache()
     torch.use_deterministic_algorithms(True)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False

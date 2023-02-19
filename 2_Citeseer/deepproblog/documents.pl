@@ -1,5 +1,6 @@
-nn(citeseer_net,[X],Y,[0,1,2,3,4,5]) :: label(X,Y).
+nn(citeseer_net,[tensor(citeseer(X))],Y,[0,1,2,3,4,5]) :: label(X,Y).
 label(X,Y) :- linked(X,Z), label(Z,Y).
+tensor(train_mnist(0))
 
 # label(X,Y) :- linked(index(X),index(Z)), label(Z,Y).
 

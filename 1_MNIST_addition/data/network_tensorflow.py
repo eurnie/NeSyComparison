@@ -22,7 +22,6 @@ class Net(tf.keras.Model):
         self.classifier.add(layers.Dense(84))
         self.classifier.add(tf.keras.layers.Activation("elu"))
         self.classifier.add(layers.Dense(10))
-        # self.classifier.add(tf.keras.layers.Activation('softmax'))
 
     def call(self, inputs, training=False):
         x = self.encoder(inputs)
