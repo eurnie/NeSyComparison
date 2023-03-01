@@ -14,6 +14,7 @@ from sklearn.model_selection import KFold
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
+from data.network_tensorflow import Net, Net_Dropout, Net_Original
 
 def train_and_test(train_set, val_set, nb_epochs, learning_rate, p_schedule):
     # predicates
@@ -112,45 +113,45 @@ possible_nb_epochs = [3]
 possible_batch_size = [64]
 possible_learning_rate = [0.01, 0.0001]
 possible_p_schedule = [1.]
+seed = 0
 k = 10
 #########################################################################################################
 
-for seed in range(3, 9):
-    for param in product(possible_nb_epochs, possible_batch_size, possible_learning_rate, possible_p_schedule):
-        nb_epochs, batch_size, learning_rate, p_schedule = param
-        
-        # setting seeds for reproducibility
-        random.seed(seed)
-        numpy.random.seed(seed)
-        torch.manual_seed(seed)
+for param in product(possible_nb_epochs, possible_batch_size, possible_learning_rate, possible_p_schedule):
+    nb_epochs, batch_size, learning_rate, p_schedule = param
+    
+    # setting seeds for reproducibility
+    random.seed(seed)
+    numpy.random.seed(seed)
+    torch.manual_seed(seed)
 
-        # import train and test set (shuffled)
-        generate_dataset(seed)
-        train_data, train_labels = get_mnist_op_dataset_k_fold()
-        accuracy = 0
-        fold_nb = 1
+    # import train and test set (shuffled)
+    generate_dataset(seed)
+    train_data, train_labels = get_mnist_op_dataset_k_fold()
+    accuracy = 0
+    fold_nb = 1
 
-        for train_index, test_index in KFold(k).split(train_labels):
-            ds_train = [numpy.array(train_data[0])[train_index], numpy.array(train_data[1])[train_index]]
-            ds_test = [numpy.array(train_data[0])[test_index], numpy.array(train_data[1])[test_index]]
-            labels_train = numpy.array(train_labels)[train_index]
-            labels_test = numpy.array(train_labels)[test_index]
-            ds_train = tf.data.Dataset.from_tensor_slices(tuple(ds_train)+(labels_train,)).batch(batch_size)
-            ds_test = tf.data.Dataset.from_tensor_slices(tuple(ds_test)+(labels_test,)).batch(1)
-            fold_accuracy, _ = train_and_test(ds_train, ds_test, nb_epochs, learning_rate, p_schedule)
-            print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
-            fold_nb += 1
-            accuracy += fold_accuracy
+    for train_index, test_index in KFold(k).split(train_labels):
+        ds_train = [numpy.array(train_data[0])[train_index], numpy.array(train_data[1])[train_index]]
+        ds_test = [numpy.array(train_data[0])[test_index], numpy.array(train_data[1])[test_index]]
+        labels_train = numpy.array(train_labels)[train_index]
+        labels_test = numpy.array(train_labels)[test_index]
+        ds_train = tf.data.Dataset.from_tensor_slices(tuple(ds_train)+(labels_train,)).batch(batch_size)
+        ds_test = tf.data.Dataset.from_tensor_slices(tuple(ds_test)+(labels_test,)).batch(1)
+        fold_accuracy, _ = train_and_test(ds_train, ds_test, nb_epochs, learning_rate, p_schedule)
+        print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
+        fold_nb += 1
+        accuracy += fold_accuracy
 
-        accuracy /= k
+    accuracy /= k
 
-        # print results
-        print("############################################")
-        print("seed: {}".format(seed))
-        print("nb_epochs: {}".format(nb_epochs))
-        print("batch_size: {}".format(batch_size))
-        print("learning_rate: {}".format(learning_rate))
-        print("p_schedule: {}".format(p_schedule))
-        print("----------")
-        print("Accuracy: {}".format(accuracy))
-        print("############################################")
+    # print results
+    print("############################################")
+    print("seed: {}".format(seed))
+    print("nb_epochs: {}".format(nb_epochs))
+    print("batch_size: {}".format(batch_size))
+    print("learning_rate: {}".format(learning_rate))
+    print("p_schedule: {}".format(p_schedule))
+    print("----------")
+    print("Accuracy: {}".format(accuracy))
+    print("############################################")

@@ -34,7 +34,7 @@ class MNIST_Addition(Dataset):
         return self.dataset[i1][0], self.dataset[i2][0], l
 
 def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dataList_test, obsList_test, 
-    nb_epochs):
+    nb_epochs, batch_size):
     
     # training (with early stopping)
     total_training_time = 0
@@ -44,7 +44,7 @@ def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dat
     for epoch in range(nb_epochs):
         start_time = time.time()
         NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=1, smPickle=None, 
-            bar=True)
+            bar=True, batchSize=batch_size)
         total_training_time += time.time() - start_time
         val_accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
@@ -69,6 +69,7 @@ def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dat
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 1
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -145,7 +146,7 @@ for seed in range(0, 10):
 
     # train and test the method on the MNIST addition dataset
     accuracy, training_time, testing_time = train_and_test(dataList_train, obsList_train, dataList_val, 
-    obsList_val, dataList_test, obsList_test, nb_epochs)
+    obsList_val, dataList_test, obsList_test, nb_epochs, batch_size)
 
     # print results
     print("############################################")
