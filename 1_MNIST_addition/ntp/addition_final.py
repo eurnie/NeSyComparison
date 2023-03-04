@@ -23,6 +23,9 @@ from ctp.evaluation import evaluate_on_countries
 from typing import Tuple, Dict, Optional
 from import_data_sep import create_data_files
 
+sys.path.append("..")
+from data.generate_dataset import raw_train
+
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 np.set_printoptions(linewidth=48, precision=5, suppress=True)
 
@@ -79,21 +82,28 @@ def main(argv):
     # dev_path = "data/nations/dev.tsv"
     # test_path = "data/nations/test.tsv"
     seperate_labels = True
+    indices = True
 
-    if (seperate_labels):
-        train_path = "data/MNIST_sep/train.tsv"
-        dev_path = "data/MNIST_sep/dev.tsv"
-        test_path = "data/MNIST_sep/test.tsv"
+    if indices:
+        train_path = "data/MNIST_ind_sep/train.tsv"
+        dev_path = "data/MNIST_ind_sep/dev.tsv"
+        test_path = "data/MNIST_ind_sep/test.tsv"
     else:
-        train_path = "data/MNIST/train.tsv"
-        dev_path = "data/MNIST/dev.tsv"
-        test_path = "data/MNIST/test.tsv"
+        if (seperate_labels):
+            train_path = "data/MNIST_sep/train.tsv"
+            dev_path = "data/MNIST_sep/dev.tsv"
+            test_path = "data/MNIST_sep/test.tsv"
+        else:
+            train_path = "data/MNIST/train.tsv"
+            dev_path = "data/MNIST/dev.tsv"
+            test_path = "data/MNIST/test.tsv"
+
 
     #############################################################################
     N2_weight = None
     N3_weight = None
-    batch_size = 16
-    embedding_size = 50
+    batch_size = 2
+    embedding_size = 10
     nb_epochs = 1
     eval_batch_size = None
     eval_batch_size = batch_size if eval_batch_size is None else eval_batch_size
@@ -233,6 +243,7 @@ def main(argv):
                          batch_xp: np.ndarray,
                          batch_xo: np.ndarray) -> np.ndarray:
         with torch.no_grad():
+            print(batch_xs)
             tensor_xs = torch.tensor(batch_xs, dtype=torch.long, device=device)
             tensor_xp = torch.tensor(batch_xp, dtype=torch.long, device=device)
             tensor_xo = torch.tensor(batch_xo, dtype=torch.long, device=device)
@@ -284,6 +295,33 @@ def main(argv):
         for batch_no, (batch_start, batch_end) in enumerate(batcher.batches, 1):
             print(batch_no)
             xp_batch_np, xs_batch_np, xo_batch_np, xi_batch_np = batcher.get_batch(batch_start, batch_end)
+            
+            print(xp_batch_np)
+            print(xs_batch_np)
+            print(xo_batch_np)
+            print(xi_batch_np)
+
+            xs_batch_np_new = []
+            for x in xs_batch_np:
+                digit = raw_train[x][0].flatten().numpy()
+                # print(digit)
+                # digit += 1
+                # digit *= 100
+                # digit = digit.numpy().round(0)
+                # digit = digit.type(torch.float64)
+                xs_batch_np_new.append(digit)
+            xs_batch_np = xs_batch_np_new
+
+            xo_batch_np_new = []
+            for x in xo_batch_np:
+                digit = raw_train[x][0].flatten().numpy()
+                # digit += 1
+                # digit *= 100
+                # digit = digit.numpy().round(0)
+                # digit = digit.type(torch.float64)
+                xo_batch_np_new.append(digit)
+            xo_batch_np = xo_batch_np_new
+
             t = xp_batch_np.shape[0]
 
             assert nb_neg > 0
@@ -327,15 +365,41 @@ def main(argv):
             xi_batch = torch.tensor(xi_exp_np, dtype=torch.long, device=device)
             xt_batch = torch.tensor(xt_exp_np, dtype=torch.float32, device=device)
 
+            print(xs_batch)
+
             # Disable masking
             # xi_batch = None
+
+            ############################################################################""
+
+            # xs_batch_images = []
+            # for x in xs_batch:
+            #     digit = raw_train[x.numpy()][0].flatten()
+            #     digit += 1
+            #     digit *= 100
+            #     digit = digit.numpy().round(0)
+            #     digit = digit.astype(int)
+            #     xs_batch_images.append(digit)
+            # xs_batch_images = torch.tensor(xs_batch_images, dtype=torch.long, device=device)
+
+            # xo_batch_images = []
+            # for x in xo_batch:
+            #     digit = raw_train[x.numpy()][0].flatten()
+            #     digit += 1
+            #     digit *= 100
+            #     digit = digit.numpy().round(0)
+            #     digit = digit.astype(int)
+            #     xo_batch_images.append(digit)
+            # xo_batch_images = torch.tensor(xo_batch_images, dtype=torch.long, device=device)        
 
             xp_batch_emb = predicate_embeddings(xp_batch)
             xs_batch_emb = entity_embeddings(xs_batch)
             xo_batch_emb = entity_embeddings(xo_batch)
 
-            factors = [model.factor(e) for e in [xp_batch_emb, xs_batch_emb, xo_batch_emb]]
+            # xs_batch_emb = entity_embeddings(xs_batch_images)
+            # xo_batch_emb = entity_embeddings(xo_batch_images)
 
+            factors = [model.factor(e) for e in [xp_batch_emb, xs_batch_emb, xo_batch_emb]]
             scores = model.score(xp_batch_emb, xs_batch_emb, xo_batch_emb, mask_indices=xi_batch)
             # scores = base_model.score(xp_batch_emb, xs_batch_emb, xo_batch_emb, mask_indices=xi_batch)
 

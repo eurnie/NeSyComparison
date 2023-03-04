@@ -3,6 +3,17 @@ import random
 import pathlib
 import torchvision
 
+ROOT_FOLDER = pathlib.Path(__file__).parent
+
+transform = torchvision.transforms.Compose(
+    [torchvision.transforms.ToTensor(), torchvision.transforms.Normalize((0.5,), (0.5,))]
+)
+
+raw_train = torchvision.datasets.MNIST(
+    root=str(ROOT_FOLDER), train=True, download=True, transform=transform)
+raw_test =  torchvision.datasets.MNIST(
+    root=str(ROOT_FOLDER), train=False, download=True, transform=transform)
+
 def make_processed_dataset(raw_dataset, seed):
     indices = list(range(len(raw_dataset)))
     rng = random.Random(seed)
@@ -36,17 +47,6 @@ def write_to_file(dataset, filename):
             f.write("\n")
 
 def generate_dataset(seed):
-    ROOT_FOLDER = pathlib.Path(__file__).parent
-
-    transform = torchvision.transforms.Compose(
-        [torchvision.transforms.ToTensor(), torchvision.transforms.Normalize((0.5,), (0.5,))]
-    )
-
-    raw_train = torchvision.datasets.MNIST(
-        root=str(ROOT_FOLDER), train=True, download=True, transform=transform)
-    raw_test =  torchvision.datasets.MNIST(
-        root=str(ROOT_FOLDER), train=False, download=True, transform=transform)
-
     processed_train = make_processed_dataset(raw_train, seed)
     processed_test = make_processed_dataset(raw_test, seed)
 

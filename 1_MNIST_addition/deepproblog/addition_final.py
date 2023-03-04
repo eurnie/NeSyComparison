@@ -3,6 +3,8 @@ import torch
 import random
 import numpy
 import sys
+import os
+import json
 from import_data import MNIST_train, MNIST_val, MNIST_test, import_datasets
 from deepproblog.dataset import DataLoader
 from deepproblog.engines import ApproximateEngine, ExactEngine
@@ -15,7 +17,8 @@ sys.path.append("..")
 from data.generate_dataset import generate_dataset
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, learning_rate, use_dropout):
+def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epochs, batch_size, 
+        learning_rate, use_dropout):
     if use_dropout:
         network = Net_Dropout()
     else:
@@ -33,6 +36,8 @@ def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, 
     model.add_tensor_source("test", MNIST_test)
     loader = DataLoader(train_set, batch_size, False)
 
+    os.mkdir("best_model")
+
     # training (with early stopping)
     total_training_time = 0
     best_accuracy = 0
@@ -45,13 +50,20 @@ def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, 
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
-            train.model.save_state("model/state", complete=True)
+            train.model.save_state("best_model/state", complete=True)
             counter = 0
         else:
             if counter >= 1:
                 break
             counter += 1
-    model.load_state("model/state")
+
+    # early stopping: load best model and delete file
+    model.load_state("best_model/state")
+    os.remove("best_model/state")
+    os.rmdir("best_model")
+
+    # save trained model to a file
+    model.save_state("results/final/{}".format(model_file_name))
 
     # testing
     start_time = time.time()
@@ -62,14 +74,14 @@ def train_and_test(train_set, val_set, test_set, method, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
-nb_epochs = 3
+nb_epochs = 1
 batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(1, 10):
+for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
@@ -81,9 +93,31 @@ for seed in range(1, 10):
     # import train, val and test set
     train_set, val_set, test_set = import_datasets(size_val)
 
+    # generate name of file that holds the trained model
+    model_file_name = "DeepProbLog_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
+        learning_rate, use_dropout, size_val)
+
     # train and test
-    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, method, nb_epochs, 
-        batch_size, learning_rate, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
+        method, nb_epochs, batch_size, learning_rate, use_dropout)
+    
+    # save results to a summary file
+    information = {
+        "algorithm": "DeepProbLog",
+        "seed": seed,
+        "method": method,
+        "nb_epochs": nb_epochs,
+        "learning_rate": learning_rate,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "training_time": training_time,
+        "testing_time": testing_time,
+        "model_file": model_file_name
+    }
+    with open("results/summary_final.json", "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
 
     # print results
     print("############################################")

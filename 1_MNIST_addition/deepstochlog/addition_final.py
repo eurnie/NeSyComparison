@@ -12,7 +12,7 @@ from deepstochlog.model import DeepStochLogModel
 from deepstochlog.term import Term, List
 from deepstochlog.trainer import DeepStochLogTrainer
 from deepstochlog.network import Network, NetworkStore
-from deepstochlog.utils import create_model_accuracy_calculator, calculate_accuracy, set_fixed_seed
+from deepstochlog.utils import create_model_accuracy_calculator, calculate_accuracy
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
@@ -96,13 +96,6 @@ for seed in range(0, 10):
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
-
-    # TODO: find out why method is not deterministic
-    set_fixed_seed(seed)
-    torch.cuda.empty_cache()
-    torch.use_deterministic_algorithms(True)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
     # shuffle dataset
     generate_dataset(seed)
