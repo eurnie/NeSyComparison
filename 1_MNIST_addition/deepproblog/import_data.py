@@ -134,6 +134,21 @@ def import_datasets(size_val):
     )
     return train_set, val_set, test_set
 
+def import_datasets_kfold():
+    train_set_list = []
+    for i in range(0, 10):
+        train_set = MNISTOperator(
+            dataset_name="train",
+            function_name="addition",
+            operator=sum,
+            size=1,
+            arity=2,
+            start_index=i*3000,
+            end_index=(i+1)*3000
+        )
+        train_set_list.append(train_set)
+    return train_set_list
+
 class MNISTOperator(Dataset, TorchDataset):
     def __getitem__(self, index: int) -> Tuple[list, list, int]:
         l1, l2 = self.data[index]
