@@ -18,7 +18,7 @@ from data.network_torch import Net, Net_Dropout
 def train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, batch_size, learning_rate, 
     use_dropout):
 
-    total_accuracy = 0
+    accuracies = []
 
     for fold_nb in range(1, 11):
         if use_dropout:
@@ -32,7 +32,8 @@ def train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, batch
         if method == "exact":
             model.set_engine(ExactEngine(model), cache=True)
         elif method == "geometric_mean":
-            model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, exploration=False))
+            model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, 
+                exploration=False))
         model.add_tensor_source("train", MNIST_train)
         model.add_tensor_source("val", MNIST_val)
         model.add_tensor_source("test", MNIST_test)
@@ -50,10 +51,10 @@ def train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, batch
 
         # testing
         fold_accuracy = get_confusion_matrix(model, test_set).accuracy()
-        total_accuracy += fold_accuracy
+        accuracies.append(fold_accuracy)
         print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
 
-    return total_accuracy / 10
+    return sum(accuracies) / 10, accuracies
 
 ############################################### PARAMETERS ##############################################
 seed = 0
@@ -80,8 +81,8 @@ model_file_name_dir = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, method,
     batch_size, learning_rate, use_dropout)
 
 # train and test
-avg_accuracy = train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, batch_size,
-    learning_rate, use_dropout)
+avg_accuracy, accuracies = train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, 
+    batch_size, learning_rate, use_dropout)
 
 # save results to a summary file
 information = {
@@ -89,8 +90,10 @@ information = {
     "seed": seed,
     "method": method,
     "nb_epochs": nb_epochs,
+    "batch_size": batch_size,
     "learning_rate": learning_rate,
     "use_dropout": use_dropout,
+    "accuracies": accuracies,
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir
 }
