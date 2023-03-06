@@ -107,6 +107,7 @@ for seed in range(0, 10):
         "seed": seed,
         "method": method,
         "nb_epochs": nb_epochs,
+        "batch_size": batch_size,
         "learning_rate": learning_rate,
         "use_dropout": use_dropout,
         "size_val": size_val,

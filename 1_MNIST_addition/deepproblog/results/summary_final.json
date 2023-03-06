@@ -1,1 +1,0 @@
-{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.9674, "training_time": 322.27923607826233, "testing_time": 269.23230719566345, "model_file": "DeepProbLog_0_exact_1_2_0.001_False_0.1"}
