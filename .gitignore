@@ -1,3 +1,7 @@
+# saved models
+final/*
+param/*
+
 # Visual Studio Code
 .vscode/*
 !.vscode/settings.json
