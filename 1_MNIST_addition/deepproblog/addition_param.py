@@ -62,10 +62,9 @@ method = "exact"
 nb_epochs = 3
 batch_size = 2
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
 
-# (3, 2, 0.001, False)
 # (1, 2, 0.001, False) !!
 # (1, 8, 0.001, True)
 # (2, 4, 0.001, True)

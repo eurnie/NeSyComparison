@@ -81,16 +81,12 @@ def train_and_test(model_file_name_dir, train_set_list, nb_epochs, batch_size, l
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 2
-batch_size = 2
+nb_epochs = 1
+batch_size = 8
 learning_rate = 0.001
 epsilon = 0.00000001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
-
-# (3, 4, 0.001, True)
-# (3, 8, 0.001, False)
-# (1, 8, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)
