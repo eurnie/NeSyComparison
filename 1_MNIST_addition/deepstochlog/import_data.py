@@ -127,5 +127,11 @@ def import_datasets(size_val):
     train_set = SimpleAdditionDataset("train", split_index, 30000)
     val_set = SimpleAdditionDataset("train", 0, split_index)
     test_set = SimpleAdditionDataset("test", 0, 5000)
-
     return train_set, val_set, test_set
+
+def import_datasets_kfold():
+    train_set_list = []
+    for i in range(10):
+        train_set = SimpleAdditionDataset("train", i*3000, (i+1)*3000)
+        train_set_list.append(train_set)
+    return train_set_list

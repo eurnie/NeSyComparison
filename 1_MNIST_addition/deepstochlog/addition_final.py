@@ -2,8 +2,10 @@ import torch
 import random
 import numpy
 import sys
+import os
 import time
 import pickle
+import json
 from pathlib import Path
 from torch.optim import Adam
 from import_data import import_datasets
@@ -18,7 +20,8 @@ sys.path.append("..")
 from data.generate_dataset import generate_dataset
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, epsilon, use_dropout):
+def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, 
+    epsilon, use_dropout):
     # create a network object containing the MNIST network and the index list
     if use_dropout:
         mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
@@ -44,7 +47,8 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
     optimizer.zero_grad()
 
     # DataLoader that can deal with proof trees and tensors (replicates the pytorch dataloader interface)
-    # if shuffle is set to True, also give the seed: the seed of the random package had only effect on this file
+    # if shuffle is set to True, also give the seed: the seed of the random package had only effect on this 
+    # file
     train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
     val_dataloader = DataLoader(val_set, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_set, batch_size=1, shuffle=False)
@@ -75,6 +79,12 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
         neural_networks = pickle.load(handle)
     model.neural_networks = neural_networks
 
+    os.remove("best_model.pickle")
+
+    # save trained model to a file
+    with open("results/final/{}".format(model_file_name), "wb") as handle:
+        pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
     # testing
     start_time = time.time()
     accuracy = calculate_accuracy(model, test_dataloader)[0]
@@ -103,9 +113,32 @@ for seed in range(0, 10):
     # import train, val and test set
     train_set, val_set, test_set = import_datasets(size_val)
 
+    # generate name of file that holds the trained model
+    model_file_name = "DeepStochLog_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+        epsilon, use_dropout, size_val)
+
     # train and test
-    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, nb_epochs, 
-        batch_size, learning_rate, epsilon, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
+        nb_epochs, batch_size, learning_rate, epsilon, use_dropout)
+
+    # save results to a summary file
+    information = {
+        "algorithm": "DeepStochLog",
+        "seed": seed,
+        "nb_epochs": nb_epochs,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "epsilon": epsilon,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "training_time": training_time,
+        "testing_time": testing_time,
+        "model_file": model_file_name
+    }
+    with open("results/summary_final.json", "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
 
     # print results
     print("############################################")
