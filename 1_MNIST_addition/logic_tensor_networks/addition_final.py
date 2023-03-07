@@ -5,6 +5,8 @@ import numpy
 import torch
 import pickle
 import time
+import json
+import os
 import tensorflow as tf
 from tensorflow.keras import layers
 from collections import defaultdict
@@ -15,7 +17,8 @@ sys.path.append("..")
 from data.generate_dataset import generate_dataset
 from data.network_tensorflow import Net, Net_Dropout, Net_Original
 
-def train_and_test(train_set, val_set, test_set, nb_epochs, learning_rate, p_schedule, use_dropout):
+def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, p_schedule, 
+    use_dropout):
     # predicates
     if use_dropout:
         logits_model = Net_Dropout()
@@ -122,6 +125,12 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, learning_rate, p_sch
             counter += 1
     with open("best_model.pickle", "rb") as handle:
         logits_model = pickle.load(handle)
+
+    os.remove("best_model.pickle")
+
+    # save trained model to a file
+    with open("results/final/{}".format(model_file_name), "wb") as handle:
+        pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
     start_time = time.time()
@@ -151,9 +160,32 @@ for seed in range(0, 10):
     # import train, val and test set
     train_set, val_set, test_set = get_mnist_op_dataset_val(size_val, batch_size)
 
+    # generate name of folder that holds all the trained models
+    model_file_name = "LTN_final_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+        p_schedule, use_dropout, size_val)
+
     # train and test
-    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, nb_epochs, 
-        learning_rate, p_schedule, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
+        nb_epochs, learning_rate, p_schedule, use_dropout)
+      
+    # save results to a summary file
+    information = {
+        "algorithm": "LTN",
+        "seed": seed,
+        "nb_epochs": nb_epochs,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "p_schedule": p_schedule,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": float(accuracy),
+        "training_time": float(training_time),
+        "testing_time": float(testing_time),
+        "model_file": model_file_name
+    }
+    with open("results/summary_final.json", "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
 
     # print results
     print("############################################")

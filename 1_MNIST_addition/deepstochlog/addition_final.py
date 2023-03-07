@@ -114,7 +114,7 @@ for seed in range(0, 10):
     train_set, val_set, test_set = import_datasets(size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "DeepStochLog_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+    model_file_name = "DeepStochLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
         epsilon, use_dropout, size_val)
 
     # train and test

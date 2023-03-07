@@ -99,8 +99,8 @@ generate_dataset(seed)
 # import train, val and test set
 train_set_list = import_datasets_kfold()
 
-# generate name of file that holds the trained model
-model_file_name_dir = "DeepStochLog_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+# generate name of folder that holds all the trained models
+model_file_name_dir = "DeepStochLog_param_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
     epsilon, use_dropout)
 
 # train and test

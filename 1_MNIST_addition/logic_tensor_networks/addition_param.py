@@ -1,24 +1,29 @@
 import ltn
+import os
 import sys
 import random
 import numpy
 import torch
-import baselines
+import json
+import pickle
 import tensorflow as tf
 from tensorflow.keras import layers
 from collections import defaultdict
 from import_data import get_mnist_op_dataset_k_fold
 from commons import train_modified, test_modified
-from itertools import product
 from sklearn.model_selection import KFold
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
 from data.network_tensorflow import Net, Net_Dropout, Net_Original
 
-def train_and_test(train_set, val_set, nb_epochs, learning_rate, p_schedule):
+def train_and_test(model_file_name_dir, fold_nb, train_set, test_set, nb_epochs, learning_rate, p_schedule, 
+    use_dropout):
     # predicates
-    logits_model = baselines.SingleDigit()
+    if use_dropout:
+        logits_model = Net_Dropout()
+    else:
+        logits_model = Net()
     Digit = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
 
     # variables
@@ -78,8 +83,8 @@ def train_and_test(train_set, val_set, nb_epochs, learning_rate, p_schedule):
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
         metrics_dict['train_loss'](loss)
         # accuracy
-        predictions_x = tf.argmax(logits_model(images_x),axis=-1)
-        predictions_y = tf.argmax(logits_model(images_y),axis=-1)
+        predictions_x = tf.argmax(logits_model(images_x, True),axis=-1)
+        predictions_y = tf.argmax(logits_model(images_y, True),axis=-1)
         predictions_z = predictions_x + predictions_y
         match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
         metrics_dict['train_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
@@ -96,62 +101,94 @@ def train_and_test(train_set, val_set, nb_epochs, learning_rate, p_schedule):
         match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
         metrics_dict['test_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
 
+    # the parameter p_schedule is the same in every epoch
     scheduled_parameters = defaultdict(lambda: {})
     for epoch in range(0, nb_epochs):
         scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
 
     # training
-    training_time = train_modified(train_set, train_step, scheduled_parameters, nb_epochs)
+    for epoch in range(nb_epochs):
+        train_modified(train_set, train_step, scheduled_parameters, 1)
 
+    # save trained model to a file
+    path = "results/param/{}".format(model_file_name_dir)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    with open("results/param/{}/fold_{}".format(model_file_name_dir, fold_nb), "wb+") as handle:
+        pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
     # testing
-    accuracy = test_modified(val_set, test_step, metrics_dict, scheduled_parameters)
+    accuracy = test_modified(test_set, test_step, metrics_dict, scheduled_parameters)
 
-    return accuracy, training_time
+    return accuracy
 
 ############################################### PARAMETERS ##############################################
-possible_nb_epochs = [3]
-possible_batch_size = [64]
-possible_learning_rate = [0.01, 0.0001]
-possible_p_schedule = [1.]
 seed = 0
-k = 10
+nb_epochs = 2
+batch_size = 64
+learning_rate = 0.001
+p_schedule = 1.
+use_dropout = True
 #########################################################################################################
 
-for param in product(possible_nb_epochs, possible_batch_size, possible_learning_rate, possible_p_schedule):
-    nb_epochs, batch_size, learning_rate, p_schedule = param
-    
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+# (2, 64, 0.001, False)
+# (1, 16, 0.001, False)
+# (2, 16, 0.001, True)
+# (3, 16, 0.001, True)
+# (2, 128, 0.001, False)
+# (3, 128, 0.001, False)
+# (2, 16, 0.001, False)
+# (3, 32, 0.001, True)
+# (1, 64, 0.001, False)
 
-    # import train and test set (shuffled)
-    generate_dataset(seed)
-    train_data, train_labels = get_mnist_op_dataset_k_fold()
-    accuracy = 0
-    fold_nb = 1
+# setting seeds for reproducibility
+random.seed(seed)
+numpy.random.seed(seed)
+torch.manual_seed(seed)
 
-    for train_index, test_index in KFold(k).split(train_labels):
-        ds_train = [numpy.array(train_data[0])[train_index], numpy.array(train_data[1])[train_index]]
-        ds_test = [numpy.array(train_data[0])[test_index], numpy.array(train_data[1])[test_index]]
-        labels_train = numpy.array(train_labels)[train_index]
-        labels_test = numpy.array(train_labels)[test_index]
-        ds_train = tf.data.Dataset.from_tensor_slices(tuple(ds_train)+(labels_train,)).batch(batch_size)
-        ds_test = tf.data.Dataset.from_tensor_slices(tuple(ds_test)+(labels_test,)).batch(1)
-        fold_accuracy, _ = train_and_test(ds_train, ds_test, nb_epochs, learning_rate, p_schedule)
-        print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
-        fold_nb += 1
-        accuracy += fold_accuracy
+# import train and test set (shuffled)
+generate_dataset(seed)
+train_data, train_labels = get_mnist_op_dataset_k_fold()
+accuracies = []
+fold_nb = 1
 
-    accuracy /= k
+# generate name of folder that holds all the trained models
+model_file_name_dir = "LTN_param_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+    p_schedule, use_dropout)
 
-    # print results
-    print("############################################")
-    print("seed: {}".format(seed))
-    print("nb_epochs: {}".format(nb_epochs))
-    print("batch_size: {}".format(batch_size))
-    print("learning_rate: {}".format(learning_rate))
-    print("p_schedule: {}".format(p_schedule))
-    print("----------")
-    print("Accuracy: {}".format(accuracy))
-    print("############################################")
+for train_index, test_index in KFold(10).split(train_labels):
+    ds_train = [numpy.array(train_data[0])[train_index], numpy.array(train_data[1])[train_index]]
+    ds_test = [numpy.array(train_data[0])[test_index], numpy.array(train_data[1])[test_index]]
+    labels_train = numpy.array(train_labels)[train_index]
+    labels_test = numpy.array(train_labels)[test_index]
+    ds_train = tf.data.Dataset.from_tensor_slices(tuple(ds_train)+(labels_train,)).batch(batch_size)
+    ds_test = tf.data.Dataset.from_tensor_slices(tuple(ds_test)+(labels_test,)).batch(1)
+    fold_accuracy = train_and_test(model_file_name_dir, fold_nb, ds_train, ds_test, nb_epochs, 
+        learning_rate, p_schedule, use_dropout)
+    print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
+    accuracies.append(float(fold_accuracy))
+    fold_nb += 1
+
+avg_accuracy = sum(accuracies) / 10
+
+# save results to a summary file
+information = {
+    "algorithm": "LTN",
+    "seed": seed,
+    "nb_epochs": nb_epochs,
+    "batch_size": batch_size,
+    "learning_rate": learning_rate,
+    "p_schedule": p_schedule,
+    "use_dropout": use_dropout,
+    "accuracies": accuracies,
+    "avg_accuracy": avg_accuracy,
+    "model_files_dir": model_file_name_dir
+}
+with open("results/summary_param.json", "a") as outfile:
+    json.dump(information, outfile)
+    outfile.write('\n')
+
+# print results
+print("############################################")
+print("Seed: {} \nAccuracy: {}".format(seed, avg_accuracy))
+print("############################################")

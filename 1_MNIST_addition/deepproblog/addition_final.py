@@ -94,7 +94,7 @@ for seed in range(0, 10):
     train_set, val_set, test_set = import_datasets(size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "DeepProbLog_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
+    model_file_name = "DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
         learning_rate, use_dropout, size_val)
 
     # train and test
