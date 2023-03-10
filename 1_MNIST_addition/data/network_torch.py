@@ -74,6 +74,7 @@ class Net_NN(nn.Module):
         )
 
     def forward(self, x):
+        print(x.size())
         x = self.encoder(x)
         x = x.view(-1, 16 * 11 * 4)
         x = self.classifier(x)
