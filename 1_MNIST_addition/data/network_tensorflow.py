@@ -9,21 +9,21 @@ class Net(tf.keras.Model):
         self.encoder = tf.keras.Sequential()
         self.encoder.add(layers.Conv2D(6, 5))
         self.encoder.add(layers.MaxPool2D((2,2)))
-        self.encoder.add(tf.keras.layers.Activation("elu"))
+        self.encoder.add(tf.keras.layers.Activation("relu"))
         self.encoder.add(layers.Conv2D(16, 5))
         self.encoder.add(layers.MaxPool2D((2,2)))
-        self.encoder.add(tf.keras.layers.Activation("elu"))
+        self.encoder.add(tf.keras.layers.Activation("relu"))
         self.encoder.add(layers.Flatten())
         
         # classifier
         self.classifier = tf.keras.Sequential()
         self.classifier.add(layers.Dense(120))
-        self.classifier.add(tf.keras.layers.Activation("elu"))
+        self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(84))
-        self.classifier.add(tf.keras.layers.Activation("elu"))
+        self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(10))
 
-    def call(self, inputs, training=False):
+    def call(self, inputs):
         x = self.encoder(inputs)
         x = self.classifier(x)
         return x
@@ -36,31 +36,27 @@ class Net_Dropout(tf.keras.Model):
         self.encoder = tf.keras.Sequential()
         self.encoder.add(layers.Conv2D(6, 5))
         self.encoder.add(layers.MaxPool2D((2,2)))
-        self.encoder.add(tf.keras.layers.Activation("elu"))
+        self.encoder.add(tf.keras.layers.Activation("relu"))
         self.encoder.add(layers.Conv2D(16, 5))
         self.encoder.add(layers.MaxPool2D((2,2)))
-        self.encoder.add(tf.keras.layers.Activation("elu"))
+        self.encoder.add(tf.keras.layers.Activation("relu"))
         self.encoder.add(layers.Flatten())
+        # self.encoder.add(layers.Dropout(0.2))
         
+        self.dropout_layer = layers.Dropout(rate=0.2)
+
+
         # classifier
         self.classifier = tf.keras.Sequential()
         self.classifier.add(layers.Dense(120))
-        self.classifier.add(tf.keras.layers.Activation("elu"))
+        self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(84))
-        self.classifier.add(tf.keras.layers.Activation("elu"))
+        self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(10))
-        # self.classifier.add(tf.keras.layers.Activation('softmax'))
 
-    def call(self, inputs, training=False):
-
+    def call(self, inputs):
         x = self.encoder(inputs)
-
-        if training:
-            dropout_layer = layers.Dropout(0.99)
-            x = dropout_layer(x)
-
-        import sys
-        tf.print(x, output_stream=sys.stderr)
+        x = self.dropout_layer(x, training=True)
         x = self.classifier(x)
         return x
 

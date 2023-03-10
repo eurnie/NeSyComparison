@@ -1,0 +1,1 @@
+{"algorithm": "DeepStochLog", "seed": 0, "nb_epochs": 3, "batch_size": 2, "learning_rate": 0.001, "use_dropout": true, "accuracies": [0.9723333333333334, 0.9753333333333333, 0.978, 0.978, 0.975, 0.973, 0.9843333333333334, 0.981, 0.98, 0.9823333333333334], "avg_accuracy": 0.9779333333333332, "model_files_dir": "NeurASP_param_0_3_2_0.001_True"}

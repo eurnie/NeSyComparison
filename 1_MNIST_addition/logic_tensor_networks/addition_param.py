@@ -107,8 +107,7 @@ def train_and_test(model_file_name_dir, fold_nb, train_set, test_set, nb_epochs,
         scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
 
     # training
-    for epoch in range(nb_epochs):
-        train_modified(train_set, train_step, scheduled_parameters, 1)
+    train_modified(train_set, train_step, scheduled_parameters, nb_epochs)
 
     # save trained model to a file
     path = "results/param/{}".format(model_file_name_dir)

@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import time
 import random
@@ -33,8 +34,8 @@ class MNIST_Addition(Dataset):
         i1, i2, l = self.data[index]
         return self.dataset[i1][0], self.dataset[i2][0], l
 
-def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dataList_test, obsList_test, 
-    nb_epochs, batch_size):
+def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val, obsList_val, 
+    dataList_test, obsList_test, nb_epochs, batch_size):
     
     # training (with early stopping)
     total_training_time = 0
@@ -59,6 +60,12 @@ def train_and_test(dataList_train, obsList_train, dataList_val, obsList_val, dat
             counter += 1
     with open("best_model.pickle", "rb") as handle:
         BestNeurASPobj = pickle.load(handle)
+
+    os.remove("best_model.pickle")
+
+    # save trained model to a file
+    with open("results/final/{}".format(model_file_name), "wb") as handle:
+        pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # testing
     start_time = time.time()
@@ -144,9 +151,31 @@ for seed in range(0, 10):
     optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
     NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
 
+    # generate name of file that holds the trained model
+    model_file_name = "NeurASP_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, 
+        learning_rate, use_dropout, size_val)
+
     # train and test the method on the MNIST addition dataset
-    accuracy, training_time, testing_time = train_and_test(dataList_train, obsList_train, dataList_val, 
-    obsList_val, dataList_test, obsList_test, nb_epochs, batch_size)
+    accuracy, training_time, testing_time = train_and_test(model_file_name, dataList_train, obsList_train,
+        dataList_val, obsList_val, dataList_test, obsList_test, nb_epochs, batch_size)
+
+    # save results to a summary file
+    information = {
+        "algorithm": "NeurASP",
+        "seed": seed,
+        "nb_epochs": nb_epochs,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "training_time": training_time,
+        "testing_time": testing_time,
+        "model_file": model_file_name
+    }
+    with open("results/summary_final.json", "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
 
     # print results
     print("############################################")

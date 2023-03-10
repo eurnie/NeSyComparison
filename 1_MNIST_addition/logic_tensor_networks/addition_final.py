@@ -83,8 +83,8 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
         metrics_dict['train_loss'](loss)
         # accuracy
-        predictions_x = tf.argmax(logits_model(images_x, True),axis=-1)
-        predictions_y = tf.argmax(logits_model(images_y, True),axis=-1)
+        predictions_x = tf.argmax(logits_model(images_x),axis=-1)
+        predictions_y = tf.argmax(logits_model(images_y),axis=-1)
         predictions_z = predictions_x + predictions_y
         match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
         metrics_dict['train_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
@@ -140,11 +140,11 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 2
-batch_size = 64
+nb_epochs = 1
+batch_size = 128
 learning_rate = 0.001
 p_schedule = 1.
-use_dropout = False
+use_dropout = True
 size_val = 0.1
 #########################################################################################################
 

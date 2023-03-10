@@ -96,7 +96,7 @@ torch.manual_seed(seed)
 # shuffle dataset
 generate_dataset(seed)
 
-# import train, val and test set
+# import train set
 train_set_list = import_datasets_kfold()
 
 # generate name of folder that holds all the trained models
