@@ -4,7 +4,7 @@ from itertools import product
 random.seed(0)
 TOTAL_COMBINATIONS = 10
 
-possible_nb_epochs = [10, 100, 1000]
+possible_nb_epochs = [3, 6, 9, 12, 15]
 possible_batch_size = [2, 4, 8, 16, 32]
 possible_learning_rate = [0.001]
 possible_dropout = [True, False]

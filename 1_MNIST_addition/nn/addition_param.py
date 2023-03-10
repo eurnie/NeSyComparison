@@ -60,6 +60,7 @@ def parse_data(filename, dataset_name, size_val):
         first = datasets[dataset_used][index_digit_1][0][0]
         second = datasets[dataset_used][index_digit_2][0][0]
         new_tensor = torch.cat((first, second), 0)
+        new_tensor = new_tensor[None, :]
         dataset.append((new_tensor, sum))
     
     return dataset
@@ -68,11 +69,7 @@ def train(dataloader, model, loss_fn, optimizer):
     model.train()
 
     for (x, y) in dataloader:
-        print(x.size())
-
         # compute prediction error
-        x = x[None, :]
-        print(x.size())
         pred = model(x)
         loss = loss_fn(pred, y)
 
@@ -93,33 +90,15 @@ def test(dataloader, model):
     return correct
 
 def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, learning_rate, use_dropout):
-    
-
-
-
-
     accuracies = []
     kfold = KFold(n_splits=10, shuffle=True)
 
     for fold_nb, (train_ids, valid_ids) in enumerate(kfold.split(total_train_set)):
-        print(f'FOLD {fold_nb}')
-        print('--------------------------------')
         train_subsampler = SubsetRandomSampler(train_ids)
         valid_subsampler = SubsetRandomSampler(valid_ids)
 
         train_dataloader = DataLoader(total_train_set, batch_size=batch_size, sampler=train_subsampler)
         test_dataloader = DataLoader(total_train_set, batch_size=1, sampler=valid_subsampler)
-   
-    
-    # for train_index, test_index in KFold(10).split(total_train_set):
-    #     train_set = numpy.array(total_train_set)[train_index].tolist()
-    #     test_set = numpy.array(total_train_set)[test_index] .tolist()
-
-    #     assert len(train_set) == 27000
-    #     assert len(test_set) == 3000
-
-        # train_dataloader = DataLoader(train_set, batch_size=batch_size)
-        # test_dataloader = DataLoader(test_set, batch_size=batch_size)
 
         if use_dropout:
             model = Net_NN_Dropout()
@@ -159,10 +138,10 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 1
+nb_epochs = 10
 batch_size = 8
 learning_rate = 0.001
-use_dropout = False
+use_dropout = True
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -186,7 +165,7 @@ accuracies, avg_accuracy = train_and_test(model_file_name_dir, train_set, nb_epo
 
 # save results to a summary file
 information = {
-    "algorithm": "DeepStochLog",
+    "algorithm": "NN",
     "seed": seed,
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,

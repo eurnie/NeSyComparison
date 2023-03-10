@@ -59,6 +59,7 @@ def parse_data(filename, dataset_name, size_val):
         first = datasets[dataset_used][index_digit_1][0][0]
         second = datasets[dataset_used][index_digit_2][0][0]
         new_tensor = torch.cat((first, second), 0)
+        new_tensor = new_tensor[None, :]
         dataset.append((new_tensor, sum))
     
     return dataset
@@ -146,7 +147,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
+nb_epochs = 25
 batch_size = 1
 learning_rate = 0.001
 use_dropout = True
