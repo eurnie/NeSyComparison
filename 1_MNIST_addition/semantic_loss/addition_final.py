@@ -2,6 +2,8 @@ import random
 import numpy
 import time
 import sys
+import os
+import json
 import torch
 import torchvision
 import pickle
@@ -98,7 +100,8 @@ def test(dataloader, model):
     correct /= size
     return correct
 
-def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, use_dropout):
+def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, 
+    use_dropout):
     if use_dropout:
         model = Net_SL_Dropout()
     else:
@@ -142,6 +145,12 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
             counter += 1
     with open("best_model.pickle", "rb") as handle:
         model = pickle.load(handle)
+
+    os.remove("best_model.pickle")
+
+    # save trained model to a file
+    with open("results/final/{}".format(model_file_name), "wb") as handle:
+        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
     start_time = time.time()
@@ -152,7 +161,7 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 10
-batch_size = 2
+batch_size = 64
 learning_rate = 0.001
 use_dropout = True
 size_val = 0.1
@@ -172,9 +181,31 @@ for seed in range(0, 10):
     val_set = parse_data("../data/MNIST/processed/train.txt", "val", size_val)
     test_set = parse_data("../data/MNIST/processed/test.txt", "test", size_val)
 
+    # generate name of file that holds the trained model
+    model_file_name = "SL_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+        use_dropout, size_val)
+
     # train and test
-    accuracy, training_time, testing_time = train_and_test(train_set, val_set, test_set, nb_epochs, 
-        batch_size, learning_rate, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
+        nb_epochs, batch_size, learning_rate, use_dropout)
+    
+    # save results to a summary file
+    information = {
+        "algorithm": "SL",
+        "seed": seed,
+        "nb_epochs": nb_epochs,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "training_time": training_time,
+        "testing_time": testing_time,
+        "model_file": model_file_name
+    }
+    with open("results/summary_final.json", "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
 
     # print results
     print("############################################")

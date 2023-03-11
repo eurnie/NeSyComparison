@@ -4,19 +4,20 @@ import sys
 import os
 import json
 import torch
-import pickle
 import torchvision
+import pickle
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torch import nn
 from torch.utils.data import DataLoader
+from semantic_loss_pytorch import SemanticLoss
 from pathlib import Path
 from sklearn.model_selection import KFold
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset
-from data.network_torch import Net_NN, Net_NN_Dropout, Net_NN_Extra
+from data.network_torch import Net_SL, Net_SL_Dropout
 
 def parse_data(filename):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
@@ -44,22 +45,24 @@ def parse_data(filename):
     for i in range(0, 30000):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
-        sum = int(entries[i].split(" ")[2])
-        first = datasets[dataset_used][index_digit_1][0][0]
-        second = datasets[dataset_used][index_digit_2][0][0]
-        new_tensor = torch.cat((first, second), 0)
-        new_tensor = new_tensor[None, :]
-        dataset.append((new_tensor, sum))
-    
+        new_tensor = [torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()]
+        dataset.append((torch.tensor(new_tensor), [datasets[dataset_used][index_digit_1][1], datasets[dataset_used][index_digit_2][1]+10]))
+
     return dataset
 
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, model, sl, loss_fn, optimizer):
     model.train()
-
     for (x, y) in dataloader:
         # compute prediction error
+        multilabels = []
+        for i in range(0, len(x)):
+            new_label = numpy.zeros(20)
+            new_label[y[0][i]] = 1
+            new_label[y[1][i]] = 1
+            multilabels.append(new_label)
+
         pred = model(x)
-        loss = loss_fn(pred, y)
+        loss = loss_fn(pred, torch.tensor(multilabels).type(torch.float)) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -72,12 +75,20 @@ def test(dataloader, model):
     correct = 0
     with torch.no_grad():
         for x, y in dataloader:
-            pred = model(x)
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            pred = model(x)  
+            predicted = torch.topk(pred, 2, largest=True).indices.numpy()[0]
+            number_1 = predicted[0]
+            number_2 = predicted[1] - 10
+            result = number_1 + number_2
+            real_number_1 = y[0]
+            real_number_2 = y[1] - 10
+            real_result = real_number_1 + real_number_2
+            correct += (result == real_result).type(torch.float).sum().item()
     correct /= size
     return correct
 
-def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, learning_rate, use_dropout):
+def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, learning_rate, 
+    use_dropout):
     accuracies = []
     kfold = KFold(n_splits=10, shuffle=True)
 
@@ -89,12 +100,12 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
         test_dataloader = DataLoader(total_train_set, batch_size=1, sampler=valid_subsampler)
 
         if use_dropout:
-            model = Net_NN_Dropout()
+            model = Net_SL_Dropout()
         else:
-            model = Net_NN()
-        loss_fn = nn.CrossEntropyLoss()
+            model = Net_SL()
+        sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
+        loss_fn = nn.BCELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-        # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
         # display image and label
         # train_features, train_labels = next(iter(train_dataloader))
@@ -108,7 +119,7 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
 
         # training
         for _ in range(nb_epochs):
-            train(train_dataloader, model, loss_fn, optimizer)
+            train(train_dataloader, model, sl, loss_fn, optimizer)
 
         # save trained model to a file
         path = "results/param/{}".format(model_file_name_dir)
@@ -126,22 +137,11 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 10
-batch_size = 8
+nb_epochs = 2
+batch_size = 16
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
-
-# (30, 8, 0.001, True)
-# (50, 32, 0.001, True)
-# (30, 16, 0.001, True)
-# (10, 4, 0.001, True)
-# (20, 16, 0.001, True)
-# (40, 4, 0.001, True)
-# (40, 2, 0.001, False)
-# (30, 8, 0.001, False)
-# (20, 32, 0.001, False)
-# (40, 2, 0.001, True)
 
 # setting seeds for reproducibility
 random.seed(seed)
@@ -155,7 +155,7 @@ generate_dataset(seed)
 train_set = parse_data("../data/MNIST/processed/train.txt")
 
 # generate name of folder that holds all the trained models
-model_file_name_dir = "NN_param_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+model_file_name_dir = "SL_param_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
     use_dropout)
 
 # train and test
@@ -164,7 +164,7 @@ accuracies, avg_accuracy = train_and_test(model_file_name_dir, train_set, nb_epo
 
 # save results to a summary file
 information = {
-    "algorithm": "NN",
+    "algorithm": "SL",
     "seed": seed,
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,

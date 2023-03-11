@@ -1,0 +1,1 @@
+{"algorithm": "SL", "seed": 0, "nb_epochs": 10, "batch_size": 2, "learning_rate": 0.001, "use_dropout": true, "size_val": 0.1, "accuracy": 0.892, "training_time": 88.3942198753357, "testing_time": 0.3499479293823242, "model_file": "SL_final_0_10_2_0.001_True_0.1"}
