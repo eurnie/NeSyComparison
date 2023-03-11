@@ -152,7 +152,7 @@ def train_and_test(train_set, val_set, test_set, nb_epochs, batch_size, learning
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 10
-batch_size = 1
+batch_size = 2
 learning_rate = 0.001
 use_dropout = True
 size_val = 0.1

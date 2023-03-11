@@ -37,6 +37,15 @@ def train_and_test(model_file_name_dir, dataList_train_total, obsList_train_tota
     accuracies = []
 
     for fold_nb in range(1, 11):
+        # define nnMapping and optimizers, initialze NeurASP object
+        if use_dropout:
+            m = Net_Dropout()
+        else:
+            m = Net()
+        nnMapping = {'digit': m}
+        optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
+        NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
+
         # training
         for _ in range(nb_epochs):
             for i in range(0, 10):
@@ -65,18 +74,22 @@ def train_and_test(model_file_name_dir, dataList_train_total, obsList_train_tota
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 2
-batch_size = 4
+nb_epochs = 3
+batch_size = 16
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
 
+# (3, 16, 0.001, False)
 # (2, 4, 0.001, True)
-# (2, 2, 0.001, False)
-# (2, 2, 0.001, True)
-# (3, 4, 0.001, True)
-# (3, 8, 0.001, False)
-# (1, 8, 0.001, False)
+# (3, 8, 0.001, True)
+# (2, 4, 0.001, False)
+# (1, 2, 0.001, False)
+# (1, 32, 0.001, True)
+# (2, 16, 0.001, True)
+# (2, 8, 0.001, False)
+# (3, 32, 0.001, True)
+# (1, 32, 0.001, False)
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
@@ -124,15 +137,6 @@ for i in range(0, 30000, 3000):
     dataList_train_total.append(dataList_train)
     obsList_train_total.append(obsList_train)
 
-# define nnMapping and optimizers, initialze NeurASP object
-if use_dropout:
-    m = Net_Dropout()
-else:
-    m = Net()
-nnMapping = {'digit': m}
-optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
-NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
-
 # generate name of folder that holds all the trained models
 model_file_name_dir = "NeurASP_param_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
     use_dropout)
@@ -143,7 +147,7 @@ accuracies, avg_accuracy = train_and_test(model_file_name_dir, dataList_train_to
 
 # save results to a summary file
 information = {
-    "algorithm": "DeepStochLog",
+    "algorithm": "NeurASP",
     "seed": seed,
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,
