@@ -75,13 +75,11 @@ def train_and_test(model_file_name_dir, dataList_train_total, obsList_train_tota
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 3
-batch_size = 16
+batch_size = 8
 learning_rate = 0.001
-use_dropout = False
+use_dropout = True
 #########################################################################################################
 
-# (3, 16, 0.001, False)
-# (2, 4, 0.001, True)
 # (3, 8, 0.001, True)
 # (2, 4, 0.001, False)
 # (1, 2, 0.001, False)

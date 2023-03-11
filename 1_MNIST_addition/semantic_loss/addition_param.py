@@ -83,6 +83,10 @@ def test(dataloader, model):
             real_number_1 = y[0]
             real_number_2 = y[1] - 10
             real_result = real_number_1 + real_number_2
+            print("---")
+            print(result)
+            print(real_result)
+            print("---")
             correct += (result == real_result).type(torch.float).sum().item()
     correct /= size
     return correct
@@ -137,8 +141,8 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 2
-batch_size = 16
+nb_epochs = 5
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 #########################################################################################################
