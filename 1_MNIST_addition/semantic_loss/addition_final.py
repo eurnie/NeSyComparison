@@ -38,15 +38,15 @@ def parse_data(filename, dataset_name, size_val):
     if dataset_name == "train":
         dataset_used = "train"
         start = split_index
-        end = 4500
+        end = 30000
     elif dataset_name == "val":
         dataset_used = "train"
         start = 0
-        end = 500
+        end = split_index
     elif dataset_name == "test":
         dataset_used = "test"
         start = 0
-        end = 500
+        end = 5000
 
     with open(filename) as f:
         entries = f.readlines()
@@ -56,7 +56,7 @@ def parse_data(filename, dataset_name, size_val):
     for i in range(start, end):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
-        new_tensor = [torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()]
+        new_tensor = numpy.array([torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()])
 
         if (dataset_name == "train"):
             dataset.append((torch.tensor(new_tensor), [datasets[dataset_name][index_digit_1][1], datasets[dataset_name][index_digit_2][1]+10]))
@@ -78,7 +78,7 @@ def train(dataloader, model, sl, loss_fn, optimizer):
             multilabels.append(new_label)
 
         pred = model(x)
-        loss = loss_fn(pred, torch.tensor(multilabels).type(torch.float)) + sl(pred)
+        loss = loss_fn(pred, torch.tensor(numpy.array(multilabels)).type(torch.float)) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -86,19 +86,23 @@ def train(dataloader, model, sl, loss_fn, optimizer):
         optimizer.step()
 
 def test(dataloader, model):
-    size = len(dataloader.dataset)
     model.eval()
     correct = 0
+    total = 0
     with torch.no_grad():
         for x, y in dataloader:
             pred = model(x)
             predicted = torch.topk(pred, 2, largest=True).indices.numpy()[0]
-            number_1 = predicted[0]
-            number_2 = predicted[1] - 10
+            if predicted[0] < predicted[1]:
+                number_1 = predicted[0]
+                number_2 = predicted[1] - 10
+            else:
+                number_1 = predicted[0] - 10
+                number_2 = predicted[1]
             result = number_1 + number_2
             correct += (result == y).type(torch.float).sum().item()
-    correct /= size
-    return correct
+            total += len(x)
+    return correct / total 
 
 def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, 
     use_dropout):
@@ -160,10 +164,10 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 10
-batch_size = 64
+nb_epochs = 1
+batch_size = 2
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 size_val = 0.1
 #########################################################################################################
 

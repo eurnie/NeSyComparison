@@ -47,7 +47,7 @@ def train_and_test(model_file_name_dir, dataList_train_total, obsList_train_tota
         NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
 
         # training
-        for _ in range(nb_epochs):
+        for epoch in range(nb_epochs):
             for i in range(0, 10):
                 if (i != (fold_nb - 1)):
                     dataList_train = dataList_train_total[i]
@@ -57,6 +57,7 @@ def train_and_test(model_file_name_dir, dataList_train_total, obsList_train_tota
                 else:
                     dataList_test = dataList_train_total[i]
                     obsList_test = obsList_train_total[i]
+            print("Epoch", epoch + 1, "finished.")
             
         # save trained model to a file
         path = "results/param/{}".format(model_file_name_dir)
@@ -74,16 +75,12 @@ def train_and_test(model_file_name_dir, dataList_train_total, obsList_train_tota
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 3
-batch_size = 8
+nb_epochs = 2
+batch_size = 16
 learning_rate = 0.001
 use_dropout = True
 #########################################################################################################
 
-# (3, 8, 0.001, True)
-# (2, 4, 0.001, False)
-# (1, 2, 0.001, False)
-# (1, 32, 0.001, True)
 # (2, 16, 0.001, True)
 # (2, 8, 0.001, False)
 # (3, 32, 0.001, True)

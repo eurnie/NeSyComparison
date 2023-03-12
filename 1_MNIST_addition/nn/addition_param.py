@@ -67,15 +67,15 @@ def train(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
 def test(dataloader, model):
-    size = len(dataloader.dataset)
     model.eval()
     correct = 0
+    total = 0
     with torch.no_grad():
         for x, y in dataloader:
             pred = model(x)
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-    correct /= size
-    return correct
+            total += len(x)
+    return correct / total
 
 def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, learning_rate, use_dropout):
     accuracies = []
@@ -107,8 +107,9 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
         # print(f"Label: {label}")
 
         # training
-        for _ in range(nb_epochs):
+        for epoch in range(nb_epochs):
             train(train_dataloader, model, loss_fn, optimizer)
+            print("Epoch", epoch + 1, "finished.")
 
         # save trained model to a file
         path = "results/param/{}".format(model_file_name_dir)
@@ -126,8 +127,8 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 10
-batch_size = 8
+nb_epochs = 3
+batch_size = 64
 learning_rate = 0.001
 use_dropout = True
 #########################################################################################################

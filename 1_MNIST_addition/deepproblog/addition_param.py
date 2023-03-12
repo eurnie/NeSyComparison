@@ -38,13 +38,14 @@ def train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, batch
         model.add_tensor_source("val", MNIST_val)
         model.add_tensor_source("test", MNIST_test)
 
-        for _ in range(nb_epochs):
+        for epoch in range(nb_epochs):
             for i in range(0, 10):
                 if (i != (fold_nb - 1)):
                     loader = DataLoader(train_set_list[i], batch_size, False)
                     train_model(model, loader, 1, log_iter=100000, profile=0)
                 else:
                     test_set = train_set_list[i]
+            print("Epoch", epoch + 1, "finished.")
 
         # save trained model to a file
         model.save_state("results/param/{}/fold_{}".format(model_file_name_dir, fold_nb))
@@ -59,10 +60,10 @@ def train_and_test(model_file_name_dir, train_set_list, method, nb_epochs, batch
 ############################################### PARAMETERS ##############################################
 seed = 0
 method = "exact"
-nb_epochs = 3
-batch_size = 4
+nb_epochs = 1
+batch_size = 8
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
 
 # (3, 4, 0.001, True)

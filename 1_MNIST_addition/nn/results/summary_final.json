@@ -1,0 +1,2 @@
+{"algorithm": "NN", "seed": 0, "nb_epochs": 3, "batch_size": 64, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.3074, "training_time": 50.88277459144592, "testing_time": 14.119160175323486, "model_file": "NN_final_0_3_64_0.001_False_0.1"}
+{"algorithm": "NN", "seed": 1, "nb_epochs": 3, "batch_size": 64, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.3224, "training_time": 65.51375389099121, "testing_time": 15.752126932144165, "model_file": "NN_final_1_3_64_0.001_False_0.1"}

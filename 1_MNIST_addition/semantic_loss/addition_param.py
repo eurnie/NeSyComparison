@@ -45,7 +45,7 @@ def parse_data(filename):
     for i in range(0, 30000):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
-        new_tensor = [torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()]
+        new_tensor = numpy.array([torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()])
         dataset.append((torch.tensor(new_tensor), [datasets[dataset_used][index_digit_1][1], datasets[dataset_used][index_digit_2][1]+10]))
 
     return dataset
@@ -62,7 +62,7 @@ def train(dataloader, model, sl, loss_fn, optimizer):
             multilabels.append(new_label)
 
         pred = model(x)
-        loss = loss_fn(pred, torch.tensor(multilabels).type(torch.float)) + sl(pred)
+        loss = loss_fn(pred, torch.tensor(numpy.array(multilabels)).type(torch.float)) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -70,26 +70,26 @@ def train(dataloader, model, sl, loss_fn, optimizer):
         optimizer.step()
 
 def test(dataloader, model):
-    size = len(dataloader.dataset)
     model.eval()
     correct = 0
+    total = 0
     with torch.no_grad():
         for x, y in dataloader:
-            pred = model(x)  
+            pred = model(x)
             predicted = torch.topk(pred, 2, largest=True).indices.numpy()[0]
-            number_1 = predicted[0]
-            number_2 = predicted[1] - 10
+            if predicted[0] < predicted[1]:
+                number_1 = predicted[0]
+                number_2 = predicted[1] - 10
+            else:
+                number_1 = predicted[0] - 10
+                number_2 = predicted[1]
             result = number_1 + number_2
             real_number_1 = y[0]
             real_number_2 = y[1] - 10
-            real_result = real_number_1 + real_number_2
-            print("---")
-            print(result)
-            print(real_result)
-            print("---")
-            correct += (result == real_result).type(torch.float).sum().item()
-    correct /= size
-    return correct
+            label = real_number_1 + real_number_2
+            correct += (result == label).type(torch.float).sum().item()
+            total += len(x)
+    return correct / total 
 
 def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, learning_rate, 
     use_dropout):
@@ -122,8 +122,9 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
         # print(f"Label: {label}")
 
         # training
-        for _ in range(nb_epochs):
+        for epoch in range(nb_epochs):
             train(train_dataloader, model, sl, loss_fn, optimizer)
+            print("Epoch", epoch + 1, "finished.")
 
         # save trained model to a file
         path = "results/param/{}".format(model_file_name_dir)
@@ -141,7 +142,7 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 5
+nb_epochs = 1
 batch_size = 2
 learning_rate = 0.001
 use_dropout = False

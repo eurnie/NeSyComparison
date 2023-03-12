@@ -57,13 +57,14 @@ def train_and_test(model_file_name_dir, train_set_list, nb_epochs, batch_size, l
 
         # training
         trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
-        for _ in range(nb_epochs):
+        for epoch in range(nb_epochs):
             for i in range(0, 10):
                 if (i != (fold_nb - 1)):
                     train_dataloader = DataLoader(train_set_list[i], batch_size=batch_size, shuffle=False)
                     trainer.train(model, optimizer, train_dataloader, 1, epsilon)
                 else:
                     test_dataloader = DataLoader(train_set_list[i], batch_size=1, shuffle=False)
+            print("Epoch", epoch + 1, "finished.")
 
         # save trained model to a file
         path = "results/param/{}".format(model_file_name_dir)

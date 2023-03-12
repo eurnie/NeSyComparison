@@ -74,8 +74,8 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
-nb_epochs = 1
-batch_size = 2
+nb_epochs = 3
+batch_size = 8
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
