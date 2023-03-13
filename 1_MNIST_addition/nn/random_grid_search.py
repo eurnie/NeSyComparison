@@ -4,8 +4,8 @@ from itertools import product
 random.seed(0)
 TOTAL_COMBINATIONS = 10
 
-possible_nb_epochs = [10, 20, 30, 40, 50]
-possible_batch_size = [2, 4, 8, 16, 32]
+possible_nb_epochs = [5, 10, 15]
+possible_batch_size = [2, 4, 8, 16, 32, 64, 128]
 possible_learning_rate = [0.001]
 possible_dropout = [True, False]
 

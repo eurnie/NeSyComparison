@@ -123,8 +123,8 @@ def train_and_test(model_file_name_dir, fold_nb, train_set, test_set, nb_epochs,
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 2
-batch_size = 64
+nb_epochs = 1
+batch_size = 128
 learning_rate = 0.001
 p_schedule = 1.
 use_dropout = True

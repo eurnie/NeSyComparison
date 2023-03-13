@@ -144,7 +144,7 @@ nb_epochs = 1
 batch_size = 128
 learning_rate = 0.001
 p_schedule = 1.
-use_dropout = True
+use_dropout = False
 size_val = 0.1
 #########################################################################################################
 

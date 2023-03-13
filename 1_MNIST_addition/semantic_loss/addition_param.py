@@ -136,7 +136,7 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
         # testing
         fold_accuracy = test(test_dataloader, model)
         accuracies.append(fold_accuracy)
-        print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
+        print(fold_nb + 1, "-- Fold accuracy: ", fold_accuracy)
 
     return accuracies, sum(accuracies) / 10
 

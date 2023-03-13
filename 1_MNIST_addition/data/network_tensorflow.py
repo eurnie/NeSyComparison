@@ -45,7 +45,6 @@ class Net_Dropout(tf.keras.Model):
         
         self.dropout_layer = layers.Dropout(rate=0.2)
 
-
         # classifier
         self.classifier = tf.keras.Sequential()
         self.classifier.add(layers.Dense(120))
@@ -56,7 +55,7 @@ class Net_Dropout(tf.keras.Model):
 
     def call(self, inputs):
         x = self.encoder(inputs)
-        x = self.dropout_layer(x, training=True)
+        x = self.dropout_layer(x)
         x = self.classifier(x)
         return x
 

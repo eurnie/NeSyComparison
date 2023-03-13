@@ -121,28 +121,24 @@ def train_and_test(model_file_name_dir, total_train_set, nb_epochs, batch_size, 
         # testing
         fold_accuracy = test(test_dataloader, model)
         accuracies.append(fold_accuracy)
-        print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
+        print(fold_nb + 1, "-- Fold accuracy: ", fold_accuracy)
 
     return accuracies, sum(accuracies) / 10
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 3
-batch_size = 64
+nb_epochs = 15
+batch_size = 4
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
 
-# (30, 8, 0.001, True)
-# (50, 32, 0.001, True)
-# (30, 16, 0.001, True)
-# (10, 4, 0.001, True)
-# (20, 16, 0.001, True)
-# (40, 4, 0.001, True)
-# (40, 2, 0.001, False)
-# (30, 8, 0.001, False)
-# (20, 32, 0.001, False)
-# (40, 2, 0.001, True)
+# (15, 8, 0.001, True)
+# (15, 4, 0.001, False)
+# (10, 64, 0.001, False)
+# (10, 8, 0.001, False)
+# (15, 4, 0.001, True)
+# (10, 32, 0.001, True)
 
 # setting seeds for reproducibility
 random.seed(seed)
