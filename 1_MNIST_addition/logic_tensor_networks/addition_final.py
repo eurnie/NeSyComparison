@@ -128,11 +128,11 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 1
-batch_size = 128
+nb_epochs = 3
+batch_size = 16
 learning_rate = 0.001
 p_schedule = 1.
-use_dropout = False
+use_dropout = True
 size_val = 0.1
 #########################################################################################################
 
