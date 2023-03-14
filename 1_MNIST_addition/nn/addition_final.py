@@ -147,10 +147,10 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 1
-batch_size = 64
+nb_epochs = 100
+batch_size = 8
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 size_val = 0.1
 #########################################################################################################
 

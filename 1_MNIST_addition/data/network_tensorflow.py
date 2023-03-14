@@ -23,7 +23,7 @@ class Net(tf.keras.Model):
         self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(10))
 
-    def call(self, inputs):
+    def call(self, inputs, training=True):
         x = self.encoder(inputs)
         x = self.classifier(x)
         return x
@@ -41,8 +41,8 @@ class Net_Dropout(tf.keras.Model):
         self.encoder.add(layers.MaxPool2D((2,2)))
         self.encoder.add(tf.keras.layers.Activation("relu"))
         self.encoder.add(layers.Flatten())
-        # self.encoder.add(layers.Dropout(0.2))
         
+        # dropout layer
         self.dropout_layer = layers.Dropout(rate=0.2)
 
         # classifier
@@ -53,9 +53,10 @@ class Net_Dropout(tf.keras.Model):
         self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(10))
 
-    def call(self, inputs):
+    def call(self, inputs, training=True):
         x = self.encoder(inputs)
-        x = self.dropout_layer(x)
+        if training:
+            x = self.dropout_layer(x)
         x = self.classifier(x)
         return x
 
@@ -77,7 +78,7 @@ class Net_Original(tf.keras.Model):
         self.classifier.add(layers.Dense(84, activation="elu"))
         self.classifier.add(layers.Dense(10))
 
-    def call(self, inputs, training=False):
+    def call(self, inputs, training=True):
         x = self.encoder(inputs)
         x = self.classifier(x)
         return x

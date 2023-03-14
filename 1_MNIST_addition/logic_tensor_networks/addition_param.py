@@ -76,27 +76,15 @@ def train_and_test(model_file_name_dir, fold_nb, train_set, test_set, nb_epochs,
 
     @tf.function
     def train_step(images_x, images_y, labels_z, **parameters):
-        # loss
         with tf.GradientTape() as tape:
             loss = 1.- axioms(images_x, images_y, labels_z, **parameters)
         gradients = tape.gradient(loss, logits_model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
-        metrics_dict['train_loss'](loss)
-        # accuracy
-        predictions_x = tf.argmax(logits_model(images_x, True),axis=-1)
-        predictions_y = tf.argmax(logits_model(images_y, True),axis=-1)
-        predictions_z = predictions_x + predictions_y
-        match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
-        metrics_dict['train_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
         
     @tf.function
     def test_step(images_x, images_y, labels_z, **parameters):
-        # loss
-        loss = 1.- axioms(images_x, images_y, labels_z, **parameters)
-        metrics_dict['test_loss'](loss)
-        # accuracy
-        predictions_x = tf.argmax(logits_model(images_x),axis=-1)
-        predictions_y = tf.argmax(logits_model(images_y),axis=-1)
+        predictions_x = tf.argmax(logits_model(images_x, training=False),axis=-1)
+        predictions_y = tf.argmax(logits_model(images_y, training=False),axis=-1)
         predictions_z = predictions_x + predictions_y
         match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
         metrics_dict['test_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
@@ -129,16 +117,6 @@ learning_rate = 0.001
 p_schedule = 1.
 use_dropout = True
 #########################################################################################################
-
-# (2, 64, 0.001, False)
-# (1, 16, 0.001, False)
-# (2, 16, 0.001, True)
-# (3, 16, 0.001, True)
-# (2, 128, 0.001, False)
-# (3, 128, 0.001, False)
-# (2, 16, 0.001, False)
-# (3, 32, 0.001, True)
-# (1, 64, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)
