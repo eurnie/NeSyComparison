@@ -55,11 +55,11 @@ def import_data(dataset):
     # print(nb_testing_entries, "testing entries")
 
     # write links to file
-    # list_1 = dataset[0].edge_index[0]
-    # list_2 = dataset[0].edge_index[1]
+    # list_1 = citation_graph.edge_index[0]
+    # list_2 = citation_graph.edge_index[1]
     # with open("test.txt", "a") as f:
     #     for i in range(0, len(list_1)):
-    #             f.write("linked({},{}).".format(list_1[i], list_2[i]))
+    #             f.write("cite({},{}).".format(list_1[i], list_2[i]))
     #             f.write("\n")
 
 def train(dataloader, model, loss_fn, optimizer):
