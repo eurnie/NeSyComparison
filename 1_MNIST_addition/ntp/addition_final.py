@@ -84,6 +84,10 @@ def main(argv):
     seperate_labels = True
     indices = True
 
+    # train_path = "data/nations/train.tsv"
+    # dev_path = "data/nations/dev.tsv"
+    # test_path = "data/nations/test.tsv"
+
     if indices:
         train_path = "data/MNIST_ind_sep/train.tsv"
         dev_path = "data/MNIST_ind_sep/dev.tsv"
@@ -128,7 +132,7 @@ def main(argv):
     refresh_interval = 100
     save_path = None
     seed = 0
-    is_show = False
+    is_show = True
     slow_eval = True
     test_i_path = None
     test_ii_path = None
@@ -285,163 +289,121 @@ def main(argv):
     N3_reg = N3() if N3_weight is not None else None
 
     for epoch_no in range(1, nb_epochs + 1):
-        batcher = Batcher(data, batch_size, 1, random_state)
-        nb_batches = len(batcher.batches)
+            batcher = Batcher(data, batch_size, 1, random_state)
+            nb_batches = len(batcher.batches)
 
-        if freeze_entities is not None and is_fix_entities is False and epoch_no > freeze_entities:
-            entity_embeddings.weight.requires_grad = True
+            if freeze_entities is not None and is_fix_entities is False and epoch_no > freeze_entities:
+                entity_embeddings.weight.requires_grad = True
 
-        epoch_loss_values = []
-        for batch_no, (batch_start, batch_end) in enumerate(batcher.batches, 1):
-            print(batch_no)
-            xp_batch_np, xs_batch_np, xo_batch_np, xi_batch_np = batcher.get_batch(batch_start, batch_end)
-            
-            print(xp_batch_np)
-            print(xs_batch_np)
-            print(xo_batch_np)
-            print(xi_batch_np)
+            epoch_loss_values = []
+            for batch_no, (batch_start, batch_end) in enumerate(batcher.batches, 1):
+                xp_batch_np, xs_batch_np, xo_batch_np, xi_batch_np = batcher.get_batch(batch_start, batch_end)
+                t = xp_batch_np.shape[0]
 
-            xs_batch_np_new = []
-            for x in xs_batch_np:
-                digit = raw_train[x][0].flatten().numpy()
-                # print(digit)
-                # digit += 1
-                # digit *= 100
-                # digit = digit.numpy().round(0)
-                # digit = digit.type(torch.float64)
-                xs_batch_np_new.append(digit)
-            xs_batch_np = xs_batch_np_new
+                assert nb_neg > 0
 
-            xo_batch_np_new = []
-            for x in xo_batch_np:
-                digit = raw_train[x][0].flatten().numpy()
-                # digit += 1
-                # digit *= 100
-                # digit = digit.numpy().round(0)
-                # digit = digit.type(torch.float64)
-                xo_batch_np_new.append(digit)
-            xo_batch_np = xo_batch_np_new
+                xp_exp_np = np.repeat(xp_batch_np, nb_neg * 3 + 1)
+                xs_exp_np = np.repeat(xs_batch_np, nb_neg * 3 + 1)
+                xo_exp_np = np.repeat(xo_batch_np, nb_neg * 3 + 1)
+                xi_exp_np = np.repeat(xi_batch_np, nb_neg * 3 + 1)
 
-            t = xp_batch_np.shape[0]
+                xt_exp_np = np.zeros_like(xp_exp_np)
+                xt_exp_np[0::nb_neg * 3 + 1] = 1
 
-            assert nb_neg > 0
+                for i in range(t):
+                    a_ = rs.permutation(data.nb_entities)
+                    b_ = rs.permutation(data.nb_entities)
 
-            xp_exp_np = np.repeat(xp_batch_np, nb_neg * 3 + 1)
-            xs_exp_np = np.repeat(xs_batch_np, nb_neg * 3 + 1)
-            xo_exp_np = np.repeat(xo_batch_np, nb_neg * 3 + 1)
-            xi_exp_np = np.repeat(xi_batch_np, nb_neg * 3 + 1)
+                    c_ = rs.permutation(data.nb_entities)
+                    d_ = rs.permutation(data.nb_entities)
 
-            xt_exp_np = np.zeros_like(xp_exp_np)
-            xt_exp_np[0::nb_neg * 3 + 1] = 1
+                    while a_.shape[0] < nb_neg:
+                        a_ = np.concatenate([a_, rs.permutation(data.nb_entities)])
+                        b_ = np.concatenate([b_, rs.permutation(data.nb_entities)])
 
-            for i in range(t):
-                a_ = rs.permutation(data.nb_entities)
-                b_ = rs.permutation(data.nb_entities)
+                        c_ = np.concatenate([c_, rs.permutation(data.nb_entities)])
+                        d_ = np.concatenate([d_, rs.permutation(data.nb_entities)])
 
-                c_ = rs.permutation(data.nb_entities)
-                d_ = rs.permutation(data.nb_entities)
+                    a = a_[:nb_neg]
+                    b = b_[:nb_neg]
+                    c = c_[:nb_neg]
+                    d = d_[:nb_neg]
 
-                while a_.shape[0] < nb_neg:
-                    a_ = np.concatenate([a_, rs.permutation(data.nb_entities)])
-                    b_ = np.concatenate([b_, rs.permutation(data.nb_entities)])
+                    xs_exp_np[(i * nb_neg * 3) + i + 1:(i * nb_neg * 3) + nb_neg + i + 1] = a
+                    xo_exp_np[(i * nb_neg * 3) + nb_neg + i + 1:(i * nb_neg * 3) + nb_neg * 2 + i + 1] = b
 
-                    c_ = np.concatenate([c_, rs.permutation(data.nb_entities)])
-                    d_ = np.concatenate([d_, rs.permutation(data.nb_entities)])
+                    xs_exp_np[(i * nb_neg * 3) + nb_neg * 2 + i + 1:(i * nb_neg * 3) + nb_neg * 3 + i + 1] = c
+                    xo_exp_np[(i * nb_neg * 3) + nb_neg * 2 + i + 1:(i * nb_neg * 3) + nb_neg * 3 + i + 1] = d
 
-                a = a_[:nb_neg]
-                b = b_[:nb_neg]
-                c = c_[:nb_neg]
-                d = d_[:nb_neg]
+                xp_batch = torch.tensor(xp_exp_np, dtype=torch.long, device=device)
+                xs_batch = torch.tensor(xs_exp_np, dtype=torch.long, device=device)
+                xo_batch = torch.tensor(xo_exp_np, dtype=torch.long, device=device)
+                xi_batch = torch.tensor(xi_exp_np, dtype=torch.long, device=device)
+                xt_batch = torch.tensor(xt_exp_np, dtype=torch.float32, device=device)
 
-                xs_exp_np[(i * nb_neg * 3) + i + 1:(i * nb_neg * 3) + nb_neg + i + 1] = a
-                xo_exp_np[(i * nb_neg * 3) + nb_neg + i + 1:(i * nb_neg * 3) + nb_neg * 2 + i + 1] = b
+                # Disable masking
+                # xi_batch = None
 
-                xs_exp_np[(i * nb_neg * 3) + nb_neg * 2 + i + 1:(i * nb_neg * 3) + nb_neg * 3 + i + 1] = c
-                xo_exp_np[(i * nb_neg * 3) + nb_neg * 2 + i + 1:(i * nb_neg * 3) + nb_neg * 3 + i + 1] = d
 
-            xp_batch = torch.tensor(xp_exp_np, dtype=torch.long, device=device)
-            xs_batch = torch.tensor(xs_exp_np, dtype=torch.long, device=device)
-            xo_batch = torch.tensor(xo_exp_np, dtype=torch.long, device=device)
-            xi_batch = torch.tensor(xi_exp_np, dtype=torch.long, device=device)
-            xt_batch = torch.tensor(xt_exp_np, dtype=torch.float32, device=device)
+                # print("---------")
+                # print(data.idx_to_entity[xs_batch_np[0]])
+                # print(data.idx_to_predicate[xp_batch_np[0]])
+                # print(data.idx_to_entity[xo_batch_np[0]])
 
-            print(xs_batch)
+                # print(data.idx_to_entity[xs_batch_np[1]])
+                # print(data.idx_to_predicate[xp_batch_np[1]])
+                # print(data.idx_to_entity[xo_batch_np[1]])
 
-            # Disable masking
-            # xi_batch = None
 
-            ############################################################################""
+                xp_batch_emb = predicate_embeddings(xp_batch)
+                xs_batch_emb = entity_embeddings(xs_batch)
+                xo_batch_emb = entity_embeddings(xo_batch)
 
-            # xs_batch_images = []
-            # for x in xs_batch:
-            #     digit = raw_train[x.numpy()][0].flatten()
-            #     digit += 1
-            #     digit *= 100
-            #     digit = digit.numpy().round(0)
-            #     digit = digit.astype(int)
-            #     xs_batch_images.append(digit)
-            # xs_batch_images = torch.tensor(xs_batch_images, dtype=torch.long, device=device)
 
-            # xo_batch_images = []
-            # for x in xo_batch:
-            #     digit = raw_train[x.numpy()][0].flatten()
-            #     digit += 1
-            #     digit *= 100
-            #     digit = digit.numpy().round(0)
-            #     digit = digit.astype(int)
-            #     xo_batch_images.append(digit)
-            # xo_batch_images = torch.tensor(xo_batch_images, dtype=torch.long, device=device)        
+                factors = [model.factor(e) for e in [xp_batch_emb, xs_batch_emb, xo_batch_emb]]
 
-            xp_batch_emb = predicate_embeddings(xp_batch)
-            xs_batch_emb = entity_embeddings(xs_batch)
-            xo_batch_emb = entity_embeddings(xo_batch)
+                scores = model.score(xp_batch_emb, xs_batch_emb, xo_batch_emb, mask_indices=xi_batch)
+                # scores = base_model.score(xp_batch_emb, xs_batch_emb, xo_batch_emb, mask_indices=xi_batch)
 
-            # xs_batch_emb = entity_embeddings(xs_batch_images)
-            # xo_batch_emb = entity_embeddings(xo_batch_images)
+                # print(scores)
+                loss = loss_function(scores, xt_batch)
 
-            factors = [model.factor(e) for e in [xp_batch_emb, xs_batch_emb, xo_batch_emb]]
-            scores = model.score(xp_batch_emb, xs_batch_emb, xo_batch_emb, mask_indices=xi_batch)
-            # scores = base_model.score(xp_batch_emb, xs_batch_emb, xo_batch_emb, mask_indices=xi_batch)
+                loss += N2_weight * N2_reg(factors) if N2_weight is not None else 0.0
+                loss += N3_weight * N3_reg(factors) if N3_weight is not None else 0.0
 
-            # print(scores)
-            loss = loss_function(scores, xt_batch)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
 
-            loss += N2_weight * N2_reg(factors) if N2_weight is not None else 0.0
-            loss += N3_weight * N3_reg(factors) if N3_weight is not None else 0.0
+                loss_value = loss.item()
+                epoch_loss_values += [loss_value]
 
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
+                if not is_quiet:
+                    logger.info(f'Epoch {epoch_no}/{nb_epochs}\tBatch {batch_no}/{nb_batches}\tLoss {loss_value:.6f}')
 
-            loss_value = loss.item()
-            epoch_loss_values += [loss_value]
+            loss_mean, loss_std = np.mean(epoch_loss_values), np.std(epoch_loss_values)
+            logger.info(f'Epoch {epoch_no}/{nb_epochs}\tLoss {loss_mean:.4f} ± {loss_std:.4f}')
 
-            if not is_quiet:
-                logger.info(f'Epoch {epoch_no}/{nb_epochs}\tBatch {batch_no}/{nb_batches}\tLoss {loss_value:.6f}')
+            if validate_every is not None and epoch_no % validate_every == 0:
+                if 'countries' in train_path:
+                    dev_auc = evaluate_on_countries('dev', data.entity_to_idx, data.predicate_to_idx, scoring_function)
+                    print('Last AUC-PR (dev) {:.4f}'.format(dev_auc))
 
-        loss_mean, loss_std = np.mean(epoch_loss_values), np.std(epoch_loss_values)
-        logger.info(f'Epoch {epoch_no}/{nb_epochs}\tLoss {loss_mean:.4f} ± {loss_std:.4f}')
+                    test_auc = evaluate_on_countries('test', data.entity_to_idx, data.predicate_to_idx, scoring_function)
+                    print('Last AUC-PR (test) {:.4f}'.format(test_auc))
+                else:
+                    for triples, name in [(t, n) for t, n in triples_name_pairs if len(t) > 0]:
+                        metrics = evaluate_(entity_embeddings=entity_embeddings, predicate_embeddings=predicate_embeddings,
+                                            test_triples=triples, all_triples=data.all_triples,
+                                            entity_to_index=data.entity_to_idx, predicate_to_index=data.predicate_to_idx,
+                                            model=model, batch_size=eval_batch_size, device=device)
+                        logger.info(f'Epoch {epoch_no}/{nb_epochs}\t{name} results\t{metrics_to_str(metrics)}')
 
-        if validate_every is not None and epoch_no % validate_every == 0:
-            if 'countries' in train_path:
-                dev_auc = evaluate_on_countries('dev', data.entity_to_idx, data.predicate_to_idx, scoring_function)
-                print('Last AUC-PR (dev) {:.4f}'.format(dev_auc))
-
-                test_auc = evaluate_on_countries('test', data.entity_to_idx, data.predicate_to_idx, scoring_function)
-                print('Last AUC-PR (test) {:.4f}'.format(test_auc))
-            else:
-                for triples, name in [(t, n) for t, n in triples_name_pairs if len(t) > 0]:
-                    metrics = evaluate_(entity_embeddings=entity_embeddings, predicate_embeddings=predicate_embeddings,
-                                        test_triples=triples, all_triples=data.all_triples,
-                                        entity_to_index=data.entity_to_idx, predicate_to_index=data.predicate_to_idx,
-                                        model=model, batch_size=eval_batch_size, device=device)
-                    logger.info(f'Epoch {epoch_no}/{nb_epochs}\t{name} results\t{metrics_to_str(metrics)}')
-
-            if is_show is True:
-                with torch.no_grad():
-                    # print(entity_embeddings.weight)
-                    show_rules(model=model, kernel=kernel, predicate_embeddings=predicate_embeddings,
-                               predicate_to_idx=data.predicate_to_idx, device=device)
+                if is_show is True:
+                    with torch.no_grad():
+                        # print(entity_embeddings.weight)
+                        show_rules(model=model, kernel=kernel, predicate_embeddings=predicate_embeddings,
+                                predicate_to_idx=data.predicate_to_idx, device=device)
 
     counter = 0
 
@@ -465,7 +427,6 @@ def main(argv):
         torch.save(model.state_dict(), save_path)
 
     logger.info("Training finished")
-
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

@@ -4,32 +4,33 @@ from torch_geometric.nn import GCNConv
 
 class Net(nn.Module):
     def __init__(self):
-        super().__init__()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(3703, 1024),
+        super(Net, self).__init__()
+        self.classifier =  nn.Sequential(
+            nn.Linear(3703, 120),
             nn.ReLU(),
-            nn.Linear(1024, 512),
+            nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Linear(256, 6)
+            nn.Linear(84, 6),
+            nn.Softmax(1)
         )
 
     def forward(self, x):
-        logits = self.linear_relu_stack(x)
-        return F.softmax(logits, dim=0)
-
-class Net_NN(nn.Module):
+        x = self.classifier(x)
+        return x
+    
+class Net_Dropout(nn.Module):
     def __init__(self):
-        super().__init__()
-        self.conv1 = GCNConv(3703, 16)
-        self.conv2 = GCNConv(16, 6)
+        super(Net_Dropout, self).__init__()
+        self.classifier =  nn.Sequential(
+            nn.Dropout(p=0.2),
+            nn.Linear(3703, 120),
+            nn.ReLU(),
+            nn.Linear(120, 84),
+            nn.ReLU(),
+            nn.Linear(84, 6),
+            nn.Softmax(1)
+        )
 
-    def forward(self, data):
-        x, edge_index = data.x, data.edge_index
-        x = self.conv1(x, edge_index)
-        x = F.relu(x)
-        # x = F.dropout(x, training=self.training)
-        x = self.conv2(x, edge_index)
-
-        return F.log_softmax(x, dim=1)
+    def forward(self, x):
+        x = self.classifier(x)
+        return x
