@@ -1,4 +1,24 @@
 import torch.nn as nn
+import torchvision
+import torchvision.transforms as transforms
+from pathlib import Path
+import numpy
+import torch
+
+DATA_ROOT = Path(__file__).parent
+
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
+)
+
+datasets = {
+    "train": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=True, download=True, transform=transform
+    ),
+    "test": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=False, download=True, transform=transform
+    ),
+}
 
 class Net(nn.Module):
     def __init__(self):
@@ -122,6 +142,12 @@ class Net_NN_Extra(nn.Module):
         x = self.flatten(x)
         logits = self.linear_relu_stack(x)
         return logits
+    
+def indices_to_images(dataset_name, indices):
+    x = []
+    for index in indices:
+        x.append(datasets[dataset_name][index.item()][0].numpy())
+    return torch.tensor(numpy.array(x))
 
 class Net_SL(nn.Module):
     def __init__(self):

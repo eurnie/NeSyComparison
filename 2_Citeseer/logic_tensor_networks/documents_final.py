@@ -74,6 +74,8 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
                 ),
                 p=2
             )
+        
+        
         sat = axiom.tensor
         return sat
 

@@ -39,7 +39,7 @@ class Citeseer(Dataset):
     def to_query(self, i):
         l = Constant(self.labels[i].item())
         return Query(
-            Term("label", Term("tensor", Term(self.dataset_name, Term("a"))), l),
+            Term("document_label", Term("tensor", Term(self.dataset_name, Term("a"))), l),
             substitution={Term("a"): Constant(i)},
         )
 
@@ -49,4 +49,5 @@ def import_dataset(dataset: str):
     )
 
 Citeseer_train = Citeseer_Documents("train")
+Citeseer_val = Citeseer_Documents("val")
 Citeseer_test = Citeseer_Documents("test")

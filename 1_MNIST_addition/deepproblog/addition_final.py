@@ -36,7 +36,8 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
     model.add_tensor_source("test", MNIST_test)
     loader = DataLoader(train_set, batch_size, False)
 
-    os.mkdir("best_model")
+    if not os.path.exists("best_model"):
+        os.mkdir("best_model")
 
     # training (with early stopping)
     total_training_time = 0
@@ -58,7 +59,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
             counter += 1
 
     # early stopping: load best model and delete file
-    model.load_state("best_model/state")
+    model.load_state_dict(torch.load("best_model/state"))
     os.remove("best_model/state")
     os.rmdir("best_model")
 
