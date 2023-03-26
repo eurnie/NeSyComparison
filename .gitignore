@@ -4,6 +4,9 @@
 
 # datasets
 1_MNIST_addition/data/MNIST/*
+1_MNIST_addition/ntp/train.txt
+1_MNIST_addition/ntp/dev.txt
+1_MNIST_addition/ntp/test.txt
 
 # Visual Studio Code
 .vscode/*
