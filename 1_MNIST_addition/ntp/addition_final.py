@@ -73,7 +73,9 @@ def show_rules(model: SimpleHoppy,
     return
 
 def create_datasets(train_path, test_path, size_val):
-    split_index = round(size_val * 30000)
+    percentage_of_original_dataset = 1
+
+    split_index = round(size_val * percentage_of_original_dataset * 30000)
     output_file_names_list = []
 
     for dataset_name in ["train", "dev", "test"]:
@@ -82,7 +84,7 @@ def create_datasets(train_path, test_path, size_val):
             with open(train_path) as f:
                 entries = f.readlines()
             start = split_index
-            end = 30000
+            end = round(percentage_of_original_dataset * 30000)
             write_dataset_name = "train"
         elif dataset_name == "dev":
             with open(train_path) as f:
@@ -94,7 +96,7 @@ def create_datasets(train_path, test_path, size_val):
             with open(test_path) as f:
                 entries = f.readlines()
             start = 0
-            end = 5000
+            end = round(percentage_of_original_dataset * 5000)
             write_dataset_name = "test"
 
         dataset = []
@@ -122,8 +124,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logging.getLogger('nmslib').setLevel(logging.WARNING)
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
-batch_size = 128
+nb_epochs = 10
+batch_size = 64
 learning_rate = 0.01
 use_dropout = False
 size_val = 0.1
@@ -151,6 +153,7 @@ lower_bound = -1.0
 upper_bound = 1.0
 is_show = False
 is_fix_predicates = False
+early_stopping = False
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -174,14 +177,14 @@ for seed in range(0, 10):
         "../data/MNIST/processed/test.txt", size_val)
     
     # generate name of file that holds the trained model
-    model_file_name = "NTP_final_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(
+    model_file_name = "NTP_final_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(
         seed, nb_epochs, batch_size, learning_rate, use_dropout,
         size_val, embedding_size, k_max, optimizer_name, input_type,
         is_quiet, hops_str, nb_neg, reformulator_type, nb_rules,
         init_type, refresh_interval, index_type, test_i_path,
         test_ii_path, N2_weight, N3_weight, init_size, ref_init_type,
         load_path, save_path, lower_bound, upper_bound, is_show,
-        is_fix_predicates)
+        is_fix_predicates, early_stopping)
 
     data = Data_MNIST(train_path=train_path, dev_path=dev_path, test_path=test_path,
                 test_i_path=test_i_path, test_ii_path=test_ii_path, input_type=input_type)
@@ -377,21 +380,23 @@ for seed in range(0, 10):
 
         training_time += time.time() - start_time
 
-        dev_accuracy = evaluate_on_mnist(dev_path, data.predicate_to_idx, data.entity_to_idx, scoring_function)
-        print(f'Dev accuracy after epoch {epoch_no}: {dev_accuracy}')
+        if early_stopping:
+            dev_accuracy = evaluate_on_mnist(dev_path, data.predicate_to_idx, data.entity_to_idx, scoring_function)
+            print(f'Dev accuracy after epoch {epoch_no}: {dev_accuracy}')
 
-        if dev_accuracy > best_accuracy:
-            best_accuracy = dev_accuracy
-            torch.save(model.state_dict(), "current_best_model")
-            counter = 0
-        else:
-            if counter >= 1:
-                break
-            counter += 1
+            if dev_accuracy > best_accuracy:
+                best_accuracy = dev_accuracy
+                torch.save(model.state_dict(), "current_best_model")
+                counter = 0
+            else:
+                if counter >= 1:
+                    break
+                counter += 1
 
-    # early stopping: load best model and delete file
-    model.load_state_dict(torch.load("current_best_model"))
-    os.remove("current_best_model")
+    if early_stopping:
+        # early stopping: load best model and delete file
+        model.load_state_dict(torch.load("current_best_model"))
+        os.remove("current_best_model")
 
     # save trained model to a file
     torch.save(model.state_dict(), "results/final/{}".format(model_file_name))
@@ -448,6 +453,7 @@ for seed in range(0, 10):
         "upper_bound": upper_bound,
         "is_show": is_show,
         "is_fix_predicates": is_fix_predicates,
+        "early_stopping": early_stopping,
         "accuracy": accuracy,
         "training_time": training_time,
         "testing_time": testing_time,

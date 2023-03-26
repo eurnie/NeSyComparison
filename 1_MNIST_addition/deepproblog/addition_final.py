@@ -59,7 +59,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
             counter += 1
 
     # early stopping: load best model and delete file
-    model.load_state_dict(torch.load("best_model/state"))
+    model.load_state("best_model/state")
     os.remove("best_model/state")
     os.rmdir("best_model")
 
