@@ -7,7 +7,7 @@ MNIST_addition/data/MNIST/*
 MNIST_addition/ntp/train.txt
 MNIST_addition/ntp/dev.txt
 MNIST_addition/ntp/test.txt
-CiteSeer/data/CiteSeer/*
+Citeseer/data/CiteSeer/*
 WarcraftShortestPath/data/Warcraft/*
 
 # Visual Studio Code
