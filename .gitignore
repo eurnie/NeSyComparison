@@ -3,10 +3,12 @@
 **/param/*
 
 # datasets
-1_MNIST_addition/data/MNIST/*
-1_MNIST_addition/ntp/train.txt
-1_MNIST_addition/ntp/dev.txt
-1_MNIST_addition/ntp/test.txt
+MNIST_addition/data/MNIST/*
+MNIST_addition/ntp/train.txt
+MNIST_addition/ntp/dev.txt
+MNIST_addition/ntp/test.txt
+CiteSeer/data/CiteSeer/*
+WarcraftShortestPath/data/Warcraft/*
 
 # Visual Studio Code
 .vscode/*
