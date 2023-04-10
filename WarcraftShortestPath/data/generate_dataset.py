@@ -1,8 +1,6 @@
-import random
 import numpy as np
-import matplotlib.pyplot as plt
-from copy import deepcopy
-from shortest_path_dijkstra import find_shortest_path
+from data.shortest_path_dijkstra import find_shortest_path
+from sklearn.utils import shuffle
 
 # import the raw warcraft dataset
 def load_npz(path_to_file):
@@ -15,53 +13,6 @@ def load_npz(path_to_file):
         "paths": loaded["paths"],
         "exp_nodes": loaded["exp_nodes"],
     }
-
-# display the given image of the map
-def display_map(map):
-    plt.imshow(map)
-    plt.show()
-
-# display the given image of the map and highlight the associated path
-# path has a given start point (source) and end point (target)
-def display_map_and_path(map, path, source, target):
-    map_to_show = deepcopy(map)
-
-    # highlight the given path
-    for i in range(len(path)):
-        for j in range(len(path[0])):
-            if path[i][j] == 1:
-                for l in range(8):
-                    for k in range(8):
-                        map_to_show[(i*8)+l][(j*8)+k] = 0
-
-    # highlight the source location
-    for l in range(8):
-        for k in range(8):
-            map_to_show[(int(source[0])*8)+l][(int(source[1])*8)+k] = [255, 0, 0]
-
-    # highlight the target location
-    for l in range(8):
-        for k in range(8):
-            map_to_show[(int(target[0])*8)+l][(int(target[1])*8)+k] = [0, 128, 0]
-
-    plt.imshow(map_to_show)
-    plt.show()
-
-# display the given image of the map and highlight the associated path
-# path starts in the left upper corner and ends in the right lower corner
-def display_map_and_path(map, path):
-    map_to_show = deepcopy(map)
-
-    # highlight the given path
-    for i in range(len(path)):
-        for j in range(len(path[0])):
-            if path[i][j] == 1:
-                for l in range(8):
-                    for k in range(8):
-                        map_to_show[(i*8)+l][(j*8)+k] = 0
-
-    plt.imshow(map_to_show)
-    plt.show()
 
 # import the raw dataset and save the processed dataset
 def generate_and_save_processed_datasets():
@@ -76,6 +27,7 @@ def generate_and_save_processed_datasets():
 
         dataset_x = []
         dataset_y = []
+        dataset_cost_matrix = []
 
         # create new dataset
         for map_id in range(len(original_dataset["maps"])):
@@ -83,28 +35,25 @@ def generate_and_save_processed_datasets():
             map = original_dataset["maps"][map_id]
             path = find_shortest_path(cost)
             dataset_x.append(map)
+            dataset_cost_matrix.append(cost)
             dataset_y.append(path)
 
         np.save(f'Warcraft/processed/{dataset_name}_x', np.array(dataset_x))
         np.save(f'Warcraft/processed/{dataset_name}_y', np.array(dataset_y))
+        np.save(f'Warcraft/processed/{dataset_name}_cost_matrix', np.array(dataset_cost_matrix))
 
 # import the processed dataset
-def generate_dataset(dataset_name, seed):
-    dataset_x = np.load(f'Warcraft/processed/{dataset_name}_x.npy')
-    dataset_y = np.load(f'Warcraft/processed/{dataset_name}_y.npy')
+def generate_dataset(dataset_name):
+    dataset_x = np.load(f'../data/Warcraft/processed/{dataset_name}_x.npy')
+    dataset_y = np.load(f'../data/Warcraft/processed/{dataset_name}_y.npy')
+    dataset_cost_matrix = np.load(f'../data/Warcraft/processed/{dataset_name}_cost_matrix.npy')
+    dataset_x, dataset_y, dataset_cost_matrix = shuffle(dataset_x, dataset_y, dataset_cost_matrix)
 
-    dataset = []
+    # dataset = []
+    # for i in range(len(dataset_x)):
+    #     # display_map_and_path(dataset_x[i], dataset_y[i])
+    #     dataset.append((dataset_x[i], dataset_y[i]))
 
-    for i in range(len(dataset_x)):
-        # display_map_and_path(dataset_x[i], dataset_y[i])
-        dataset.append((dataset_x[i], dataset_y[i]))
+    return dataset_x, dataset_y, dataset_cost_matrix
 
-    rng = random.Random(seed)
-    rng.shuffle(dataset)
-
-    return dataset
-
-generate_and_save_processed_datasets()
-train_set = generate_dataset("train", 0)
-val_set = generate_dataset("val", 0)
-test_set = generate_dataset("test", 0)
+# generate_and_save_processed_datasets()

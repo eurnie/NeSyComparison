@@ -16,7 +16,16 @@ transform = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
 )
 
-datasets = {
+datasets_mnist = {
+    "train": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=True, download=True, transform=transform
+    ),
+    "test": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=False, download=True, transform=transform
+    ),
+}
+
+datasets_fashion_mnist = {
     "train": torchvision.datasets.MNIST(
         root=str(DATA_ROOT), train=True, download=True, transform=transform
     ),
@@ -57,57 +66,26 @@ def digits_to_number(digits: Iterable[int]) -> int:
     return number
 
 class MNIST_Images(object):
-    def __init__(self, subset):
+    def __init__(self, dataset, subset):
         self.subset = subset
+        self.dataset = dataset
 
     def __getitem__(self, item):
-        if self.subset == "val":
-            return datasets["train"][int(item[0]+2700)][0]
-        else:
-            return datasets[self.subset][int(item[0])][0]
+        if self.dataset == "mnist":
+            if self.subset == "val":
+                return datasets_mnist["train"][int(item[0]+2700)][0]
+            else:
+                return datasets_mnist[self.subset][int(item[0])][0]
+        elif self.dataset == "fashion_mnist":
+            if self.subset == "val":
+                return datasets_fashion_mnist["train"][int(item[0]+2700)][0]
+            else:
+                return datasets_fashion_mnist[self.subset][int(item[0])][0]
 
-class MNIST(Dataset):
-    def __len__(self):
-        return len(self.data)
-
-    def to_query(self, i):
-        l = Constant(self.data[i][1])
-        return Query(
-            Term("digit", Term("tensor", Term(self.dataset, Term("a"))), l),
-            substitution={Term("a"): Constant(i)},
-        )
-
-    def __init__(self, dataset):
-        self.dataset = dataset
-        self.data = datasets[dataset]
-
-def import_dataset_log_iter(n: int, dataset: str, log_iter=10):
-    MNISTOperator_list = []
-
-    if dataset == "train":
-        for i in range(0, 30000, log_iter):
-            MNISTOperator_list.append(MNISTOperator(
-                                    dataset_name=dataset,
-                                    function_name="addition" if n == 1 else "multi_addition",
-                                    operator=sum,
-                                    start_index=i,
-                                    end_index=i+log_iter,
-                                    size=n,
-                                    arity=2,
-        ))
-        return MNISTOperator_list
-    elif dataset == "test":
-        return MNISTOperator(
-            dataset_name=dataset,
-            function_name="addition" if n == 1 else "multi_addition",
-            operator=sum,
-            size=n,
-            arity=2
-        )
-
-def import_datasets(size_val):
+def import_datasets(dataset, size_val):
     split_index = round(size_val * 30000)
     train_set = MNISTOperator(
+        dataset=dataset,
         dataset_name="train",
         function_name="addition",
         operator=sum,
@@ -117,6 +95,7 @@ def import_datasets(size_val):
         end_index=30000
     )
     val_set = MNISTOperator(
+        dataset=dataset,
         dataset_name="train",
         function_name="addition",
         operator=sum,
@@ -126,18 +105,22 @@ def import_datasets(size_val):
         end_index=split_index
     )
     test_set = MNISTOperator(
+        dataset=dataset,
         dataset_name="test",
         function_name="addition",
         operator=sum,
         size=1,
-        arity=2
+        arity=2,
+        start_index=0,
+        end_index=100
     )
     return train_set, val_set, test_set
 
-def import_datasets_kfold():
+def import_datasets_kfold(dataset):
     train_set_list = []
     for i in range(0, 10):
         train_set = MNISTOperator(
+            dataset=dataset,
             dataset_name="train",
             function_name="addition",
             operator=sum,
@@ -159,6 +142,7 @@ class MNISTOperator(Dataset, TorchDataset):
 
     def __init__(
         self,
+        dataset: str,
         dataset_name: str,
         function_name: str,
         operator: Callable[[List[int]], int],
@@ -179,16 +163,24 @@ class MNISTOperator(Dataset, TorchDataset):
         assert size >= 1
         assert arity >= 1
         self.dataset_name = dataset_name
-        self.dataset = datasets[self.dataset_name]
+
         self.function_name = function_name
         self.operator = operator
         self.size = size
         self.arity = arity      
 
-        if dataset_name == "train":
-            self.data, self.labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
-        elif dataset_name == "test":
-            self.data, self.labels = parse_data("../data/MNIST/processed/test.txt", 0, 5000)
+        if dataset == "mnist":
+            self.dataset = datasets_mnist[self.dataset_name]
+            if dataset_name == "train":
+                self.data, self.labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
+            elif dataset_name == "test":
+                self.data, self.labels = parse_data("../data/MNIST/processed/test.txt", 0, 5000)
+        elif dataset == "fashion_mnist":
+            self.dataset = datasets_fashion_mnist[self.dataset_name]
+            if dataset_name == "train":
+                self.data, self.labels = parse_data("../data/FashionMNIST/processed/train.txt", start_index, end_index)
+            elif dataset_name == "test":
+                self.data, self.labels = parse_data("../data/FashionMNIST/processed/test.txt", 0, 5000)
 
     def to_file_repr(self, i):
         """Old file represenation dump. Not a very clear format as multi-digit arguments are not separated"""
@@ -254,6 +246,10 @@ class MNISTOperator(Dataset, TorchDataset):
     def __len__(self):
         return len(self.data)
 
-MNIST_train = MNIST_Images("train")
-MNIST_val = MNIST_Images("val")
-MNIST_test = MNIST_Images("test")
+MNIST_train = MNIST_Images("mnist", "train")
+MNIST_val = MNIST_Images("mnist", "val")
+MNIST_test = MNIST_Images("mnist", "test")
+
+FashionMNIST_train = MNIST_Images("fashion_mnist", "train")
+FashionMNIST_val = MNIST_Images("fashion_mnist", "val")
+FashionMNIST_test = MNIST_Images("fashion_mnist", "test")

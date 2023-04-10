@@ -1,6 +1,4 @@
 import torch.nn as nn
-import numpy
-import torch
 
 class Net(nn.Module):
     def __init__(self):
@@ -67,11 +65,13 @@ class Net_NN(nn.Module):
             nn.ReLU(True) 
         )
         self.classifier =  nn.Sequential(
-            nn.Linear(16 * 11 * 4, 120), # the input size is larger, because images are stacked
+            # the input size is larger, because images are stacked
+            nn.Linear(16 * 11 * 4, 120), 
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(84, 19), # second parameter is 19, because 19 different results possible
+            # second parameter is 19, because 19 different results possible
+            nn.Linear(84, 19), 
             nn.Softmax(1)
         )
 
@@ -94,11 +94,13 @@ class Net_NN_Dropout(nn.Module):
         )
         self.classifier =  nn.Sequential(
             nn.Dropout(p=0.2),
-            nn.Linear(16 * 11 * 4, 120), # the input size is larger, because images are stacked
+            # the input size is larger, because images are stacked
+            nn.Linear(16 * 11 * 4, 120), 
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(84, 19), # second parameter is 19, because 19 different results possible
+            # second parameter is 19, because 19 different results possible
+            nn.Linear(84, 19), 
             nn.Softmax(1)
         )
 
@@ -137,11 +139,13 @@ class Net_SL(nn.Module):
             nn.ReLU(True) 
         )
         self.classifier =  nn.Sequential(
-            nn.Linear(16 * 11 * 4, 120), # the input size is larger, because images are stacked
+            # the input size is larger, because images are stacked
+            nn.Linear(16 * 11 * 4, 120), 
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(84, 20), # second parameter is 20, because label of 2 images are predicted
+            # second parameter is 20, because label of 2 images are predicted
+            nn.Linear(84, 20), 
             nn.Softmax(1)
         )
 
@@ -164,11 +168,13 @@ class Net_SL_Dropout(nn.Module):
         )
         self.classifier =  nn.Sequential(
             nn.Dropout(p=0.2),
-            nn.Linear(16 * 11 * 4, 120), # the input size is larger, because images are stacked
+            # the input size is larger, because images are stacked
+            nn.Linear(16 * 11 * 4, 120), 
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(84, 20), # second parameter is 20, because label of 2 images are predicted
+            # second parameter is 20, because label of 2 images are predicted
+            nn.Linear(84, 20), 
             nn.Softmax(1)
         )
 

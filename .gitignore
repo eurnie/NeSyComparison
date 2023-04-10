@@ -4,6 +4,7 @@
 
 # datasets
 MNIST_addition/data/MNIST/*
+MNIST_addition/data/FashionMNIST/*
 MNIST_addition/ntp/train.txt
 MNIST_addition/ntp/dev.txt
 MNIST_addition/ntp/test.txt

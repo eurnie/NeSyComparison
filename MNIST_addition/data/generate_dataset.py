@@ -9,12 +9,20 @@ transform = torchvision.transforms.Compose(
     [torchvision.transforms.ToTensor(), torchvision.transforms.Normalize((0.5,), (0.5,))]
 )
 
-raw_train = torchvision.datasets.MNIST(
+# import MNIST dataset
+raw_train_mnist = torchvision.datasets.MNIST(
     root=str(ROOT_FOLDER), train=True, download=True, transform=transform)
-raw_test =  torchvision.datasets.MNIST(
+raw_test_mnist = torchvision.datasets.MNIST(
     root=str(ROOT_FOLDER), train=False, download=True, transform=transform)
 
-def make_processed_dataset(raw_dataset, seed):
+# import MNIST fashion dataset
+raw_train_fashion_mnist = torchvision.datasets.FashionMNIST(
+    root=str(ROOT_FOLDER), train=True, download=True, transform=transform)
+raw_test_fashion_mnist = torchvision.datasets.FashionMNIST(
+    root=str(ROOT_FOLDER), train=False, download=True, transform=transform)
+
+# process the raw dataset and shuffle
+def make_processed_dataset(raw_dataset, seed, label_noise):
     indices = list(range(len(raw_dataset)))
     rng = random.Random(seed)
     rng.shuffle(indices)
@@ -34,8 +42,13 @@ def make_processed_dataset(raw_dataset, seed):
 
         dataset.append(new_entry)
 
+    examples = random.sample(dataset, round(label_noise * len(dataset)))
+    for i in range(len(examples)):
+        examples[i][2] = random.randint(0,18)
+
     return dataset
 
+# write the given dataset to the file with the given filename
 def write_to_file(dataset, filename):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     
@@ -46,14 +59,28 @@ def write_to_file(dataset, filename):
                 f.write(" ")
             f.write("\n")
 
-def generate_dataset(seed):
-    processed_train = make_processed_dataset(raw_train, seed)
-    processed_test = make_processed_dataset(raw_test, seed)
+# generate the mnist addition dataset
+def generate_dataset_mnist(seed, label_noise):
+    processed_train = make_processed_dataset(raw_train_mnist, seed, label_noise)
+    processed_test = make_processed_dataset(raw_test_mnist, seed, label_noise)
 
-    print("The raw training set: " + str(len(raw_train)) + " entries")
-    print("The raw testing set: " + str(len(raw_test)) + " entries")
+    print("The raw training set: " + str(len(raw_train_mnist)) + " entries")
+    print("The raw testing set: " + str(len(raw_test_mnist)) + " entries")
     print("The processed training set: " + str(len(processed_train)) + " entries")
     print("The processed testing set: " + str(len(processed_test)) + " entries")
 
     write_to_file(processed_train, "../data/MNIST/processed/train.txt")
     write_to_file(processed_test, "../data/MNIST/processed/test.txt")
+
+# generate the fashion mnist addition dataset
+def generate_dataset_fashion_mnist(seed, label_noise):
+    processed_train = make_processed_dataset(raw_train_fashion_mnist, seed, label_noise)
+    processed_test = make_processed_dataset(raw_test_fashion_mnist, seed, label_noise)
+
+    print("The raw training set: " + str(len(raw_train_fashion_mnist)) + " entries")
+    print("The raw testing set: " + str(len(raw_test_fashion_mnist)) + " entries")
+    print("The processed training set: " + str(len(processed_train)) + " entries")
+    print("The processed testing set: " + str(len(processed_test)) + " entries")
+
+    write_to_file(processed_train, "../data/FashionMNIST/processed/train.txt")
+    write_to_file(processed_test, "../data/FashionMNIST/processed/test.txt")

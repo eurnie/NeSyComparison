@@ -60,6 +60,7 @@ class Net_Dropout(tf.keras.Model):
         x = self.classifier(x)
         return x
 
+# original neural net of LTN for mnist addition
 class Net_Original(tf.keras.Model):
     def __init__(self):
         super(Net_Original, self).__init__()

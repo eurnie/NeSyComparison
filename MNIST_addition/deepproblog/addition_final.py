@@ -5,7 +5,7 @@ import numpy
 import sys
 import os
 import json
-from import_data import MNIST_train, MNIST_val, MNIST_test, import_datasets
+from import_data import *
 from deepproblog.dataset import DataLoader
 from deepproblog.engines import ApproximateEngine, ExactEngine
 from deepproblog.model import Model
@@ -14,10 +14,10 @@ from deepproblog.train import train_model
 from deepproblog.evaluate import get_confusion_matrix
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epochs, batch_size, 
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, method, nb_epochs, batch_size, 
         learning_rate, use_dropout):
     if use_dropout:
         network = Net_Dropout()
@@ -31,9 +31,16 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
         model.set_engine(ExactEngine(model), cache=True)
     elif method == "geometric_mean":
         model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, exploration=False))
-    model.add_tensor_source("train", MNIST_train)
-    model.add_tensor_source("val", MNIST_val)
-    model.add_tensor_source("test", MNIST_test)
+
+    if dataset == "mnist":
+        model.add_tensor_source("train", MNIST_train)
+        model.add_tensor_source("val", MNIST_val)
+        model.add_tensor_source("test", MNIST_test)
+    elif dataset == "fashion_mnist":
+        model.add_tensor_source("train", FashionMNIST_train)
+        model.add_tensor_source("val", FashionMNIST_val)
+        model.add_tensor_source("test", FashionMNIST_test)
+
     loader = DataLoader(train_set, batch_size, False)
 
     if not os.path.exists("best_model"):
@@ -64,7 +71,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
     os.rmdir("best_model")
 
     # save trained model to a file
-    model.save_state("results/final/{}".format(model_file_name))
+    model.save_state(f'results/{dataset}/{model_file_name}')
 
     # testing
     start_time = time.time()
@@ -72,6 +79,12 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
     testing_time = time.time() - start_time
 
     return accuracy, total_training_time, testing_time
+
+################################################# DATASET ###############################################
+dataset = "mnist"
+# dataset = "fashion_mnist"
+label_noise = 0.1
+#########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
@@ -88,19 +101,22 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # shuffle dataset
-    generate_dataset(seed)
+    # generate and shuffle dataset
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
 
     # import train, val and test set
-    train_set, val_set, test_set = import_datasets(size_val)
+    train_set, val_set, test_set = import_datasets(dataset, size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
-        learning_rate, use_dropout, size_val)
+    model_file_name = "final/label_noise_{}/DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+        method, nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        method, nb_epochs, batch_size, learning_rate, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
+        test_set, method, nb_epochs, batch_size, learning_rate, use_dropout)
     
     # save results to a summary file
     information = {
@@ -117,7 +133,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
