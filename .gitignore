@@ -1,6 +1,6 @@
-# saved models
-**/final/*
-**/param/*
+# ignore all saved models
+**/results/*
+!**/results/**.json
 
 # datasets
 MNIST_addition/data/MNIST/*

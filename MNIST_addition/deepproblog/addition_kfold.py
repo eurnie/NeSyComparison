@@ -112,7 +112,7 @@ information = {
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir
 }
-with open(f'results/{dataset}/kfold/summary_param.json', "a") as outfile:
+with open(f'results/{dataset}/kfold/summary_kfold.json', "a") as outfile:
     json.dump(information, outfile)
     outfile.write('\n')
 

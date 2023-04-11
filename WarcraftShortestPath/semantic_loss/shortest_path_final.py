@@ -24,7 +24,7 @@ def train(dataloader, model, sl, loss_fn, optimizer):
         pred = model(x)
         y = y.view(-1, 144)
         loss = loss_fn(pred, y) + sl(pred)
-        print(loss.item())
+        # print(loss.item())
 
         # backpropagation
         optimizer.zero_grad()
