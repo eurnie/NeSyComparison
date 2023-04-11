@@ -4,11 +4,13 @@ from itertools import product
 random.seed(0)
 TOTAL_COMBINATIONS = 10
 
+########################### OLD ###########################
+
 # deepproblog
-possible_nb_epochs = [1, 2, 3]
-possible_batch_size = [2, 4, 8]
-possible_learning_rate = [0.001]
-possible_dropout = [True, False]
+# possible_nb_epochs = [1, 2, 3]
+# possible_batch_size = [2, 4, 8]
+# possible_learning_rate = [0.001]
+# possible_dropout = [True, False]
 
 # deepstochlog
 # possible_nb_epochs = [1, 2, 3]
@@ -39,6 +41,14 @@ possible_dropout = [True, False]
 # possible_batch_size = [2, 4, 8, 16, 32]
 # possible_learning_rate = [0.001]
 # possible_dropout = [True, False]
+
+########################### NEW ###########################
+
+# deepproblog, deepstochlog, neurasp
+possible_nb_epochs = [1, 2, 3]
+possible_batch_size = [2, 4, 8, 16]
+possible_learning_rate = [0.001]
+possible_dropout = [False]
 
 possible_combinations = []
 

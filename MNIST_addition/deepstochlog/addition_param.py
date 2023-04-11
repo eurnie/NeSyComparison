@@ -70,14 +70,14 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batc
     return accuracy
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
+dataset = "mnist"
+# dataset = "fashion_mnist"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 1
-batch_size = 256
+nb_epochs = 3
+batch_size = 2
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
