@@ -1,22 +1,24 @@
 import ltn
+import os
 import sys
 import random
 import numpy
 import torch
-import pickle
 import json
+import pickle
 import tensorflow as tf
 from tensorflow.keras import layers
 from collections import defaultdict
-from import_data import get_mnist_op_dataset_val
+from import_data import get_mnist_op_dataset_k_fold
 from commons import train_modified, test_modified
+from sklearn.model_selection import KFold
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_tensorflow import Net, Net_Dropout, Net_Original
 
-def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, learning_rate, 
-                   p_schedule, use_dropout):
+def train_and_test(model_file_name_dir, fold_nb, train_set, test_set, nb_epochs, learning_rate, p_schedule, 
+    use_dropout):
     # predicates
     if use_dropout:
         logits_model = Net_Dropout()
@@ -93,15 +95,18 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, lear
         scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
 
     # training
-    for epoch in range(nb_epochs):
-        train_modified(train_set, train_step, scheduled_parameters, 1)
+    train_modified(train_set, train_step, scheduled_parameters, nb_epochs)
 
     # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+    path = f'results/{dataset}/kfold/{model_file_name_dir}'
+    if not os.path.exists(path):
+        os.makedirs(path)
+    with open(f'results/{dataset}/kfold/{model_file_name_dir}/fold_{fold_nb}', "wb+") as handle:
         pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
-    accuracy = test_modified(val_set, test_step, metrics_dict, scheduled_parameters)
+    accuracy = test_modified(test_set, test_step, metrics_dict, scheduled_parameters)
+
     return accuracy
 
 ################################################# DATASET ###############################################
@@ -112,11 +117,10 @@ dataset = "fashion_mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 1
-batch_size = 256
+batch_size = 128
 learning_rate = 0.001
 p_schedule = 1.
 use_dropout = True
-size_val = 0.1
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -130,17 +134,29 @@ if dataset == "mnist":
 elif dataset == "fashion_mnist":
     generate_dataset_fashion_mnist(seed, 0)
 
-# import train and val set
-train_set, val_set, _ = get_mnist_op_dataset_val(dataset, size_val, batch_size)
+train_data, train_labels = get_mnist_op_dataset_k_fold(dataset)
+accuracies = []
+fold_nb = 1
 
 # generate name of folder that holds all the trained models
-model_file_name = "param/LTN_param_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, 
-        learning_rate, p_schedule, use_dropout, size_val)
+model_file_name_dir = "LTN_kfold_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+    p_schedule, use_dropout)
 
-# train and test
-accuracy = train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, learning_rate, 
-                          p_schedule, use_dropout)
-    
+for train_index, test_index in KFold(10).split(train_labels):
+    ds_train = [numpy.array(train_data[0])[train_index], numpy.array(train_data[1])[train_index]]
+    ds_test = [numpy.array(train_data[0])[test_index], numpy.array(train_data[1])[test_index]]
+    labels_train = numpy.array(train_labels)[train_index]
+    labels_test = numpy.array(train_labels)[test_index]
+    ds_train = tf.data.Dataset.from_tensor_slices(tuple(ds_train)+(labels_train,)).batch(batch_size)
+    ds_test = tf.data.Dataset.from_tensor_slices(tuple(ds_test)+(labels_test,)).batch(1)
+    fold_accuracy = train_and_test(model_file_name_dir, fold_nb, ds_train, ds_test, nb_epochs, 
+        learning_rate, p_schedule, use_dropout)
+    print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
+    accuracies.append(float(fold_accuracy))
+    fold_nb += 1
+
+avg_accuracy = sum(accuracies) / 10
+
 # save results to a summary file
 information = {
     "algorithm": "LTN",
@@ -150,15 +166,15 @@ information = {
     "learning_rate": learning_rate,
     "p_schedule": p_schedule,
     "use_dropout": use_dropout,
-    "size_val": size_val,
-    "accuracy": float(accuracy),
-    "model_file": model_file_name
+    "accuracies": accuracies,
+    "avg_accuracy": avg_accuracy,
+    "model_files_dir": model_file_name_dir
 }
-with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+with open(f'results/{dataset}/kfold/summary_kfold.json', "a") as outfile:
     json.dump(information, outfile)
     outfile.write('\n')
 
 # print results
 print("############################################")
-print("Accuracy: {}".format(accuracy))
+print("Seed: {} \nAvg_accuracy: {}".format(seed, avg_accuracy))
 print("############################################")

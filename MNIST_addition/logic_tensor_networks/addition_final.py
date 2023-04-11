@@ -14,11 +14,11 @@ from import_data import get_mnist_op_dataset_val
 from commons import train_modified, test_modified
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_tensorflow import Net, Net_Dropout, Net_Original
 
-def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, p_schedule, 
-    use_dropout):
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, 
+                   p_schedule, use_dropout):
     # predicates
     if use_dropout:
         logits_model = Net_Dropout()
@@ -117,7 +117,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open("results/final/{}".format(model_file_name), "wb") as handle:
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
         pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
@@ -126,6 +126,12 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     testing_time = time.time() - start_time
 
     return accuracy, total_training_time, testing_time
+
+################################################# DATASET ###############################################
+# dataset = "mnist"
+dataset = "fashion_mnist"
+label_noise = 0
+#########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 3
@@ -142,19 +148,22 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # shuffle dataset
-    generate_dataset(seed)
+    # generate and shuffle dataset
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
 
     # import train, val and test set
-    train_set, val_set, test_set = get_mnist_op_dataset_val(size_val, batch_size)
+    train_set, val_set, test_set = get_mnist_op_dataset_val(dataset, size_val, batch_size)
 
     # generate name of folder that holds all the trained models
-    model_file_name = "LTN_final_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-        p_schedule, use_dropout, size_val)
+    model_file_name = "final/label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+        nb_epochs, batch_size, learning_rate, p_schedule, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        nb_epochs, learning_rate, p_schedule, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
+        test_set, nb_epochs, learning_rate, p_schedule, use_dropout)
       
     # save results to a summary file
     information = {
@@ -171,7 +180,7 @@ for seed in range(0, 10):
         "testing_time": float(testing_time),
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

@@ -29,10 +29,10 @@ datasets_mnist = {
 }
 
 datasets_fashion_mnist = {
-    "train": torchvision.datasets.MNIST(
+    "train": torchvision.datasets.FashionMNIST(
         root=str(DATA_ROOT), train=True, download=True, transform=transform
     ),
-    "test": torchvision.datasets.MNIST(
+    "test": torchvision.datasets.FashionMNIST(
         root=str(DATA_ROOT), train=False, download=True, transform=transform
     ),
 }
