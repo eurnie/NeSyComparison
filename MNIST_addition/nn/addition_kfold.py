@@ -1,20 +1,24 @@
 import random
 import numpy
 import sys
+import os
 import json
 import torch
 import pickle
 import torchvision
+import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torch import nn
 from torch.utils.data import DataLoader
 from pathlib import Path
+from sklearn.model_selection import KFold
+from torch.utils.data import DataLoader, SubsetRandomSampler
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net_NN, Net_NN_Dropout, Net_NN_Extra
 
-def parse_data(dataset, filename, dataset_name, size_val):
+def parse_data(dataset, filename):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 
     transform = transforms.Compose(
@@ -44,26 +48,14 @@ def parse_data(dataset, filename, dataset_name, size_val):
     elif dataset == "fashion_mnist":
         datasets = datasets_fashion_mnist
 
-    split_index = round(size_val * 30000)
-    if dataset_name == "train":
-        dataset_used = "train"
-        start = split_index
-        end = 30000
-    elif dataset_name == "val":
-        dataset_used = "train"
-        start = 0
-        end = split_index
-    elif dataset_name == "test":
-        dataset_used = "test"
-        start = 0
-        end = 5000
+    dataset_used = "train"
 
     with open(filename + dataset_used + ".txt") as f:
         entries = f.readlines()
 
     dataset = []
 
-    for i in range(start, end):
+    for i in range(0, 30000):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
         sum = int(entries[i].split(" ")[2])
@@ -77,6 +69,7 @@ def parse_data(dataset, filename, dataset_name, size_val):
 
 def train(dataloader, model, loss_fn, optimizer):
     model.train()
+
     for (x, y) in dataloader:
         # compute prediction error
         pred = model(x)
@@ -98,30 +91,44 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
-def train_and_test(dataset, model_file_name, train_set, val_set,
-    nb_epochs, batch_size, learning_rate, use_dropout):
-    if use_dropout:
-        model = Net_NN_Dropout()
-    else:
-        model = Net_NN()
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+def train_and_test(dataset, model_file_name_dir, total_train_set, nb_epochs, batch_size, 
+                   learning_rate, use_dropout):
+    accuracies = []
+    kfold = KFold(n_splits=10, shuffle=True)
 
-    train_dataloader = DataLoader(train_set, batch_size=batch_size)
-    val_dataloader = DataLoader(val_set, batch_size=1)
+    for fold_nb, (train_ids, valid_ids) in enumerate(kfold.split(total_train_set)):
+        train_subsampler = SubsetRandomSampler(train_ids)
+        valid_subsampler = SubsetRandomSampler(valid_ids)
 
-    # training
-    for _ in range(nb_epochs):
-        train(train_dataloader, model, loss_fn, optimizer)
+        train_dataloader = DataLoader(total_train_set, batch_size=batch_size, sampler=train_subsampler)
+        test_dataloader = DataLoader(total_train_set, batch_size=1, sampler=valid_subsampler)
 
-    # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
-        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-    # testing
-    accuracy = test(val_dataloader, model)
-    return accuracy
+        if use_dropout:
+            model = Net_NN_Dropout()
+        else:
+            model = Net_NN()
+        loss_fn = nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+        # training
+        for epoch in range(nb_epochs):
+            train(train_dataloader, model, loss_fn, optimizer)
+            print("Epoch", epoch + 1, "finished.")
+
+        # save trained model to a file
+        path = f'results/{dataset}/kfold/{model_file_name_dir}'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        with open(f'results/{dataset}/kfold/{model_file_name_dir}/fold_{fold_nb}', "wb+") as handle:
+            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # testing
+        fold_accuracy = test(test_dataloader, model)
+        accuracies.append(fold_accuracy)
+        print(fold_nb + 1, "-- Fold accuracy: ", fold_accuracy)
+
+    return accuracies, sum(accuracies) / 10
 
 ################################################# DATASET ###############################################
 # dataset = "mnist"
@@ -134,7 +141,6 @@ nb_epochs = 1
 batch_size = 8
 learning_rate = 0.001
 use_dropout = False
-size_val = 0.1
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -150,17 +156,16 @@ elif dataset == "fashion_mnist":
     generate_dataset_fashion_mnist(seed, 0)
     processed_data_path = "../data/FashionMNIST/processed/"
 
-# import train, val and test set
-train_set = parse_data(dataset, processed_data_path, "train", size_val)
-val_set = parse_data(dataset, processed_data_path, "val", size_val)
+# import train set
+train_set = parse_data(dataset, processed_data_path)
 
-# generate name of file that holds the trained model
-model_file_name = "param/NN_param_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, 
-    batch_size, learning_rate, use_dropout, size_val)
+# generate name of folder that holds all the trained models
+model_file_name_dir = "NN_kfold_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+    use_dropout)
 
 # train and test
-accuracy = train_and_test(dataset, model_file_name, train_set, val_set,
-    nb_epochs, batch_size, learning_rate, use_dropout)
+accuracies, avg_accuracy = train_and_test(dataset, model_file_name_dir, train_set, nb_epochs, 
+    batch_size, learning_rate, use_dropout)
 
 # save results to a summary file
 information = {
@@ -170,15 +175,15 @@ information = {
     "batch_size": batch_size,
     "learning_rate": learning_rate,
     "use_dropout": use_dropout,
-    "size_val": size_val,
-    "accuracy": accuracy,
-    "model_file": model_file_name
+    "accuracies": accuracies,
+    "avg_accuracy": avg_accuracy,
+    "model_files_dir": model_file_name_dir
 }
-with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+with open(f'results/{dataset}/kfold/summary_kfold.json', "a") as outfile:
     json.dump(information, outfile)
     outfile.write('\n')
 
 # print results
 print("############################################")
-print("Accuracy: {}".format(accuracy))
+print("Seed: {} \nAvg_accuracy: {}".format(seed, avg_accuracy))
 print("############################################")

@@ -14,17 +14,17 @@ from torch.utils.data import DataLoader
 from pathlib import Path
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net_NN, Net_NN_Dropout, Net_NN_Extra
 
-def parse_data(filename, dataset_name, size_val):
+def parse_data(dataset, filename, dataset_name, size_val):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
     )
 
-    datasets = {
+    datasets_mnist = {
         "train": torchvision.datasets.MNIST(
             root=str(DATA_ROOT), train=True, download=True, transform=transform
         ),
@@ -32,6 +32,20 @@ def parse_data(filename, dataset_name, size_val):
             root=str(DATA_ROOT), train=False, download=True, transform=transform
         ),
     }
+
+    datasets_fashion_mnist = {
+        "train": torchvision.datasets.FashionMNIST(
+            root=str(DATA_ROOT), train=True, download=True, transform=transform
+        ),
+        "test": torchvision.datasets.FashionMNIST(
+            root=str(DATA_ROOT), train=False, download=True, transform=transform
+        ),
+    }
+
+    if dataset == "mnist":
+        datasets = datasets_mnist
+    elif dataset == "fashion_mnist":
+        datasets = datasets_fashion_mnist
 
     split_index = round(size_val * 30000)
     if dataset_name == "train":
@@ -47,7 +61,7 @@ def parse_data(filename, dataset_name, size_val):
         start = 0
         end = 5000
 
-    with open(filename) as f:
+    with open(filename + dataset_used + ".txt") as f:
         entries = f.readlines()
 
     dataset = []
@@ -87,8 +101,8 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
-def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, 
-    use_dropout):
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, 
+    nb_epochs, batch_size, learning_rate, use_dropout):
     if use_dropout:
         model = Net_NN_Dropout()
     else:
@@ -136,7 +150,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open("results/final/{}".format(model_file_name), "wb") as handle:
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
@@ -146,8 +160,14 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
 
     return accuracy, total_training_time, testing_time
 
+################################################# DATASET ###############################################
+# dataset = "mnist"
+dataset = "fashion_mnist"
+label_noise = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
-nb_epochs = 100
+nb_epochs = 1
 batch_size = 8
 learning_rate = 0.001
 use_dropout = False
@@ -160,20 +180,25 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # shuffle dataset
-    generate_dataset(seed)
+    # generate and shuffle dataset
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+        processed_data_path = "../data/MNIST/processed/"
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
+        processed_data_path = "../data/FashionMNIST/processed/"
 
     # import train, val and test set
-    train_set = parse_data("../data/MNIST/processed/train.txt", "train", size_val)
-    val_set = parse_data("../data/MNIST/processed/train.txt", "val", size_val)
-    test_set = parse_data("../data/MNIST/processed/test.txt", "test", size_val)
+    train_set = parse_data(dataset, processed_data_path, "train", size_val)
+    val_set = parse_data(dataset, processed_data_path, "val", size_val)
+    test_set = parse_data(dataset, processed_data_path, "test", size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "NN_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-        use_dropout, size_val)
+    model_file_name = "final/label_noise_{}/NN_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, nb_epochs, 
+        batch_size, learning_rate, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set,
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set,
         test_set, nb_epochs, batch_size, learning_rate, use_dropout)
     
     # save results to a summary file
@@ -190,7 +215,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
