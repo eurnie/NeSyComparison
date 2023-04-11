@@ -1,7 +1,7 @@
 # ignore all saved models
 **/results/*
 
-!**/results/kfold/*.json
+!**/results/mnist/kfold/*.json
 
 # datasets
 MNIST_addition/data/MNIST/*
