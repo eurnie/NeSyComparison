@@ -2,13 +2,12 @@ import torch
 import random
 import numpy
 import sys
-import os
 import time
 import pickle
 import json
 from pathlib import Path
 from torch.optim import Adam
-from import_data import import_datasets_kfold
+from import_data import import_datasets
 from deepstochlog.dataloader import DataLoader
 from deepstochlog.model import DeepStochLogModel
 from deepstochlog.term import Term, List
@@ -17,76 +16,72 @@ from deepstochlog.network import Network, NetworkStore
 from deepstochlog.utils import create_model_accuracy_calculator, calculate_accuracy
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(model_file_name_dir, train_set_list, nb_epochs, batch_size, learning_rate, 
-    epsilon, use_dropout):
+def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batch_size, learning_rate, 
+                   epsilon, use_dropout):
+    # create a network object containing the MNIST network and the index list
+    if use_dropout:
+        mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
+    else:
+        mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    networks = NetworkStore(mnist_classifier)
 
-    accuracies = []
+    # load the model "addition_simple.pl" with the specific query
+    query = Term(
+        # we want to use the "addition" non-terminal in the specific grammar
+        "addition",
+        # we want to calculate all possible sums by giving the wildcard "_" as argument
+        Term("_"),
+        # denote that the input will be a list of two tensors, t1 and t2, representing the MNIST digit.
+        List(Term("t1"), Term("t2")),
+    )
 
-    for fold_nb in range(1, 11):
-        # create a network object containing the MNIST network and the index list
-        if use_dropout:
-            mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
-        else:
-            mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        networks = NetworkStore(mnist_classifier)
+    root_path = Path(__file__).parent
+    model = DeepStochLogModel.from_file(file_location=str((root_path / "addition.pl").absolute()),
+        query=query, networks=networks, device=device, verbose=False)
+    optimizer = Adam(model.get_all_net_parameters(), lr=learning_rate)
+    optimizer.zero_grad()
 
-        # load the model "addition_simple.pl" with the specific query
-        query = Term(
-            # we want to use the "addition" non-terminal in the specific grammar
-            "addition",
-            # we want to calculate all possible sums by giving the wildcard "_" as argument
-            Term("_"),
-            # denote that the input will be a list of two tensors, t1 and t2, representing the MNIST digit.
-            List(Term("t1"), Term("t2")),
-        )
+    # DataLoader that can deal with proof trees and tensors (replicates the pytorch dataloader interface)
+    # if shuffle is set to True, also give the seed: the seed of the random package had only effect on this 
+    # file
+    train_dataloader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
+    val_dataloader = DataLoader(val_set, batch_size=1, shuffle=False)
+    dummy_dataloader = DataLoader([], batch_size=1, shuffle=False)
 
-        root_path = Path(__file__).parent
-        model = DeepStochLogModel.from_file(file_location=str((root_path / "addition.pl").absolute()),
-            query=query, networks=networks, device=device, verbose=False)
-        optimizer = Adam(model.get_all_net_parameters(), lr=learning_rate)
-        optimizer.zero_grad()     
-        
-        dummy_dataloader = DataLoader([], batch_size=1, shuffle=False)
+    # create test functions
+    calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
 
-        # create test functions
-        calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
+    # training (with early stopping)
+    trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
 
-        # training
-        trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
-        for epoch in range(nb_epochs):
-            for i in range(0, 10):
-                if (i != (fold_nb - 1)):
-                    train_dataloader = DataLoader(train_set_list[i], batch_size=batch_size, shuffle=False)
-                    trainer.train(model, optimizer, train_dataloader, 1, epsilon)
-                else:
-                    test_dataloader = DataLoader(train_set_list[i], batch_size=1, shuffle=False)
-            print("Epoch", epoch + 1, "finished.")
+    for _ in range(nb_epochs):
+        trainer.train(model, optimizer, train_dataloader, 1, epsilon)
 
-        # save trained model to a file
-        path = "results/param/{}".format(model_file_name_dir)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        with open("results/param/{}/fold_{}".format(model_file_name_dir, fold_nb), "wb+") as handle:
-            pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    # save trained model to a file
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+        pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        # testing
-        fold_accuracy = calculate_accuracy(model, test_dataloader)[0]
-        accuracies.append(fold_accuracy)
-        print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
+    # testing
+    accuracy = calculate_accuracy(model, val_dataloader)[0]
+    return accuracy
 
-    return sum(accuracies) / 10, accuracies
+################################################# DATASET ###############################################
+# dataset = "mnist"
+dataset = "fashion_mnist"
+#########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 1
-batch_size = 8
+batch_size = 256
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
+size_val = 0.1
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -94,19 +89,22 @@ random.seed(seed)
 numpy.random.seed(seed)
 torch.manual_seed(seed)
 
-# shuffle dataset
-generate_dataset(seed)
+# generate and shuffle dataset
+if dataset == "mnist":
+    generate_dataset_mnist(seed, 0)
+elif dataset == "fashion_mnist":
+    generate_dataset_fashion_mnist(seed, 0)
 
-# import train set
-train_set_list = import_datasets_kfold()
+# import train, val and test set
+train_set, val_set, _ = import_datasets(dataset, size_val)
 
-# generate name of folder that holds all the trained models
-model_file_name_dir = "DeepStochLog_param_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-    epsilon, use_dropout)
+# generate name of file that holds the trained model
+model_file_name = "param/DeepStochLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, 
+    learning_rate, epsilon, use_dropout, size_val)
 
 # train and test
-avg_accuracy, accuracies = train_and_test(model_file_name_dir, train_set_list, nb_epochs, batch_size, 
-    learning_rate, epsilon, use_dropout)
+accuracy = train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batch_size, 
+                          learning_rate, epsilon, use_dropout)
 
 # save results to a summary file
 information = {
@@ -117,15 +115,15 @@ information = {
     "learning_rate": learning_rate,
     "epsilon": epsilon,
     "use_dropout": use_dropout,
-    "accuracies": accuracies,
-    "avg_accuracy": avg_accuracy,
-    "model_files_dir": model_file_name_dir
+    "size_val": size_val,
+    "accuracy": accuracy,
+    "model_file": model_file_name
 }
-with open("results/summary_param.json", "a") as outfile:
+with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
     json.dump(information, outfile)
     outfile.write('\n')
 
 # print results
 print("############################################")
-print("Seed: {} \nAccuracy: {}".format(seed, avg_accuracy))
+print("Accuracy: {}".format(accuracy))
 print("############################################")

@@ -19,7 +19,16 @@ transform = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
 )
 
-datasets = {
+datasets_mnist = {
+    "train": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=True, download=True, transform=transform
+    ),
+    "test": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=False, download=True, transform=transform
+    ),
+}
+
+datasets_fashion_mnist = {
     "train": torchvision.datasets.MNIST(
         root=str(DATA_ROOT), train=True, download=True, transform=transform
     ),
@@ -29,13 +38,22 @@ datasets = {
 }
 
 class SimpleAdditionDataset(Sequence):
-    def __init__(self, dataset_name, start_index, end_index, digit_length=1, size: int = None):
-        self.mnist_dataset = get_mnist_data(dataset_name)
+    def __init__(self, dataset, dataset_name, start_index, end_index, digit_length=1, size: int = None):
+        self.dataset = dataset
+        self.mnist_dataset = get_mnist_data(dataset, dataset_name)
         self.ct_term_dataset = []
-        if (dataset_name == "train"):
-            dataset, labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
-        elif (dataset_name == "test"):
-            dataset, labels = parse_data("../data/MNIST/processed/test.txt", start_index, end_index)
+
+        if self.dataset == "mnist":
+            if (dataset_name == "train"):
+                dataset, labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
+            elif (dataset_name == "test"):
+                dataset, labels = parse_data("../data/MNIST/processed/test.txt", start_index, end_index)
+        elif self.dataset == "fashion_mnist":
+            if (dataset_name == "train"):
+                dataset, labels = parse_data("../data/FashionMNIST/processed/train.txt", start_index, end_index)
+            elif (dataset_name == "test"):
+                dataset, labels = parse_data("../data/FashionMNIST/processed/test.txt", start_index, end_index)
+
         for idx in range(0, len(dataset)):
             mnist_datapoint_1 = self.mnist_dataset[dataset[idx][0]][0]
             mnist_datapoint_2 = self.mnist_dataset[dataset[idx][1]][0]
@@ -63,9 +81,12 @@ class SimpleAdditionDataset(Sequence):
             return (self[i] for i in range(*item.indices(len(self))))
         return self.ct_term_dataset[item]
 
-def get_mnist_data(dataset) -> MNIST:
-    return datasets[dataset]
-
+def get_mnist_data(dataset, dataset_name) -> MNIST:
+    if dataset == "mnist":
+        return datasets_mnist[dataset_name]
+    elif dataset == "fashion_mnist":
+        return datasets_fashion_mnist[dataset_name]
+    
 def parse_data(filename, start, end):
     with open(filename) as f:
         entries = f.readlines()
@@ -122,16 +143,16 @@ def get_next(idx: int, elements: typing.MutableSequence) -> Tuple[any, int]:
     idx += 1
     return result, idx
 
-def import_datasets(size_val):
+def import_datasets(dataset, size_val):
     split_index = round(size_val * 30000)
-    train_set = SimpleAdditionDataset("train", split_index, 30000)
-    val_set = SimpleAdditionDataset("train", 0, split_index)
-    test_set = SimpleAdditionDataset("test", 0, 5000)
+    train_set = SimpleAdditionDataset(dataset, "train", split_index, 30000)
+    val_set = SimpleAdditionDataset(dataset, "train", 0, split_index)
+    test_set = SimpleAdditionDataset(dataset, "test", 0, 5000)
     return train_set, val_set, test_set
 
-def import_datasets_kfold():
+def import_datasets_kfold(dataset):
     train_set_list = []
     for i in range(10):
-        train_set = SimpleAdditionDataset("train", i*3000, (i+1)*3000)
+        train_set = SimpleAdditionDataset(dataset, "train", i*3000, (i+1)*3000)
         train_set_list.append(train_set)
     return train_set_list

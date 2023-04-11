@@ -17,11 +17,11 @@ from deepstochlog.network import Network, NetworkStore
 from deepstochlog.utils import create_model_accuracy_calculator, calculate_accuracy
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, 
-    epsilon, use_dropout):
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
+                   learning_rate, epsilon, use_dropout):
     # create a network object containing the MNIST network and the index list
     if use_dropout:
         mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
@@ -82,7 +82,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open("results/final/{}".format(model_file_name), "wb") as handle:
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
         pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # testing
@@ -92,9 +92,15 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
 
     return accuracy, total_training_time, testing_time
 
+################################################# DATASET ###############################################
+# dataset = "mnist"
+dataset = "fashion_mnist"
+label_noise = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
-batch_size = 8
+nb_epochs = 1
+batch_size = 256
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
@@ -107,19 +113,22 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # shuffle dataset
-    generate_dataset(seed)
+    # generate and shuffle dataset
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
 
     # import train, val and test set
-    train_set, val_set, test_set = import_datasets(size_val)
+    train_set, val_set, test_set = import_datasets(dataset, size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "DeepStochLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-        epsilon, use_dropout, size_val)
+    model_file_name = "final/label_noise_{}/DeepStochLog_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, 
+        seed, nb_epochs, batch_size, learning_rate, epsilon, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        nb_epochs, batch_size, learning_rate, epsilon, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
+        test_set, nb_epochs, batch_size, learning_rate, epsilon, use_dropout)
 
     # save results to a summary file
     information = {
@@ -136,7 +145,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
