@@ -62,16 +62,13 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 method = "exact"
-nb_epochs = 1
-batch_size = 8
+nb_epochs = 3
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-# (1, 8, 0.001, False)
-# (3, 8, 0.001, False)
-# (2, 4, 0.001, False)
 # (3, 2, 0.001, False)
 
 # setting seeds for reproducibility

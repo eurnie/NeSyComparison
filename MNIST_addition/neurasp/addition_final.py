@@ -13,7 +13,7 @@ from torchvision.transforms import transforms
 from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net, Net_Dropout
 
 class MNIST_Addition(Dataset):
@@ -34,8 +34,8 @@ class MNIST_Addition(Dataset):
         i1, i2, l = self.data[index]
         return self.dataset[i1][0], self.dataset[i2][0], l
 
-def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val, obsList_val, 
-    dataList_test, obsList_test, nb_epochs, batch_size):
+def train_and_test(dataset, model_file_name, dataList_train, obsList_train, 
+    dataList_val, obsList_val, dataList_test, obsList_test, nb_epochs, batch_size):
     
     # training (with early stopping)
     total_training_time = 0
@@ -64,7 +64,7 @@ def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val,
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open("results/final/{}".format(model_file_name), "wb") as handle:
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
         pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # testing
@@ -74,9 +74,15 @@ def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val,
 
     return accuracy, total_training_time, testing_time
 
+################################################# DATASET ###############################################
+# dataset = "mnist"
+dataset = "fashion_mnist"
+label_noise = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
-batch_size = 8
+nb_epochs = 1
+batch_size = 256
 learning_rate = 0.001
 use_dropout = True
 size_val = 0.1
@@ -90,11 +96,20 @@ transform = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
 )
 
-datasets = {
+datasets_mnist = {
     "train": torchvision.datasets.MNIST(
         root=str(DATA_ROOT), train=True, download=True, transform=transform
     ),
     "test": torchvision.datasets.MNIST(
+        root=str(DATA_ROOT), train=False, download=True, transform=transform
+    )
+}
+
+datasets_fashion_mnist = {
+    "train": torchvision.datasets.FashionMNIST(
+        root=str(DATA_ROOT), train=True, download=True, transform=transform
+    ),
+    "test": torchvision.datasets.FashionMNIST(
         root=str(DATA_ROOT), train=False, download=True, transform=transform
     )
 }
@@ -112,30 +127,37 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    # shuffle dataset
-    generate_dataset(seed)
-
-    # import train, val and test set
+    # generate and shuffle dataset
     split_index = round(size_val * 30000)
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+        trainDataset = MNIST_Addition(datasets_mnist["train"], dir_path + "/../data/MNIST/processed/train.txt",
+            start_index=split_index, end_index=30000)
+        valDataset = MNIST_Addition(datasets_mnist["train"], dir_path + "/../data/MNIST/processed/train.txt",
+            start_index=0, end_index=split_index)
+        testDataset = MNIST_Addition(datasets_mnist["test"], dir_path + "/../data/MNIST/processed/test.txt",
+            start_index=0, end_index=5000)
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
+        trainDataset = MNIST_Addition(datasets_fashion_mnist["train"], dir_path + "/../data/FashionMNIST/processed/train.txt",
+            start_index=split_index, end_index=30000)
+        valDataset = MNIST_Addition(datasets_fashion_mnist["train"], dir_path + "/../data/FashionMNIST/processed/train.txt",
+            start_index=0, end_index=split_index)
+        testDataset = MNIST_Addition(datasets_fashion_mnist["test"], dir_path + "/../data/FashionMNIST/processed/test.txt",
+            start_index=0, end_index=5000)
 
-    trainDataset = MNIST_Addition(datasets["train"], dir_path + "/../data/MNIST/processed/train.txt",
-        start_index=split_index, end_index=30000)
     dataList_train = []
     obsList_train = []
     for i1, i2, l in trainDataset:
         dataList_train.append({'i1': i1[0].unsqueeze(0), 'i2': i2[0].unsqueeze(0)})
         obsList_train.append(':- not addition(i1, i2, {}).'.format(l))
 
-    valDataset = MNIST_Addition(datasets["train"], dir_path + "/../data/MNIST/processed/train.txt",
-        start_index=0, end_index=split_index)
     dataList_val = []
     obsList_val = []
     for i1, i2, l in valDataset:
         dataList_val.append({'i1': i1[0].unsqueeze(0), 'i2': i2[0].unsqueeze(0)})
         obsList_val.append(':- not addition(i1, i2, {}).'.format(l))
 
-    testDataset = MNIST_Addition(datasets["test"], dir_path + "/../data/MNIST/processed/test.txt",
-        start_index=0, end_index=5000)
     dataList_test = []
     obsList_test = []
     for i1, i2, l in testDataset:
@@ -152,12 +174,12 @@ for seed in range(0, 10):
     NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
 
     # generate name of file that holds the trained model
-    model_file_name = "NeurASP_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, 
-        learning_rate, use_dropout, size_val)
+    model_file_name = "final/label_noise_{}/NeurASP_final_{}_{}_{}_{}_{}_{}".format(label_noise, 
+        seed, nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
     # train and test the method on the MNIST addition dataset
-    accuracy, training_time, testing_time = train_and_test(model_file_name, dataList_train, obsList_train,
-        dataList_val, obsList_val, dataList_test, obsList_test, nb_epochs, batch_size)
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, dataList_train, 
+        obsList_train, dataList_val, obsList_val, dataList_test, obsList_test, nb_epochs, batch_size)
 
     # save results to a summary file
     information = {
@@ -173,7 +195,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
