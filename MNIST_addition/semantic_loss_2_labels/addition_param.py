@@ -166,6 +166,19 @@ use_dropout = True
 size_val = 0.1
 #########################################################################################################
 
+# (2, 8, 0.001, False)
+# (3, 16, 0.001, False)
+# (1, 2, 0.001, False)
+# (2, 2, 0.001, False)
+# (2, 16, 0.001, False)
+# (1, 16, 0.001, False)
+# (1, 8, 0.001, False)
+# (3, 8, 0.001, False)
+# (2, 4, 0.001, False)
+# (3, 2, 0.001, False)
+# (3, 4, 0.001, False)
+# (1, 4, 0.001, False)
+
 # setting seeds for reproducibility
 random.seed(seed)
 numpy.random.seed(seed)

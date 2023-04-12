@@ -142,25 +142,12 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 2
-batch_size = 8
+nb_epochs = 1
+batch_size = 4
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
-
-# (2, 8, 0.001, False)
-# (3, 16, 0.001, False)
-# (1, 2, 0.001, False)
-# (2, 2, 0.001, False)
-# (2, 16, 0.001, False)
-# (1, 16, 0.001, False)
-# (1, 8, 0.001, False)
-# (3, 8, 0.001, False)
-# (2, 4, 0.001, False)
-# (3, 2, 0.001, False)
-# (3, 4, 0.001, False)
-# (1, 4, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)
