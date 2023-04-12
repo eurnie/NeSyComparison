@@ -14,9 +14,9 @@ from torch.utils.data import DataLoader
 from semantic_loss_pytorch import SemanticLoss
 from pathlib import Path
 
-sys.path.append("..")
+sys.path.append("../..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net_SL, Net_SL_Dropout
+from data.network_torch import Net_NN, Net_NN_Dropout
 
 def parse_data(dataset, filename, dataset_name, size_val):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
@@ -70,29 +70,21 @@ def parse_data(dataset, filename, dataset_name, size_val):
     for i in range(start, end):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
-        new_tensor = numpy.array([torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()])
-
-        if (dataset_name == "train"):
-            dataset.append((torch.tensor(new_tensor), [datasets[dataset_name][index_digit_1][1], datasets[dataset_name][index_digit_2][1]+10]))
-        elif ((dataset_name == "test") or (dataset_name == "val")):
-            sum = int(entries[i].split(" ")[2])
-            dataset.append((torch.tensor(new_tensor), sum))
-
+        sum = int(entries[i].split(" ")[2])
+        first = datasets[dataset_used][index_digit_1][0][0]
+        second = datasets[dataset_used][index_digit_2][0][0]
+        new_tensor = torch.cat((first, second), 0)
+        new_tensor = new_tensor[None, :]
+        dataset.append((new_tensor, sum))
+    
     return dataset
 
 def train(dataloader, model, sl, loss_fn, optimizer):
     model.train()
     for (x, y) in dataloader:
         # compute prediction error
-        multilabels = []
-        for i in range(0, len(x)):
-            new_label = numpy.zeros(20)
-            new_label[y[0][i]] = 1
-            new_label[y[1][i]] = 1
-            multilabels.append(new_label)
-
         pred = model(x)
-        loss = loss_fn(pred, torch.tensor(numpy.array(multilabels)).type(torch.float)) + sl(pred)
+        loss = loss_fn(pred, y) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -106,24 +98,16 @@ def test(dataloader, model):
     with torch.no_grad():
         for x, y in dataloader:
             pred = model(x)
-            predicted = torch.topk(pred, 2, largest=True).indices.numpy()[0]
-            if predicted[0] < predicted[1]:
-                number_1 = predicted[0]
-                number_2 = predicted[1] - 10
-            else:
-                number_1 = predicted[0] - 10
-                number_2 = predicted[1]
-            result = number_1 + number_2
-            correct += (result == y).type(torch.float).sum().item()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
             total += len(x)
-    return correct / total 
+    return correct / total
 
 def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
                    learning_rate, use_dropout):
     if use_dropout:
-        model = Net_SL_Dropout()
+        model = Net_NN_Dropout()
     else:
-        model = Net_SL()
+        model = Net_NN()
     sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
     loss_fn = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)

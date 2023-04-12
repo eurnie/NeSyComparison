@@ -43,9 +43,7 @@ def train_and_test(dataset, model_file_name_dir, train_set, val_set, method, nb_
     loader = DataLoader(train_set, batch_size, False)
 
     # training (no early stopping)
-    for epoch in range(nb_epochs):
-        print(f'Training: epoch {epoch + 1}')
-        train_model(model, loader, 1, log_iter=100000, profile=0)
+    train_model(model, loader, nb_epochs, log_iter=100, profile=0)
         
     # save trained model to a file
     model.save_state(f'results/{dataset}/param/{model_file_name_dir}')
@@ -62,14 +60,12 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 method = "exact"
-nb_epochs = 3
-batch_size = 2
+nb_epochs = 1
+batch_size = 4
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
-
-# (3, 2, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)

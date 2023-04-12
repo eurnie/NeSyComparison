@@ -57,9 +57,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batc
 
     # training (with early stopping)
     trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
-
-    for _ in range(nb_epochs):
-        trainer.train(model, optimizer, train_dataloader, 1, epsilon)
+    trainer.train(model, optimizer, train_dataloader, nb_epochs, epsilon)
 
     # save trained model to a file
     with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
@@ -77,12 +75,15 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 3
-batch_size = 2
+batch_size = 4
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
+
+# (3, 4, 0.001, False)
+# (1, 4, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)

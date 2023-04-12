@@ -1,7 +1,7 @@
 import json
 from sklearn import linear_model
 
-input_file = 'MNIST_addition/deepproblog/results/mnist/param/summary_param.json'
+input_file = 'MNIST_addition/deepproblog/results/mnist/kfold/summary_kfold.json'
 
 with open(input_file) as f:
     lines = f.readlines()

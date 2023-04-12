@@ -44,7 +44,7 @@ TOTAL_COMBINATIONS = 12
 
 ########################### NEW ###########################
 
-# deepproblog, deepstochlog, neurasp
+# deepproblog, deepstochlog, neurasp, LTN
 possible_nb_epochs = [1, 2, 3]
 possible_batch_size = [2, 4, 8, 16]
 possible_learning_rate = [0.001]

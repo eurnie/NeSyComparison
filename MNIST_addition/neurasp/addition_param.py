@@ -61,6 +61,9 @@ use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
+# (3, 4, 0.001, False)
+# (1, 4, 0.001, False)
+
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')

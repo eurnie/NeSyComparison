@@ -93,8 +93,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, lear
         scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
 
     # training
-    for epoch in range(nb_epochs):
-        train_modified(train_set, train_step, scheduled_parameters, 1)
+    train_modified(train_set, train_step, scheduled_parameters, nb_epochs)
 
     # save trained model to a file
     with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
@@ -105,8 +104,8 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, lear
     return accuracy
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
+dataset = "mnist"
+# dataset = "fashion_mnist"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -118,6 +117,19 @@ p_schedule = 1.
 use_dropout = True
 size_val = 0.1
 #########################################################################################################
+
+# (2, 8, 0.001, False)
+# (3, 16, 0.001, False)
+# (1, 2, 0.001, False)
+# (2, 2, 0.001, False)
+# (2, 16, 0.001, False)
+# (1, 16, 0.001, False)
+# (1, 8, 0.001, False)
+# (3, 8, 0.001, False)
+# (2, 4, 0.001, False)
+# (3, 2, 0.001, False)
+# (3, 4, 0.001, False)
+# (1, 4, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)
