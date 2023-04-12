@@ -54,16 +54,12 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 1
-batch_size = 8
+nb_epochs = 3
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
-
-# (3, 8, 0.001, False)
-# (2, 4, 0.001, False)
-# (3, 2, 0.001, False)
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)

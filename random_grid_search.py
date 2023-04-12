@@ -2,7 +2,7 @@ import random
 from itertools import product
 
 random.seed(0)
-TOTAL_COMBINATIONS = 10
+TOTAL_COMBINATIONS = 12
 
 ########################### OLD ###########################
 
