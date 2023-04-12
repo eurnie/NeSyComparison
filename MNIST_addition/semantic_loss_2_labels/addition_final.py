@@ -14,12 +14,12 @@ from torch.utils.data import DataLoader
 from semantic_loss_pytorch import SemanticLoss
 from pathlib import Path
 
-sys.path.append("../..")
+sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net_SL, Net_SL_Dropout
 
 def parse_data(dataset, filename, dataset_name, size_val):
-    DATA_ROOT = Path(__file__).parent.parent.parent.joinpath('data')
+    DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]

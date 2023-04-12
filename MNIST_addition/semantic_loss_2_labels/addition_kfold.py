@@ -1,6 +1,7 @@
 import random
 import numpy
 import sys
+import os
 import json
 import torch
 import torchvision
@@ -11,13 +12,15 @@ from torch import nn
 from torch.utils.data import DataLoader
 from semantic_loss_pytorch import SemanticLoss
 from pathlib import Path
+from sklearn.model_selection import KFold
+from torch.utils.data import DataLoader, SubsetRandomSampler
 
-sys.path.append("../..")
+sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_torch import Net_SL, Net_SL_Dropout
 
-def parse_data(dataset, filename, dataset_name, size_val):
-    DATA_ROOT = Path(__file__).parent.parent.parent.joinpath('data')
+def parse_data(dataset, filename):
+    DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
@@ -46,35 +49,18 @@ def parse_data(dataset, filename, dataset_name, size_val):
     elif dataset == "fashion_mnist":
         datasets = datasets_fashion_mnist
 
-    split_index = round(size_val * 30000)
-    if dataset_name == "train":
-        dataset_used = "train"
-        start = split_index
-        end = 30000
-    elif dataset_name == "val":
-        dataset_used = "train"
-        start = 0
-        end = split_index
-    elif dataset_name == "test":
-        dataset_used = "test"
-        start = 0
-        end = 5000
+    dataset_used = "train"
 
     with open(filename + dataset_used + ".txt") as f:
         entries = f.readlines()
 
     dataset = []
 
-    for i in range(start, end):
+    for i in range(0, 30000):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
         new_tensor = numpy.array([torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()])
-
-        if (dataset_name == "train"):
-            dataset.append((torch.tensor(new_tensor), [datasets[dataset_name][index_digit_1][1], datasets[dataset_name][index_digit_2][1]+10]))
-        elif ((dataset_name == "test") or (dataset_name == "val")):
-            sum = int(entries[i].split(" ")[2])
-            dataset.append((torch.tensor(new_tensor), sum))
+        dataset.append((torch.tensor(new_tensor), [datasets[dataset_used][index_digit_1][1], datasets[dataset_used][index_digit_2][1]+10]))
 
     return dataset
 
@@ -112,58 +98,73 @@ def test(dataloader, model):
                 number_1 = predicted[0] - 10
                 number_2 = predicted[1]
             result = number_1 + number_2
-            correct += (result == y).type(torch.float).sum().item()
+            real_number_1 = y[0]
+            real_number_2 = y[1] - 10
+            label = real_number_1 + real_number_2
+            correct += (result == label).type(torch.float).sum().item()
             total += len(x)
     return correct / total 
 
-def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batch_size, 
-                   learning_rate, use_dropout):
-    if use_dropout:
-        model = Net_SL_Dropout()
-    else:
-        model = Net_SL()
-    sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
-    loss_fn = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+def train_and_test(dataset, model_file_name_dir, total_train_set, nb_epochs, batch_size, learning_rate, 
+    use_dropout):
+    accuracies = []
+    kfold = KFold(n_splits=10, shuffle=True)
 
-    train_dataloader = DataLoader(train_set, batch_size=batch_size)
-    val_dataloader = DataLoader(val_set, batch_size=1)
+    for fold_nb, (train_ids, valid_ids) in enumerate(kfold.split(total_train_set)):
+        train_subsampler = SubsetRandomSampler(train_ids)
+        valid_subsampler = SubsetRandomSampler(valid_ids)
 
-    # display image and label
-    # train_features, train_labels = next(iter(train_dataloader))
-    # print(f"Feature batch shape: {train_features.size()}")
-    # print(f"Labels batch shape: {train_labels.size()}")
-    # img = train_features[0].squeeze()
-    # label = train_labels[0]
-    # plt.imshow(img, cmap="gray")
-    # plt.show()
-    # print(f"Label: {label}")
+        train_dataloader = DataLoader(total_train_set, batch_size=batch_size, sampler=train_subsampler)
+        test_dataloader = DataLoader(total_train_set, batch_size=1, sampler=valid_subsampler)
 
-    # training
-    for epoch in range(nb_epochs):
-        train(train_dataloader, model, sl, loss_fn, optimizer)
+        if use_dropout:
+            model = Net_SL_Dropout()
+        else:
+            model = Net_SL()
+        sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
+        loss_fn = nn.BCELoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
-        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-    # testing
-    accuracy = test(val_dataloader, model)
-    return accuracy
+        # display image and label
+        # train_features, train_labels = next(iter(train_dataloader))
+        # print(f"Feature batch shape: {train_features.size()}")
+        # print(f"Labels batch shape: {train_labels.size()}")
+        # img = train_features[0].squeeze()
+        # label = train_labels[0]
+        # plt.imshow(img, cmap="gray")
+        # plt.show()
+        # print(f"Label: {label}")
+
+        # training
+        for epoch in range(nb_epochs):
+            train(train_dataloader, model, sl, loss_fn, optimizer)
+            print("Epoch", epoch + 1, "finished.")
+
+        # save trained model to a file
+        path = f'results/{dataset}/kfold/{model_file_name_dir}'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        with open(f'results/{dataset}/kfold/{model_file_name_dir}/fold_{fold_nb}', "wb+") as handle:
+            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # testing
+        fold_accuracy = test(test_dataloader, model)
+        accuracies.append(fold_accuracy)
+        print(fold_nb + 1, "-- Fold accuracy: ", fold_accuracy)
+
+    return accuracies, sum(accuracies) / 10
 
 ################################################# DATASET ###############################################
 # dataset = "mnist"
 dataset = "fashion_mnist"
-label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 1
-batch_size = 16
+batch_size = 2
 learning_rate = 0.001
-use_dropout = True
-size_val = 0.1
+use_dropout = False
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -173,23 +174,22 @@ torch.manual_seed(seed)
 
 # generate and shuffle dataset
 if dataset == "mnist":
-    generate_dataset_mnist(seed, label_noise)
+    generate_dataset_mnist(seed, 0)
     processed_data_path = "../data/MNIST/processed/"
 elif dataset == "fashion_mnist":
-    generate_dataset_fashion_mnist(seed, label_noise)
+    generate_dataset_fashion_mnist(seed, 0)
     processed_data_path = "../data/FashionMNIST/processed/"
 
-# import train, val and test set
-train_set = parse_data(dataset, processed_data_path, "train", size_val)
-val_set = parse_data(dataset, processed_data_path, "val", size_val)
+# import train set
+train_set = parse_data(dataset, processed_data_path)
 
-# generate name of file that holds the trained model
-model_file_name = "param/SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
-    nb_epochs, batch_size, learning_rate, use_dropout, size_val)
+# generate name of folder that holds all the trained models
+model_file_name_dir = "SL_kfold_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+    use_dropout)
 
 # train and test
-accuracy = train_and_test(dataset, model_file_name, train_set, val_set, 
-    nb_epochs, batch_size, learning_rate, use_dropout)
+accuracies, avg_accuracy = train_and_test(dataset, model_file_name_dir, train_set, nb_epochs, 
+    batch_size, learning_rate, use_dropout)
 
 # save results to a summary file
 information = {
@@ -199,15 +199,15 @@ information = {
     "batch_size": batch_size,
     "learning_rate": learning_rate,
     "use_dropout": use_dropout,
-    "size_val": size_val,
-    "accuracy": accuracy,
-    "model_file": model_file_name
+    "accuracies": accuracies,
+    "avg_accuracy": avg_accuracy,
+    "model_files_dir": model_file_name_dir
 }
-with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+with open(f'results/{dataset}/kfold/summary_kfold.json', "a") as outfile:
     json.dump(information, outfile)
     outfile.write('\n')
 
 # print results
 print("############################################")
-print("Accuracy: {}".format(accuracy))
+print("Seed: {} \nAvg_accuracy: {}".format(seed, avg_accuracy))
 print("############################################")

@@ -1,8 +1,6 @@
 import random
 import numpy
-import time
 import sys
-import os
 import json
 import torch
 import torchvision
@@ -14,12 +12,12 @@ from torch.utils.data import DataLoader
 from semantic_loss_pytorch import SemanticLoss
 from pathlib import Path
 
-sys.path.append("../..")
+sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net_NN, Net_NN_Dropout
+from data.network_torch import Net_SL, Net_SL_Dropout
 
 def parse_data(dataset, filename, dataset_name, size_val):
-    DATA_ROOT = Path(__file__).parent.parent.parent.joinpath('data')
+    DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
@@ -70,21 +68,29 @@ def parse_data(dataset, filename, dataset_name, size_val):
     for i in range(start, end):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
-        sum = int(entries[i].split(" ")[2])
-        first = datasets[dataset_used][index_digit_1][0][0]
-        second = datasets[dataset_used][index_digit_2][0][0]
-        new_tensor = torch.cat((first, second), 0)
-        new_tensor = new_tensor[None, :]
-        dataset.append((new_tensor, sum))
-    
+        new_tensor = numpy.array([torch.cat((datasets[dataset_used][index_digit_1][0][0], datasets[dataset_used][index_digit_2][0][0]), 0).numpy()])
+
+        if (dataset_name == "train"):
+            dataset.append((torch.tensor(new_tensor), [datasets[dataset_name][index_digit_1][1], datasets[dataset_name][index_digit_2][1]+10]))
+        elif ((dataset_name == "test") or (dataset_name == "val")):
+            sum = int(entries[i].split(" ")[2])
+            dataset.append((torch.tensor(new_tensor), sum))
+
     return dataset
 
 def train(dataloader, model, sl, loss_fn, optimizer):
     model.train()
     for (x, y) in dataloader:
         # compute prediction error
+        multilabels = []
+        for i in range(0, len(x)):
+            new_label = numpy.zeros(20)
+            new_label[y[0][i]] = 1
+            new_label[y[1][i]] = 1
+            multilabels.append(new_label)
+
         pred = model(x)
-        loss = loss_fn(pred, y) + sl(pred)
+        loss = loss_fn(pred, torch.tensor(numpy.array(multilabels)).type(torch.float)) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -98,23 +104,30 @@ def test(dataloader, model):
     with torch.no_grad():
         for x, y in dataloader:
             pred = model(x)
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            predicted = torch.topk(pred, 2, largest=True).indices.numpy()[0]
+            if predicted[0] < predicted[1]:
+                number_1 = predicted[0]
+                number_2 = predicted[1] - 10
+            else:
+                number_1 = predicted[0] - 10
+                number_2 = predicted[1]
+            result = number_1 + number_2
+            correct += (result == y).type(torch.float).sum().item()
             total += len(x)
-    return correct / total
+    return correct / total 
 
-def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
+def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batch_size, 
                    learning_rate, use_dropout):
     if use_dropout:
-        model = Net_NN_Dropout()
+        model = Net_SL_Dropout()
     else:
-        model = Net_NN()
+        model = Net_SL()
     sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size)
     val_dataloader = DataLoader(val_set, batch_size=1)
-    test_dataloader = DataLoader(test_set, batch_size=1)
 
     # display image and label
     # train_features, train_labels = next(iter(train_dataloader))
@@ -126,40 +139,17 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     # plt.show()
     # print(f"Label: {label}")
 
-    # training (with early stopping)
-    total_training_time = 0
-    best_accuracy = 0
-    counter = 0
+    # training
     for epoch in range(nb_epochs):
-        start_time = time.time()
         train(train_dataloader, model, sl, loss_fn, optimizer)
-        total_training_time += time.time() - start_time
-        val_accuracy = test(val_dataloader, model)
-        print("Val accuracy after epoch", epoch, ":", val_accuracy)
-        if val_accuracy > best_accuracy:
-            best_accuracy = val_accuracy
-            with open("best_model.pickle", "wb") as handle:
-                pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            counter = 0
-        else:
-            if counter >= 0:
-                break
-            counter += 1
-    with open("best_model.pickle", "rb") as handle:
-        model = pickle.load(handle)
-
-    os.remove("best_model.pickle")
 
     # save trained model to a file
     with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
-    start_time = time.time()
-    accuracy = test(test_dataloader, model)
-    testing_time = time.time() - start_time
-
-    return accuracy, total_training_time, testing_time
+    accuracy = test(val_dataloader, model)
+    return accuracy
 
 ################################################# DATASET ###############################################
 # dataset = "mnist"
@@ -168,60 +158,56 @@ label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
+seed = 0
 nb_epochs = 1
 batch_size = 16
 learning_rate = 0.001
-use_dropout = False
+use_dropout = True
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(0, 10):
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+# setting seeds for reproducibility
+random.seed(seed)
+numpy.random.seed(seed)
+torch.manual_seed(seed)
 
-    # generate and shuffle dataset
-    if dataset == "mnist":
-        generate_dataset_mnist(seed, label_noise)
-        processed_data_path = "../data/MNIST/processed/"
-    elif dataset == "fashion_mnist":
-        generate_dataset_fashion_mnist(seed, label_noise)
-        processed_data_path = "../data/FashionMNIST/processed/"
+# generate and shuffle dataset
+if dataset == "mnist":
+    generate_dataset_mnist(seed, label_noise)
+    processed_data_path = "../data/MNIST/processed/"
+elif dataset == "fashion_mnist":
+    generate_dataset_fashion_mnist(seed, label_noise)
+    processed_data_path = "../data/FashionMNIST/processed/"
 
-    # import train, val and test set
-    train_set = parse_data(dataset, processed_data_path, "train", size_val)
-    val_set = parse_data(dataset, processed_data_path, "val", size_val)
-    test_set = parse_data(dataset, processed_data_path, "test", size_val)
+# import train, val and test set
+train_set = parse_data(dataset, processed_data_path, "train", size_val)
+val_set = parse_data(dataset, processed_data_path, "val", size_val)
 
-    # generate name of file that holds the trained model
-    model_file_name = "final/label_noise_{}/SL_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
-        nb_epochs, batch_size, learning_rate, use_dropout, size_val)
+# generate name of file that holds the trained model
+model_file_name = "param/SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
+    nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
-    # train and test
-    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
-        test_set, nb_epochs, batch_size, learning_rate, use_dropout)
-    
-    # save results to a summary file
-    information = {
-        "algorithm": "SL",
-        "seed": seed,
-        "nb_epochs": nb_epochs,
-        "batch_size": batch_size,
-        "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
-        "size_val": size_val,
-        "accuracy": accuracy,
-        "training_time": training_time,
-        "testing_time": testing_time,
-        "model_file": model_file_name
-    }
-    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
-        json.dump(information, outfile)
-        outfile.write('\n')
+# train and test
+accuracy = train_and_test(dataset, model_file_name, train_set, val_set, 
+    nb_epochs, batch_size, learning_rate, use_dropout)
 
-    # print results
-    print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
-        training_time, testing_time))
-    print("############################################")
+# save results to a summary file
+information = {
+    "algorithm": "SL",
+    "seed": seed,
+    "nb_epochs": nb_epochs,
+    "batch_size": batch_size,
+    "learning_rate": learning_rate,
+    "use_dropout": use_dropout,
+    "size_val": size_val,
+    "accuracy": accuracy,
+    "model_file": model_file_name
+}
+with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+    json.dump(information, outfile)
+    outfile.write('\n')
+
+# print results
+print("############################################")
+print("Accuracy: {}".format(accuracy))
+print("############################################")
