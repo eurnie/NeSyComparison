@@ -1,5 +1,3 @@
-import re
-import collections
 import numpy as np
 
 def evaluate_on_mnist(test_path, predicate_to_idx, entity_to_idx, scoring_function):
@@ -36,7 +34,7 @@ def evaluate_on_mnist(test_path, predicate_to_idx, entity_to_idx, scoring_functi
         y = int(labels[i])
         scores = np.array(predict(image_1, image_2))
 
-        print(f'actual: {y} -- predicted: {scores.argmax(0)}')
+        # print(f'actual: {y} -- predicted: {scores.argmax(0)}')
     
         if scores.argmax(0) == y:
             correct += 1

@@ -8,7 +8,7 @@ import logging
 import multiprocessing
 import numpy as np
 from torch import nn, optim, Tensor
-from ctp.training.data import Data_MNIST
+from ctp.training.data import Data
 from ctp.training.batcher import Batcher
 from ctp.kernels import BaseKernel, GaussianKernel
 from ctp.smart.kb import NeuralKB
@@ -25,7 +25,7 @@ from evaluation import evaluate_on_mnist
 from custom_entity_embedding import CustomEntityEmbeddings
 
 sys.path.append("..")
-from data.generate_dataset import generate_dataset
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 
 logger = logging.getLogger(os.path.basename(sys.argv[0]))
 np.set_printoptions(linewidth=48, precision=5, suppress=True)
@@ -73,9 +73,9 @@ def show_rules(model: SimpleHoppy,
     return
 
 def create_datasets(train_path, test_path, size_val):
-    percentage_of_original_train_dataset = 0.1
-    percentage_of_original_dev_dataset = 0.01
-    percentage_of_original_test_dataset = 0.01
+    percentage_of_original_train_dataset = 1
+    percentage_of_original_dev_dataset = 1
+    percentage_of_original_test_dataset = 1
     
     split_index = round(size_val * 30000)
     output_file_names_list = []
@@ -125,6 +125,12 @@ def write_to_file(dataset, filename):
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logging.getLogger('nmslib').setLevel(logging.WARNING)
 
+################################################# DATASET ###############################################
+# dataset = "mnist"
+dataset = "fashion_mnist"
+label_noise = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
 nb_epochs = 1
 batch_size = 16
@@ -149,8 +155,6 @@ N2_weight = None
 N3_weight = None
 init_size = 1.0
 ref_init_type = "random"
-load_path = None
-save_path = None
 lower_bound = -1.0
 upper_bound = 1.0
 is_show = False
@@ -173,25 +177,30 @@ for seed in range(0, 10):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # shuffle dataset and create dataset files
-    generate_dataset(seed)
-    train_path, dev_path, test_path = create_datasets("../data/MNIST/processed/train.txt",
-        "../data/MNIST/processed/test.txt", size_val)
-    
+    # generate and shuffle dataset
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+        train_path, dev_path, test_path = create_datasets("../data/MNIST/processed/train.txt",
+            "../data/MNIST/processed/test.txt", size_val)
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
+        train_path, dev_path, test_path = create_datasets("../data/FashionMNIST/processed/train.txt",
+            "../data/FashionMNIST/processed/test.txt", size_val)
+
     # generate name of file that holds the trained model
-    model_file_name = "NTP_final_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(
-        seed, nb_epochs, batch_size, learning_rate, use_dropout,
+    model_file_name = "final/label_noise_{}/NTP_final_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(
+        label_noise, seed, nb_epochs, batch_size, learning_rate, use_dropout,
         size_val, embedding_size, k_max, optimizer_name, input_type,
         is_quiet, hops_str, nb_neg, reformulator_type, nb_rules,
         init_type, refresh_interval, index_type, test_i_path,
         test_ii_path, N2_weight, N3_weight, init_size, ref_init_type,
-        load_path, save_path, lower_bound, upper_bound, is_show,
+        lower_bound, upper_bound, is_show,
         is_fix_predicates, early_stopping)
 
-    data = Data_MNIST(train_path=train_path, dev_path=dev_path, test_path=test_path,
+    data = Data(train_path=train_path, dev_path=dev_path, test_path=test_path,
                 test_i_path=test_i_path, test_ii_path=test_ii_path, input_type=input_type)
 
-    entity_embeddings = CustomEntityEmbeddings(data.idx_to_entity, use_dropout)
+    entity_embeddings = CustomEntityEmbeddings(dataset, data.idx_to_entity, use_dropout)
     predicate_embeddings = nn.Embedding(data.nb_predicates, embedding_size, sparse=True)
 
     if init_type in {'uniform'}:
@@ -279,9 +288,6 @@ for seed in range(0, 10):
                     ({x for x in entity_embeddings.neural_net.parameters()})
 
     params = nn.ParameterList(params_lst).to(device)
-
-    if load_path is not None:
-        model.load_state_dict(torch.load(load_path))
 
     for tensor in params_lst:
         logger.info(f'\t{tensor.size()}\t{tensor.device}')
@@ -405,23 +411,22 @@ for seed in range(0, 10):
         os.remove("current_best_model")
 
     # save trained model to a file
-    torch.save(model.state_dict(), "results/final/{}".format(model_file_name))
+    torch.save(model.state_dict(), f'results/{dataset}/{model_file_name}')
 
     # evaluation
     start_time = time.time()
-    accuracy = evaluate_on_mnist(dev_path, data.predicate_to_idx, data.entity_to_idx, scoring_function)
+    accuracy = evaluate_on_mnist(test_path, data.predicate_to_idx, data.entity_to_idx, scoring_function)
     testing_time = time.time() - start_time
-    print('Final accuracy: {}'.format(accuracy))
 
     if is_show is True:
         with torch.no_grad():
             show_rules(model=model, kernel=kernel, predicate_embeddings=predicate_embeddings,
                         predicate_to_idx=data.predicate_to_idx, device=device)
 
-    if save_path is not None:
-        torch.save(model.state_dict(), save_path)
+    # save trained model to a file
+    torch.save(model.state_dict(), f'results/{dataset}/{model_file_name}')
 
-    # remove data files
+    # remove created data files
     os.remove("train.txt") 
     os.remove("dev.txt") 
     os.remove("test.txt")
@@ -453,8 +458,6 @@ for seed in range(0, 10):
         "N3_weight": N3_weight,
         "init_size": init_size,
         "ref_init_type": ref_init_type,
-        "load_path": load_path,
-        "save_path": save_path,
         "lower_bound": lower_bound,
         "upper_bound": upper_bound,
         "is_show": is_show,
@@ -465,7 +468,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
