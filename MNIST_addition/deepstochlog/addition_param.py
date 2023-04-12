@@ -74,16 +74,13 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 3
+nb_epochs = 1
 batch_size = 4
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
-
-# (3, 4, 0.001, False)
-# (1, 4, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)
