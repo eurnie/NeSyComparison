@@ -66,64 +66,47 @@ learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
+   
+# setting seeds for reproducibility
+random.seed(seed)
+numpy.random.seed(seed)
+torch.manual_seed(seed)
 
-param_list = []
-param_list.append((2, 8, 0.001, False))
-param_list.append((3, 16, 0.001, False))
-param_list.append((1, 2, 0.001, False))
-param_list.append((2, 2, 0.001, False))
-param_list.append((2, 16, 0.001, False))
-param_list.append((1, 16, 0.001, False))
-param_list.append((1, 8, 0.001, False))
-param_list.append((3, 8, 0.001, False))
-param_list.append((2, 4, 0.001, False))
-param_list.append((3, 2, 0.001, False))
-param_list.append((3, 4, 0.001, False))
-param_list.append((1, 4, 0.001, False))
+# generate and shuffle dataset
+if dataset == "mnist":
+    generate_dataset_mnist(seed, 0)
+elif dataset == "fashion_mnist":
+    generate_dataset_fashion_mnist(seed, 0)
 
+# import train and val set
+train_set, val_set, _ = import_datasets(dataset, size_val)
 
-for nb_epcohs, batch_size, learning_rate, use_dropout in param_list:
-    
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+# generate name of folder that holds all the trained models
+model_file_name_dir = "DeepProbLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, 
+    batch_size, learning_rate, use_dropout, size_val)
 
-    # generate and shuffle dataset
-    if dataset == "mnist":
-        generate_dataset_mnist(seed, 0)
-    elif dataset == "fashion_mnist":
-        generate_dataset_fashion_mnist(seed, 0)
+# train and test
+accuracy = train_and_test(dataset, model_file_name_dir, train_set, val_set, method, nb_epochs, batch_size, 
+                        learning_rate, use_dropout)
 
-    # import train and val set
-    train_set, val_set, _ = import_datasets(dataset, size_val)
+# save results to a summary file
+information = {
+    "algorithm": "DeepProbLog",
+    "seed": seed,
+    "method": method,
+    "nb_epochs": nb_epochs,
+    "batch_size": batch_size,
+    "learning_rate": learning_rate,
+    "use_dropout": use_dropout,
+    "size_val": size_val,
+    "accuracy": accuracy,
+    "model_files_dir": model_file_name_dir
+}
+with open(f'results/{method}/{dataset}/param/summary_param.json', "a") as outfile:
+    json.dump(information, outfile)
+    outfile.write('\n')
 
-    # generate name of folder that holds all the trained models
-    model_file_name_dir = "DeepProbLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, 
-        batch_size, learning_rate, use_dropout, size_val)
-
-    # train and test
-    accuracy = train_and_test(dataset, model_file_name_dir, train_set, val_set, method, nb_epochs, batch_size, 
-                            learning_rate, use_dropout)
-
-    # save results to a summary file
-    information = {
-        "algorithm": "DeepProbLog",
-        "seed": seed,
-        "method": method,
-        "nb_epochs": nb_epochs,
-        "batch_size": batch_size,
-        "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
-        "size_val": size_val,
-        "accuracy": accuracy,
-        "model_files_dir": model_file_name_dir
-    }
-    with open(f'results/{method}/{dataset}/param/summary_param.json', "a") as outfile:
-        json.dump(information, outfile)
-        outfile.write('\n')
-
-    # print results
-    print("############################################")
-    print("Accuracy: {}".format(accuracy))
-    print("############################################")
+# print results
+print("############################################")
+print("Accuracy: {}".format(accuracy))
+print("############################################")
