@@ -71,7 +71,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
     os.rmdir("best_model")
 
     # save trained model to a file
-    model.save_state(f'results/{dataset}/{model_file_name}')
+    model.save_state(f'results/{method}/{dataset}/{model_file_name}')
 
     # testing
     start_time = time.time()
@@ -133,7 +133,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
+    with open(f'results/{method}/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

@@ -152,32 +152,18 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batc
     return accuracy
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
-label_noise = 0
+dataset = "mnist"
+# dataset = "fashion_mnist"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 1
-batch_size = 16
+batch_size = 4
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 size_val = 0.1
 #########################################################################################################
-
-# (2, 8, 0.001, False)
-# (3, 16, 0.001, False)
-# (1, 2, 0.001, False)
-# (2, 2, 0.001, False)
-# (2, 16, 0.001, False)
-# (1, 16, 0.001, False)
-# (1, 8, 0.001, False)
-# (3, 8, 0.001, False)
-# (2, 4, 0.001, False)
-# (3, 2, 0.001, False)
-# (3, 4, 0.001, False)
-# (1, 4, 0.001, False)
 
 # setting seeds for reproducibility
 random.seed(seed)
@@ -186,10 +172,10 @@ torch.manual_seed(seed)
 
 # generate and shuffle dataset
 if dataset == "mnist":
-    generate_dataset_mnist(seed, label_noise)
+    generate_dataset_mnist(seed, 0)
     processed_data_path = "../data/MNIST/processed/"
 elif dataset == "fashion_mnist":
-    generate_dataset_fashion_mnist(seed, label_noise)
+    generate_dataset_fashion_mnist(seed, 0)
     processed_data_path = "../data/FashionMNIST/processed/"
 
 # import train, val and test set

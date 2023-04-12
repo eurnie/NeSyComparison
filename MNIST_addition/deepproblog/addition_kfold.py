@@ -54,7 +54,7 @@ def train_and_test(dataset, model_file_name_dir, train_set_list, method, nb_epoc
             print("Epoch", epoch + 1, "finished.")
 
         # save trained model to a file
-        model.save_state(f'results/{dataset}/kfold/{model_file_name_dir}/fold_{fold_nb}')
+        model.save_state(f'results/{method}/{dataset}/kfold/{model_file_name_dir}/fold_{fold_nb}')
 
         # testing
         fold_accuracy = get_confusion_matrix(model, test_set).accuracy()
@@ -112,7 +112,7 @@ information = {
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir
 }
-with open(f'results/{dataset}/kfold/summary_kfold.json', "a") as outfile:
+with open(f'results/{method}/{dataset}/kfold/summary_kfold.json', "a") as outfile:
     json.dump(information, outfile)
     outfile.write('\n')
 
