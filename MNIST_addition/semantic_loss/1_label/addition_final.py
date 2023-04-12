@@ -19,7 +19,7 @@ from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashi
 from data.network_torch import Net_NN, Net_NN_Dropout
 
 def parse_data(dataset, filename, dataset_name, size_val):
-    DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
+    DATA_ROOT = Path(__file__).parent.parent.parent.joinpath('data')
 
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
@@ -109,7 +109,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     else:
         model = Net_NN()
     sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
-    loss_fn = nn.BCELoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size)
@@ -171,7 +171,7 @@ label_noise = 0
 nb_epochs = 1
 batch_size = 16
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
