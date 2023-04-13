@@ -126,14 +126,14 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logging.getLogger('nmslib').setLevel(logging.WARNING)
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
+dataset = "mnist"
+# dataset = "fashion_mnist"
 label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 1
-batch_size = 16
+batch_size = 256
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1

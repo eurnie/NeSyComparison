@@ -75,8 +75,8 @@ def train_and_test(dataset, model_file_name, dataList_train, obsList_train,
     return accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
+# dataset = "mnist"
+dataset = "fashion_mnist"
 label_noise = 0
 #########################################################################################################
 
