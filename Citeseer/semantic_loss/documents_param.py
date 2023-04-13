@@ -9,6 +9,7 @@ from torch import nn
 import torch_geometric
 from pathlib import Path
 from torch.utils.data import DataLoader
+from semantic_loss_pytorch import SemanticLoss
 
 sys.path.append("..")
 from data.network_torch import Net, Net_Dropout
@@ -37,12 +38,12 @@ def import_data(dataset):
     print("The", print_string, "set contains", len(dataset_return), "instances.")
     return dataset_return
 
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, model, sl, loss_fn, optimizer):
     model.train()
     for (x, y) in dataloader:
         # compute prediction error
         pred = model(x)
-        loss = loss_fn(pred, y)
+        loss = loss_fn(pred, y) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -66,6 +67,7 @@ def train_and_test(model_file_name, train_set, val_set, nb_epochs, batch_size, l
         model = Net_Dropout()
     else:
         model = Net()
+    sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -74,7 +76,7 @@ def train_and_test(model_file_name, train_set, val_set, nb_epochs, batch_size, l
 
     # training
     for _ in range(nb_epochs):
-        train(train_dataloader, model, loss_fn, optimizer)
+        train(train_dataloader, model, sl, loss_fn, optimizer)
 
     # save trained model to a file
     with open("results/param/{}".format(model_file_name), "wb") as handle:
@@ -103,7 +105,7 @@ train_set = import_data("train")
 val_set = import_data("val")
 
 # generate name of file that holds the trained model
-model_file_name = "NN_param_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+model_file_name = "SL_param_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
     use_dropout)
 
 # train and test
@@ -112,7 +114,7 @@ accuracy = train_and_test(model_file_name, train_set, val_set,
 
 # save results to a summary file
 information = {
-    "algorithm": "NN",
+    "algorithm": "SL",
     "seed": seed,
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,

@@ -6,7 +6,7 @@ def valid_coordinates(x, y):
             return True
     return False
 
-file_name = "constraints_generated.txt"
+file_name = "constraints.txt"
 
 matrix = [
     ["X0.0", "X0.1", "X0.2", "X0.3", "X0.4", "X0.5", "X0.6", "X0.7", "X0.8", "X0.9", "X0.10", "X0.11"],
