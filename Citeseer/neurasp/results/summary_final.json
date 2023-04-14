@@ -1,1 +1,2 @@
 {"algorithm": "NeurASP", "seed": 0, "nb_epochs": 3, "batch_size": 16, "learning_rate": 0.001, "use_dropout": false, "accuracy": 0.7240000000000001, "training_time": 935.2716438770294, "testing_time": 240.68082284927368, "model_file": "NeurASP_final_0_3_16_0.001_False"}
+{"algorithm": "NeurASP", "seed": 0, "nb_epochs": 3, "batch_size": 4, "learning_rate": 0.001, "use_dropout": false, "accuracy": 0.738, "training_time": 1038.0360887050629, "testing_time": 243.57395219802856, "model_file": "NeurASP_final_0_3_4_0.001_False"}

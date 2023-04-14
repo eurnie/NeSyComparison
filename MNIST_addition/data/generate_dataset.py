@@ -62,7 +62,7 @@ def write_to_file(dataset, filename):
 # generate the mnist addition dataset
 def generate_dataset_mnist(seed, label_noise):
     processed_train = make_processed_dataset(raw_train_mnist, seed, label_noise)
-    processed_test = make_processed_dataset(raw_test_mnist, seed, label_noise)
+    processed_test = make_processed_dataset(raw_test_mnist, seed, 0)
 
     print("The raw training set: " + str(len(raw_train_mnist)) + " entries")
     print("The raw testing set: " + str(len(raw_test_mnist)) + " entries")
@@ -75,7 +75,7 @@ def generate_dataset_mnist(seed, label_noise):
 # generate the fashion mnist addition dataset
 def generate_dataset_fashion_mnist(seed, label_noise):
     processed_train = make_processed_dataset(raw_train_fashion_mnist, seed, label_noise)
-    processed_test = make_processed_dataset(raw_test_fashion_mnist, seed, label_noise)
+    processed_test = make_processed_dataset(raw_test_fashion_mnist, seed, 0)
 
     print("The raw training set: " + str(len(raw_train_fashion_mnist)) + " entries")
     print("The raw testing set: " + str(len(raw_test_fashion_mnist)) + " entries")
