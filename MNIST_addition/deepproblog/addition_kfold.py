@@ -6,6 +6,7 @@ import json
 from import_data import *
 from deepproblog.dataset import DataLoader
 from deepproblog.engines import ApproximateEngine, ExactEngine
+from deepproblog.heuristics import geometric_mean, ucs
 from deepproblog.model import Model
 from deepproblog.network import Network
 from deepproblog.train import train_model
@@ -32,7 +33,7 @@ def train_and_test(dataset, model_file_name_dir, train_set_list, method, nb_epoc
         if method == "exact":
             model.set_engine(ExactEngine(model), cache=True)
         elif method == "geometric_mean":
-            model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, 
+            model.set_engine(ApproximateEngine(model, 1, geometric_mean, 
                 exploration=False))
             
         if dataset == "mnist":

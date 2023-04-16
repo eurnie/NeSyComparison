@@ -1,10 +1,12 @@
 dprogram = '''
-nn(document_label_neural(3327,citeseer), [0,1,2,3,4,5]).
-document_label(I,Y) :- document_label(I,Y,0).
+document(doc). 
+document_to_index(doc, ind).
 
-document_label(I,Y,0) :- cite(Z,I), document_label(Z,Y,1).
-document_label(I,Y,0) :- document_label_neural(I,citeseer,Y).
-document_label(I,Y,1) :- document_label_neural(I,citeseer,Y).
+nn(document_label_neural(1,X), [0,1,2,3,4,5]) :- document(X).
+
+document_label(I,Y) :- cite(I,Z), document_label(Z,Y).
+document_label(I,Y) :- cite(Z,I), document_label(Z,Y).
+document_label(I,Y) :- document_label_neural(0,Z,Y), document_to_index(Z, I).
 
 cite(0,628).
 cite(1,158).

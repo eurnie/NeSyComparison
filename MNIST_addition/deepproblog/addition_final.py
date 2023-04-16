@@ -8,6 +8,7 @@ import json
 from import_data import *
 from deepproblog.dataset import DataLoader
 from deepproblog.engines import ApproximateEngine, ExactEngine
+from deepproblog.heuristics import geometric_mean, ucs
 from deepproblog.model import Model
 from deepproblog.network import Network
 from deepproblog.train import train_model
@@ -30,7 +31,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
     if method == "exact":
         model.set_engine(ExactEngine(model), cache=True)
     elif method == "geometric_mean":
-        model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, exploration=False))
+        model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))
 
     if dataset == "mnist":
         model.add_tensor_source("train", MNIST_train)
@@ -83,7 +84,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
 ################################################# DATASET ###############################################
 dataset = "mnist"
 # dataset = "fashion_mnist"
-label_noise = 0.1
+label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -95,7 +96,7 @@ use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(0, 10):
+for seed in range(9, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
