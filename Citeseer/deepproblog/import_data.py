@@ -31,8 +31,8 @@ def import_indices(dataset):
     return indices, labels
 
 class Citeseer_Documents(object):
-    def __init__(self):
-        self.data = x_values
+    def __init__(self, x):
+        self.data = x
 
     def __getitem__(self, item):
         return x_values[int(item[0])]
@@ -88,4 +88,4 @@ class CiteseerOperator(Dataset, TorchDataset):
     def __len__(self):
         return len(self.data)
 
-Citeseer_examples = Citeseer_Documents()
+citeseer_examples = Citeseer_Documents(x_values)

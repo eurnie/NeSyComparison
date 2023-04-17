@@ -7,11 +7,12 @@ import time
 import torch
 from deepproblog.dataset import DataLoader
 from deepproblog.engines import ApproximateEngine, ExactEngine
+from deepproblog.heuristics import geometric_mean, ucs
 from deepproblog.model import Model
 from deepproblog.network import Network
 from deepproblog.train import train_model
 from deepproblog.evaluate import get_confusion_matrix
-from import_data import import_datasets, Citeseer_examples
+from import_data import import_datasets, citeseer_examples
 
 sys.path.append("..")
 from data.network_torch import Net, Net_Dropout
@@ -30,9 +31,9 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
     if method == "exact":
         model.set_engine(ExactEngine(model), cache=False)
     elif method == "geometric_mean":
-        model.set_engine(ApproximateEngine(model, 1, ApproximateEngine.geometric_mean, exploration=False))   
+        model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))   
 
-    model.add_tensor_source("citeseer", Citeseer_examples)
+    model.add_tensor_source("citeseer", citeseer_examples)
     loader = DataLoader(train_set, batch_size, False)
 
     if not os.path.exists("best_model"):
@@ -63,7 +64,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
     os.rmdir("best_model")
 
     # save trained model to a file
-    model.save_state("results/final/{}".format(model_file_name))
+    model.save_state(f'results/{method}/final/{model_file_name}')
 
     # testing
     start_time = time.time()
@@ -111,7 +112,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{method}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

@@ -94,7 +94,3 @@ test_dataset = CiteseerDataset(split="test", documents=documents, labels=labels)
 
 queries_for_model = train_dataset.queries_for_model + valid_dataset.queries_for_model + test_dataset.queries_for_model
 
-
-
-
-

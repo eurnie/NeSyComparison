@@ -88,15 +88,15 @@ label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
-method = "exact"
+method = "geometric_mean"
 nb_epochs = 3
-batch_size = 4
+batch_size = 16
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(9, 10):
+for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
