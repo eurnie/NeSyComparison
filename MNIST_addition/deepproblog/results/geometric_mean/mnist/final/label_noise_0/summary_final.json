@@ -1,0 +1,1 @@
+{"algorithm": "DeepProbLog", "seed": 9, "method": "geometric_mean", "nb_epochs": 3, "batch_size": 16, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.6538, "training_time": 555.8967607021332, "testing_time": 29.447056531906128, "model_file": "final/label_noise_0/DeepProbLog_final_9_geometric_mean_3_16_0.001_False_0.1"}
