@@ -46,9 +46,9 @@ def train_and_test(model_file_name, train_set, val_set, method, nb_epochs, batch
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-method = "exact"
+method = "geometric_mean"
 nb_epochs = 1
-batch_size = 8
+batch_size = 4
 learning_rate = 0.001
 use_dropout = False
 #########################################################################################################

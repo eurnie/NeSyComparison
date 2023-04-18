@@ -29,11 +29,24 @@ def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val,
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 1
-batch_size = 64
+nb_epochs = 2
+batch_size = 8
 learning_rate = 0.001
 use_dropout = False
 #########################################################################################################
+
+# (2, 8, 0.01, False)
+# (3, 16, 0.01, False)
+# (1, 2, 0.01, False)
+# (2, 2, 0.01, False)
+# (2, 16, 0.01, False)
+# (1, 16, 0.01, False)
+# (1, 8, 0.01, False)
+# (3, 8, 0.01, False)
+# (2, 4, 0.01, False)
+# (3, 2, 0.01, False)
+# (3, 4, 0.01, False)
+# (1, 4, 0.01, False)
 
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
@@ -60,13 +73,13 @@ for i in range(round(len(citation_graph.x))):
 
 dataList_train = []
 obsList_train = []
-for index, label in trainDataset[0:100]:
+for index, label in trainDataset:
     dataList_train.append({'ind': index, 'citeseer': complete_dataset})
     obsList_train.append(f':- not document_label(ind, {label}).')
 
 dataList_val = []
 obsList_val = []
-for index, label in valDataset[0:100]:
+for index, label in valDataset:
     dataList_val.append({'ind': index, 'citeseer': complete_dataset})
     obsList_val.append(f':- not document_label(ind, {label}).')
 
