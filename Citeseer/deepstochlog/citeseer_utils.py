@@ -7,9 +7,6 @@ from deepstochlog.context import ContextualizedTerm
 from deepstochlog.dataloader import DataLoader
 from deepstochlog.utils import calculate_zipped_probabilities
 
-
-
-
 class AccuracyCalculator():
 
     def __init__(self, model, valid, test, start_time, after_epoch = 0):
