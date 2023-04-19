@@ -10,3 +10,4 @@
 {"algorithm": "SL", "seed": 0, "nb_epochs": 3, "batch_size": 2, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.733, "model_file": "param/SL_param_0_3_2_0.001_False_0.1"}
 {"algorithm": "SL", "seed": 0, "nb_epochs": 3, "batch_size": 4, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.674, "model_file": "param/SL_param_0_3_4_0.001_False_0.1"}
 {"algorithm": "SL", "seed": 0, "nb_epochs": 1, "batch_size": 4, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.4886666666666667, "model_file": "param/SL_param_0_1_4_0.001_False_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 10, "batch_size": 16, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.8036666666666666, "model_file": "param/SL_param_0_10_16_0.001_False_0.1"}

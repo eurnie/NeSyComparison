@@ -59,7 +59,7 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-method = "exact"
+method = "geometric_mean"
 nb_epochs = 10
 batch_size = 16
 learning_rate = 0.001
