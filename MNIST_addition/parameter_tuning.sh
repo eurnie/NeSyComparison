@@ -1,4 +1,5 @@
-source /opt/anaconda3/etc/profile.d/conda.sh;
+source /home/arne/miniconda3/etc/profile.d/conda.sh;
+#source /opt/anaconda3/etc/profile.d/conda.sh;
 cd semantic_loss_1_label;
 python3 addition_param.py;
 cd ..;
