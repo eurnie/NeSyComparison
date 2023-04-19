@@ -7,7 +7,7 @@ import json
 import torch
 import torchvision
 import pickle
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torch import nn
 from torch.utils.data import DataLoader
@@ -162,9 +162,9 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     return accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
-label_noise = 0
+dataset = "mnist"
+#dataset = "fashion_mnist"
+label_noise = 0.10
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
