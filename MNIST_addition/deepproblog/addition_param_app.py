@@ -60,8 +60,8 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 method = "geometric_mean"
-nb_epochs = 10
-batch_size = 16
+nb_epochs = 5
+batch_size = 32
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
