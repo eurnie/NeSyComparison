@@ -18,7 +18,7 @@ conda activate neurasp;
 python3 addition_param.py;
 cd ..;
 cd nn;
-conda activate base;
+conda activate deepproblog;
 python3 addition_param.py;
 cd ..;
 cd semantic_loss_1_label;

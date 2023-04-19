@@ -27,7 +27,7 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 2
+batch_size = 8
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
@@ -91,11 +91,11 @@ for epoch in range(nb_epochs):
     trainer.train(model, optimizer, train_dataloader, 1, epsilon)
 
     # generate name of file that holds the trained model
-    model_file_name = "param/DeepStochLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, batch_size, 
+    model_file_name = "DeepStochLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, batch_size, 
         learning_rate, epsilon, use_dropout, size_val)
 
     # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
         pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # testing
