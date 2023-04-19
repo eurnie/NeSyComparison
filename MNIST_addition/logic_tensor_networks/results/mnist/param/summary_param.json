@@ -11,3 +11,4 @@
 {"algorithm": "LTN", "seed": 0, "nb_epochs": 3, "batch_size": 4, "learning_rate": 0.001, "p_schedule": 1.0, "use_dropout": false, "size_val": 0.1, "accuracy": 0.44333332777023315, "model_file": "param/LTN_param_0_3_4_0.001_1.0_False_0.1"}
 {"algorithm": "LTN", "seed": 0, "nb_epochs": 1, "batch_size": 4, "learning_rate": 0.001, "p_schedule": 1.0, "use_dropout": false, "size_val": 0.1, "accuracy": 0.41200000047683716, "model_file": "param/LTN_param_0_1_4_0.001_1.0_False_0.1"}
 {"algorithm": "LTN", "seed": 0, "nb_epochs": 10, "batch_size": 16, "learning_rate": 0.001, "p_schedule": 1.0, "use_dropout": false, "size_val": 0.1, "accuracy": 0.9570000171661377, "model_file": "param/LTN_param_0_10_16_0.001_1.0_False_0.1"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 5, "batch_size": 32, "learning_rate": 0.001, "p_schedule": 1.0, "use_dropout": false, "size_val": 0.1, "accuracy": 0.95333331823349, "model_file": "param/LTN_param_0_5_32_0.001_1.0_False_0.1"}
