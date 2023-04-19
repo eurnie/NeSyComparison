@@ -33,20 +33,6 @@ class MNIST_Addition(Dataset):
         i1, i2, l = self.data[index]
         return self.dataset[i1][0], self.dataset[i2][0], l
 
-def train_and_test(dataset, model_file_name, dataList_train, obsList_train, 
-    dataList_val, obsList_val, nb_epochs, batch_size):
-    
-    NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=nb_epochs, smPickle=None, 
-        bar=True, batchSize=batch_size)
-
-    # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
-        pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    # testing
-    accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
-    return accuracy
-
 ################################################# DATASET ###############################################
 dataset = "mnist"
 # dataset = "fashion_mnist"
@@ -54,8 +40,8 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 5
-batch_size = 16
+nb_epochs = 100
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -136,31 +122,48 @@ nnMapping = {'digit': m}
 optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
 NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
 
-# generate name of file that holds the trained model
-model_file_name = "param/NeurASP_param_{}_{}_{}_{}_{}_{}".format(seed, 
-    nb_epochs, batch_size, learning_rate, use_dropout, size_val)
+best_accuracy = 0
 
-# train and test the method on the MNIST addition dataset
-accuracy = train_and_test(dataset, model_file_name, dataList_train, obsList_train, 
-                          dataList_val, obsList_val, nb_epochs, batch_size)
+for epoch in range(nb_epochs):
+    NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=1, smPickle=None, 
+        bar=True, batchSize=batch_size)
+    
+    # generate name of file that holds the trained model
+    model_file_name = "param/NeurASP_param_{}_{}_{}_{}_{}_{}".format(seed, 
+        epoch + 1, batch_size, learning_rate, use_dropout, size_val)
 
-# save results to a summary file
-information = {
-    "algorithm": "NeurASP",
-    "seed": seed,
-    "nb_epochs": nb_epochs,
-    "batch_size": batch_size,
-    "learning_rate": learning_rate,
-    "use_dropout": use_dropout,
-    "size_val": size_val,
-    "accuracy": accuracy,
-    "model_file": model_file_name
-}
-with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
-    json.dump(information, outfile)
-    outfile.write('\n')
+    # save trained model to a file
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+        pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-# print results
-print("############################################")
-print("Accuracy: {}".format(accuracy))
-print("############################################")
+    # testing
+    accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
+
+    # save results to a summary file
+    information = {
+        "algorithm": "NeurASP",
+        "seed": seed,
+        "nb_epochs": epoch + 1,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "model_file": model_file_name
+    }
+    with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
+
+    # print results
+    print("############################################")
+    print("Accuracy: {}".format(accuracy))
+    print("############################################")
+
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        counter = 0
+    else:
+        if counter >= 3:
+            break
+        counter += 1

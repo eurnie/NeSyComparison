@@ -12,3 +12,6 @@
 {"algorithm": "SL", "seed": 0, "nb_epochs": 1, "batch_size": 4, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.4886666666666667, "model_file": "param/SL_param_0_1_4_0.001_False_0.1"}
 {"algorithm": "SL", "seed": 0, "nb_epochs": 10, "batch_size": 16, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.8036666666666666, "model_file": "param/SL_param_0_10_16_0.001_False_0.1"}
 {"algorithm": "SL", "seed": 0, "nb_epochs": 5, "batch_size": 32, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.6106666666666667, "model_file": "param/SL_param_0_5_32_0.001_False_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 5, "batch_size": 16, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.6883333333333334, "model_file": "param/SL_param_0_5_16_0.001_False_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 1, "batch_size": 32, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.314, "model_file": "param/SL_param_0_1_32_0.001_False_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 2, "batch_size": 32, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.5116666666666667, "model_file": "param/SL_param_0_2_32_0.001_False_0.1"}

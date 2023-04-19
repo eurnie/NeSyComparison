@@ -100,41 +100,6 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
-def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batch_size, 
-                   learning_rate, use_dropout):
-    if use_dropout:
-        model = Net_NN_Dropout()
-    else:
-        model = Net_NN()
-    sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    train_dataloader = DataLoader(train_set, batch_size=batch_size)
-    val_dataloader = DataLoader(val_set, batch_size=1)
-
-    # display image and label
-    # train_features, train_labels = next(iter(train_dataloader))
-    # print(f"Feature batch shape: {train_features.size()}")
-    # print(f"Labels batch shape: {train_labels.size()}")
-    # img = train_features[0].squeeze()
-    # label = train_labels[0]
-    # plt.imshow(img, cmap="gray")
-    # plt.show()
-    # print(f"Label: {label}")
-
-    # training
-    for _ in range(nb_epochs):
-        train(train_dataloader, model, sl, loss_fn, optimizer)
-
-    # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
-        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-    # testing
-    accuracy = test(val_dataloader, model)
-    return accuracy
-
 ################################################# DATASET ###############################################
 dataset = "mnist"
 # dataset = "fashion_mnist"
@@ -142,8 +107,8 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 5
-batch_size = 16
+nb_epochs = 100
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -166,31 +131,59 @@ elif dataset == "fashion_mnist":
 train_set = parse_data(dataset, processed_data_path, "train", size_val)
 val_set = parse_data(dataset, processed_data_path, "val", size_val)
 
-# generate name of file that holds the trained model
-model_file_name = "param/SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
-    nb_epochs, batch_size, learning_rate, use_dropout, size_val)
+if use_dropout:
+    model = Net_NN_Dropout()
+else:
+    model = Net_NN()
+sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-# train and test
-accuracy = train_and_test(dataset, model_file_name, train_set, val_set, 
-    nb_epochs, batch_size, learning_rate, use_dropout)
+train_dataloader = DataLoader(train_set, batch_size=batch_size)
+val_dataloader = DataLoader(val_set, batch_size=1)
 
-# save results to a summary file
-information = {
-    "algorithm": "SL",
-    "seed": seed,
-    "nb_epochs": nb_epochs,
-    "batch_size": batch_size,
-    "learning_rate": learning_rate,
-    "use_dropout": use_dropout,
-    "size_val": size_val,
-    "accuracy": accuracy,
-    "model_file": model_file_name
-}
-with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
-    json.dump(information, outfile)
-    outfile.write('\n')
+best_accuracy = 0
 
-# print results
-print("############################################")
-print("Accuracy: {}".format(accuracy))
-print("############################################")
+# training
+for epoch in range(nb_epochs):
+    train(train_dataloader, model, sl, loss_fn, optimizer)
+
+    # generate name of file that holds the trained model
+    model_file_name = "param/SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
+        epoch + 1, batch_size, learning_rate, use_dropout, size_val)
+
+    # save trained model to a file
+    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
+    # testing
+    accuracy = test(val_dataloader, model)
+
+    # save results to a summary file
+    information = {
+        "algorithm": "SL",
+        "seed": seed,
+        "nb_epochs": epoch + 1,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "use_dropout": use_dropout,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "model_file": model_file_name
+    }
+    with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
+
+    # print results
+    print("############################################")
+    print("Accuracy: {}".format(accuracy))
+    print("############################################")
+
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        counter = 0
+    else:
+        if counter >= 3:
+            break
+        counter += 1
