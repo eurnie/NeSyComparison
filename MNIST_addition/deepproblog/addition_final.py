@@ -84,19 +84,23 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
 ################################################# DATASET ###############################################
 dataset = "mnist"
 # dataset = "fashion_mnist"
+<<<<<<< HEAD
 label_noise = 0.25
+=======
+label_noise = 0
+>>>>>>> ad206c85faae01a7e92295fe541cb03839ee0cd1
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
-method = "exact"
+method = "geometric_mean"
 nb_epochs = 3
-batch_size = 4
+batch_size = 16
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(0, 10):
+for seed in range(2, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)

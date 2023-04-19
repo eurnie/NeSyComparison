@@ -93,6 +93,19 @@ learning_rate = 0.001
 use_dropout = False
 #########################################################################################################
 
+# (2, 8, 0.01, False)
+# (3, 16, 0.01, False)
+# (1, 2, 0.01, False)
+# (2, 2, 0.01, False)
+# (2, 16, 0.01, False)
+# (1, 16, 0.01, False)
+# (1, 8, 0.01, False)
+# (3, 8, 0.01, False)
+# (2, 4, 0.01, False)
+# (3, 2, 0.01, False)
+# (3, 4, 0.01, False)
+# (1, 4, 0.01, False)
+
 # setting seeds for reproducibility
 random.seed(seed)
 numpy.random.seed(seed)

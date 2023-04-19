@@ -1,8 +1,8 @@
 dprogram = '''
 nn(document_label_neural(3327,citeseer), [0,1,2,3,4,5]).
-document_label(I,Y) :- document_label(I,Y,0).
 
-document_label(I,Y,0) :- cite(Z,I), document_label(Z,Y,1).
+document_label(I,Y) :- document_label(I,Y,0).
+document_label(I,Y,0) :- cite(I,Z), document_label(Z,Y,1).
 document_label(I,Y,0) :- document_label_neural(I,citeseer,Y).
 document_label(I,Y,1) :- document_label_neural(I,citeseer,Y).
 

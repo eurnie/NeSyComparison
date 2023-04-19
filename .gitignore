@@ -2,20 +2,18 @@
 Citeseer/**/results/*
 WarcraftShortestPath/**/results/*
 
-MNIST_addition/**/results/**/mnist/final/label_noise_0/*
-MNIST_addition/**/results/**/mnist/final/label_noise_0.1/*
+MNIST_addition/**/results/**/mnist/final/label_noise_*/*
 MNIST_addition/**/results/**/mnist/param/*
 MNIST_addition/**/results/**/mnist/kfold/*
-MNIST_addition/**/results/**/fashion_mnist/final/label_noise_0/*
+MNIST_addition/**/results/**/fashion_mnist/final/label_noise_*/*
 MNIST_addition/**/results/**/fashion_mnist/param/*
 MNIST_addition/**/results/**/fashion_mnist/kfold/*
 
 # show json summary files
-!MNIST_addition/**/results/**/mnist/final/label_noise_0/*.json
-!MNIST_addition/**/results/**/mnist/final/label_noise_0.1/*.json
+!MNIST_addition/**/results/**/mnist/final/label_noise_*/*.json
 !MNIST_addition/**/results/**/mnist/kfold/*.json
 !MNIST_addition/**/results/**/mnist/param/*.json
-!MNIST_addition/**/results/**/fashion_mnist/final/label_noise_0/*.json
+!MNIST_addition/**/results/**/fashion_mnist/final/label_noise_*/*.json
 !MNIST_addition/**/results/**/fashion_mnist/kfold/*.json
 !MNIST_addition/**/results/**/fashion_mnist/param/*.json
 

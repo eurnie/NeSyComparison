@@ -1,6 +1,5 @@
 import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
+import torch
 
 class Net(nn.Module):
     def __init__(self):
@@ -15,6 +14,7 @@ class Net(nn.Module):
         )
 
     def forward(self, x):
+        x = x.type(torch.float32)
         x = self.classifier(x)
         return x
     
