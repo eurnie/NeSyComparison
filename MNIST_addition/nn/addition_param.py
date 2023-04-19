@@ -182,6 +182,6 @@ for epoch in range(nb_epochs):
         best_accuracy = accuracy
         counter = 0
     else:
-        if counter >= 3:
+        if counter >= 2:
             break
         counter += 1
