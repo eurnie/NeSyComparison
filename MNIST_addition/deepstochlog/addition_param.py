@@ -56,7 +56,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, nb_epochs, batc
     calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
 
     # training (with early stopping)
-    trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
+    trainer = DeepStochLogTrainer(log_freq=100, accuracy_tester=calculate_model_accuracy)
     trainer.train(model, optimizer, train_dataloader, nb_epochs, epsilon)
 
     # save trained model to a file
