@@ -55,7 +55,7 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 10
-batch_size = 16
+batch_size = 4
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
