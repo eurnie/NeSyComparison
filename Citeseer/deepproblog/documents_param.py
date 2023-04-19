@@ -49,6 +49,8 @@ elif method == "geometric_mean":
 model.add_tensor_source("citeseer", citeseer_examples)
 loader = DataLoader(train_set, batch_size, False)
 
+best_accuracy = 0
+
 # training
 for epoch in range(nb_epochs):
     train_model(model, loader, 1, log_iter=10, profile=0)
@@ -83,3 +85,11 @@ for epoch in range(nb_epochs):
     print("############################################")
     print("Accuracy: {}".format(accuracy))
     print("############################################")
+
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        counter = 0
+    else:
+        if counter >= 2:
+            break
+        counter += 1

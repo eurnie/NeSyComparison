@@ -21,7 +21,7 @@ from data.network_torch import Net, Net_Dropout
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 2
+batch_size = 64
 learning_rate = 0.001
 epsilon = 0.00000001
 use_dropout = False
@@ -64,7 +64,9 @@ dummy_dataloader = DataLoader([], batch_size=1, shuffle=False)
 calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
 
 # training
-trainer = DeepStochLogTrainer(log_freq=10, accuracy_tester=calculate_model_accuracy)
+trainer = DeepStochLogTrainer(log_freq=100, accuracy_tester=calculate_model_accuracy)
+
+best_accuracy = 0
 
 for epoch in range(nb_epochs):
     trainer.train(model, optimizer, train_dataloader, 1, epsilon)
@@ -101,3 +103,11 @@ for epoch in range(nb_epochs):
     print("############################################")
     print("Accuracy: {}".format(accuracy))
     print("############################################")
+
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        counter = 0
+    else:
+        if counter >= 2:
+            break
+        counter += 1
