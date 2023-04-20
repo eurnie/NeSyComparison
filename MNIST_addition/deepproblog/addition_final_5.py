@@ -90,7 +90,7 @@ label_noise = 0.5
 ############################################### PARAMETERS ##############################################
 method = "exact"
 nb_epochs = 100
-batch_size = 16
+batch_size = 8
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
