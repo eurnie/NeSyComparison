@@ -23,8 +23,6 @@ source /opt/anaconda3/etc/profile.d/conda.sh;
 # cd ..;
 cd nn;
 conda activate deepproblog;
-python3 addition_final.py;
-python3 addition_final_1.py;
 python3 addition_final_25.py;
 python3 addition_final_5.py;
 cd ..;
