@@ -151,7 +151,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set,
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+    with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
@@ -195,7 +195,7 @@ for seed in range(0, 10):
     test_set = parse_data(dataset, processed_data_path, "test", size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "final/label_noise_{}/NN_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, nb_epochs, 
+    model_file_name = "label_noise_{}/NN_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, nb_epochs, 
         batch_size, learning_rate, use_dropout, size_val)
 
     # train and test

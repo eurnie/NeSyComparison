@@ -118,7 +118,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+    with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
         pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
@@ -159,7 +159,7 @@ for seed in range(0, 10):
     train_set, val_set, test_set = get_mnist_op_dataset_val(dataset, size_val, batch_size)
 
     # generate name of folder that holds all the trained models
-    model_file_name = "final/label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+    model_file_name = "label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
         nb_epochs, batch_size, learning_rate, p_schedule, use_dropout, size_val)
 
     # train and test

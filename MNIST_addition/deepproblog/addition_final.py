@@ -73,7 +73,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
     os.rmdir("best_model")
 
     # save trained model to a file
-    model.save_state(f'results/{method}/{dataset}/{model_file_name}')
+    model.save_state(f'results/{method}/{dataset}/final/{model_file_name}')
 
     # testing
     start_time = time.time()
@@ -113,7 +113,7 @@ for seed in range(0, 10):
     train_set, val_set, test_set = import_datasets(dataset, size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "final/label_noise_{}/DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+    model_file_name = "label_noise_{}/DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
         method, nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
     # train and test
