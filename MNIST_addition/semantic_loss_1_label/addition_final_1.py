@@ -5,17 +5,18 @@ import sys
 import os
 import json
 import torch
-import pickle
 import torchvision
-import matplotlib.pyplot as plt
+import pickle
+#import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torch import nn
 from torch.utils.data import DataLoader
+from semantic_loss_pytorch import SemanticLoss
 from pathlib import Path
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net_NN, Net_NN_Dropout, Net_NN_Extra
+from data.network_torch import Net_NN, Net_NN_Dropout
 
 def parse_data(dataset, filename, dataset_name, size_val):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
@@ -78,12 +79,12 @@ def parse_data(dataset, filename, dataset_name, size_val):
     
     return dataset
 
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, model, sl, loss_fn, optimizer):
     model.train()
     for (x, y) in dataloader:
         # compute prediction error
         pred = model(x)
-        loss = loss_fn(pred, y)
+        loss = loss_fn(pred, y) + sl(pred)
 
         # backpropagation
         optimizer.zero_grad()
@@ -101,15 +102,15 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
-def train_and_test(dataset, model_file_name, train_set, val_set, test_set, 
-    nb_epochs, batch_size, learning_rate, use_dropout):
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
+                   learning_rate, use_dropout):
     if use_dropout:
         model = Net_NN_Dropout()
     else:
         model = Net_NN()
+    sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
     train_dataloader = DataLoader(train_set, batch_size=batch_size)
     val_dataloader = DataLoader(val_set, batch_size=1)
@@ -131,7 +132,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set,
     counter = 0
     for epoch in range(nb_epochs):
         start_time = time.time()
-        train(train_dataloader, model, loss_fn, optimizer)
+        train(train_dataloader, model, sl, loss_fn, optimizer)
         total_training_time += time.time() - start_time
         val_accuracy = test(val_dataloader, model)
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
@@ -162,14 +163,14 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set,
     return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
-label_noise = 0
+dataset = "mnist"
+# dataset = "fashion_mnist"
+label_noise = 0.1
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 64
+batch_size = 16
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -195,16 +196,16 @@ for seed in range(0, 10):
     test_set = parse_data(dataset, processed_data_path, "test", size_val)
 
     # generate name of file that holds the trained model
-    model_file_name = "label_noise_{}/NN_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, nb_epochs, 
-        batch_size, learning_rate, use_dropout, size_val)
+    model_file_name = "label_noise_{}/SL_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+        nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
     # train and test
-    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set,
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
         test_set, nb_epochs, batch_size, learning_rate, use_dropout)
     
     # save results to a summary file
     information = {
-        "algorithm": "NN",
+        "algorithm": "SL",
         "seed": seed,
         "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,

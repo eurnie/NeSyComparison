@@ -1,1 +1,0 @@
-{"algorithm": "DeepStochLog", "seed": 0, "nb_epochs": 2, "batch_size": 8, "learning_rate": 0.001, "epsilon": 1e-08, "use_dropout": false, "size_val": 0.1, "accuracy": 0.105, "model_file": "param/DeepStochLog_param_0_2_8_0.001_1e-08_False_0.1"}

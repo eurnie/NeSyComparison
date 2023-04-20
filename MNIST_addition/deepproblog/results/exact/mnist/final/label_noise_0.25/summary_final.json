@@ -1,1 +1,0 @@
-{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 3, "batch_size": 4, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.962, "training_time": 4704.912535429001, "testing_time": 1231.5319199562073, "model_file": "final/label_noise_0.25/DeepProbLog_final_0_exact_3_4_0.001_False_0.1"}

@@ -170,7 +170,7 @@ label_noise = 0
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 2
+batch_size = 16
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
