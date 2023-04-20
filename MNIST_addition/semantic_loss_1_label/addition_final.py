@@ -142,7 +142,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
                 pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
         else:
-            if counter >= 0:
+            if counter >= 2:
                 break
             counter += 1
     with open("best_model.pickle", "rb") as handle:

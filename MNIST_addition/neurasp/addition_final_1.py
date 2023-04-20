@@ -55,7 +55,7 @@ def train_and_test(dataset, model_file_name, dataList_train, obsList_train,
                 pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
         else:
-            if counter >= 1:
+            if counter >= 2:
                 break
             counter += 1
     with open("best_model.pickle", "rb") as handle:

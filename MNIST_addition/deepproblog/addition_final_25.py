@@ -62,7 +62,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
             train.model.save_state("best_model/state", complete=True)
             counter = 0
         else:
-            if counter >= 1:
+            if counter >= 2:
                 break
             counter += 1
 
