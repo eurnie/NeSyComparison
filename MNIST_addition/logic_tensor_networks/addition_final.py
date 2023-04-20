@@ -104,6 +104,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
+            nb_epochs_done = epoch + 1
             with open("best_model.pickle", "wb") as handle:
                 pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
@@ -125,7 +126,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     accuracy = test_modified(test_set, test_step, metrics_dict, scheduled_parameters)
     testing_time = time.time() - start_time
 
-    return accuracy, total_training_time, testing_time
+    return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
 dataset = "mnist"
@@ -162,14 +163,14 @@ for seed in range(0, 10):
         nb_epochs, batch_size, learning_rate, p_schedule, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
         test_set, nb_epochs, learning_rate, p_schedule, use_dropout)
       
     # save results to a summary file
     information = {
         "algorithm": "LTN",
         "seed": seed,
-        "nb_epochs": nb_epochs,
+        "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "p_schedule": p_schedule,

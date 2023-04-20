@@ -59,6 +59,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
+            nb_epochs_done = epoch + 1
             train.model.save_state("best_model/state", complete=True)
             counter = 0
         else:
@@ -79,7 +80,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
     accuracy = get_confusion_matrix(model, test_set).accuracy()
     testing_time = time.time() - start_time
 
-    return accuracy, total_training_time, testing_time
+    return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
 # dataset = "mnist"
@@ -116,7 +117,7 @@ for seed in range(0, 10):
         method, nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
         test_set, method, nb_epochs, batch_size, learning_rate, use_dropout)
     
     # save results to a summary file
@@ -124,7 +125,7 @@ for seed in range(0, 10):
         "algorithm": "DeepProbLog",
         "seed": seed,
         "method": method,
-        "nb_epochs": nb_epochs,
+        "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "use_dropout": use_dropout,

@@ -51,6 +51,7 @@ def train_and_test(dataset, model_file_name, dataList_train, obsList_train,
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
+            nb_epochs_done = epoch + 1
             with open("best_model.pickle", "wb") as handle:
                 pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
@@ -72,7 +73,7 @@ def train_and_test(dataset, model_file_name, dataList_train, obsList_train,
     accuracy = BestNeurASPobj.testInferenceResults(dataList_test, obsList_test) / 100
     testing_time = time.time() - start_time
 
-    return accuracy, total_training_time, testing_time
+    return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
 # dataset = "mnist"
@@ -81,7 +82,7 @@ label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
+nb_epochs = 100
 batch_size = 4
 learning_rate = 0.001
 use_dropout = False
@@ -121,7 +122,7 @@ addition(A,B,N) :- digit(0,A,N1), digit(0,B,N2), N=N1+N2.
 nn(digit(1,X), [0,1,2,3,4,5,6,7,8,9]) :- img(X).
 '''
 
-for seed in range(2, 10):
+for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
@@ -178,14 +179,14 @@ for seed in range(2, 10):
         seed, nb_epochs, batch_size, learning_rate, use_dropout, size_val)
 
     # train and test the method on the MNIST addition dataset
-    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, dataList_train, 
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, dataList_train, 
         obsList_train, dataList_val, obsList_val, dataList_test, obsList_test, nb_epochs, batch_size)
 
     # save results to a summary file
     information = {
         "algorithm": "NeurASP",
         "seed": seed,
-        "nb_epochs": nb_epochs,
+        "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "use_dropout": use_dropout,

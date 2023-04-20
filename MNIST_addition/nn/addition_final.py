@@ -137,6 +137,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set,
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
+            nb_epochs_done = epoch + 1
             with open("best_model.pickle", "wb") as handle:
                 pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
@@ -158,23 +159,23 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set,
     accuracy = test(test_dataloader, model)
     testing_time = time.time() - start_time
 
-    return accuracy, total_training_time, testing_time
+    return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-dataset = "mnist"
-#dataset = "fashion_mnist"
-label_noise = 0.5
+# dataset = "mnist"
+dataset = "fashion_mnist"
+label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
+nb_epochs = 100
 batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(1, 10):
+for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
@@ -198,14 +199,14 @@ for seed in range(1, 10):
         batch_size, learning_rate, use_dropout, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set,
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set,
         test_set, nb_epochs, batch_size, learning_rate, use_dropout)
     
     # save results to a summary file
     information = {
         "algorithm": "NN",
         "seed": seed,
-        "nb_epochs": nb_epochs,
+        "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "use_dropout": use_dropout,
