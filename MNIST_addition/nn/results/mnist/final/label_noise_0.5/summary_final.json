@@ -1,0 +1,1 @@
+{"algorithm": "NN", "seed": 0, "nb_epochs": 20, "batch_size": 64, "learning_rate": 0.001, "use_dropout": false, "size_val": 0.1, "accuracy": 0.49, "training_time": 82.64399266242981, "testing_time": 2.272437572479248, "model_file": "label_noise_0.5/NN_final_0_100_64_0.001_False_0.1"}
