@@ -25,7 +25,7 @@ dataset = "mnist"
 seed = 0
 method = "geometric_mean"
 nb_epochs = 100
-batch_size = 8
+batch_size = 32
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -76,11 +76,11 @@ for epoch in range(nb_epochs):
     train_model(model, loader, 1, log_iter=100, profile=0)
 
     # generate name of folder that holds all the trained models
-    model_file_name_dir = "DeepProbLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, 
+    model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, 
         batch_size, learning_rate, use_dropout, size_val)
     
     # save trained model to a file
-    model.save_state(f'results/{method}/{dataset}/param/{model_file_name_dir}')
+    model.save_state(f'results/{method}/{dataset}/param/{model_file_name}')
 
     # testing
     accuracy = get_confusion_matrix(model, val_set).accuracy()
@@ -96,7 +96,7 @@ for epoch in range(nb_epochs):
         "use_dropout": use_dropout,
         "size_val": size_val,
         "accuracy": accuracy,
-        "model_files_dir": model_file_name_dir
+        "model_files": model_file_name
     }
     with open(f'results/{method}/{dataset}/param/summary_param.json', "a") as outfile:
         json.dump(information, outfile)

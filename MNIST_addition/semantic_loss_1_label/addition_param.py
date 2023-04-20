@@ -108,7 +108,7 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 8
+batch_size = 32
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -153,7 +153,7 @@ for epoch in range(nb_epochs):
         epoch + 1, batch_size, learning_rate, use_dropout, size_val)
 
     # save trained model to a file
-    with open(f'results/param/{dataset}/{model_file_name}', "wb") as handle:
+    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing

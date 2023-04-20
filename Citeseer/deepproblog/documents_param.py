@@ -17,9 +17,9 @@ from data.network_torch import Net, Net_Dropout
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-method = "geometric_mean"
-nb_epochs = 1
-batch_size = 4
+method = "exact"
+nb_epochs = 100
+batch_size = 2
 learning_rate = 0.001
 use_dropout = False
 #########################################################################################################
@@ -53,7 +53,7 @@ best_accuracy = 0
 
 # training
 for epoch in range(nb_epochs):
-    train_model(model, loader, 1, log_iter=10, profile=0)
+    train_model(model, loader, 1, log_iter=100, profile=0)
 
     # generate name of file that holds the trained model
     model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, batch_size, 

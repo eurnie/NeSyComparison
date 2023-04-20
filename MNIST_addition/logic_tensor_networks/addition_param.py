@@ -23,7 +23,7 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 8
+batch_size = 32
 learning_rate = 0.001
 p_schedule = 1.
 use_dropout = False
@@ -126,11 +126,11 @@ for epoch in range(nb_epochs):
     train_modified(train_set, train_step, scheduled_parameters, 1)
 
     # generate name of folder that holds all the trained models
-    model_file_name = "param/LTN_param_{}_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, batch_size, 
+    model_file_name = "LTN_param_{}_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, batch_size, 
             learning_rate, p_schedule, use_dropout, size_val)
 
     # save trained model to a file
-    with open(f'results/{dataset}/{model_file_name}', "wb") as handle:
+    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
         pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
