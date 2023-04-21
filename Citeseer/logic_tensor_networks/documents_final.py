@@ -10,23 +10,23 @@ import os
 import tensorflow as tf
 from tensorflow.keras import layers
 from collections import defaultdict
-from import_data import get_dataset
+from import_data import get_dataset, get_cites
 from commons import train_modified, test_modified
 
 sys.path.append("..")
 from data.network_tensorflow import Net, Net_Dropout
 
 def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, p_schedule, 
-    use_dropout):
+    use_dropout, cite_a, cite_b):
 
-    with open('../data/CiteSeer/cites.txt') as f:
-        lines = f.readlines()
-    cites = []
-    for line in lines:
-        cite_1 = int(line.split(",")[0].split("(")[-1])
-        cite_2 = int(line.split(",")[1].split(")")[0])
-        cites.append((cite_1, cite_2))
-    cite_set = tf.data.Dataset.from_tensor_slices(cites)
+    # with open('../data/CiteSeer/cites.txt') as f:
+    #     lines = f.readlines()
+    # cites = []
+    # for line in lines:
+    #     cite_1 = int(line.split(",")[0].split("(")[-1])
+    #     cite_2 = int(line.split(",")[1].split(")")[0])
+    #     cites.append((cite_1, cite_2))
+    # cite_set = tf.data.Dataset.from_tensor_slices(cites)
 
     # predicates
     if use_dropout:
@@ -34,9 +34,6 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     else:
         logits_model = Net()
     Document_type = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
-
-    # variables
-    d1 = ltn.Variable("digits1", range(6))
 
     # operators
     Not = ltn.Wrapper_Connective(ltn.fuzzy_ops.Not_Std())
@@ -69,28 +66,47 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     #     sat = axiom.tensor
     #     return sat
 
+    # variables
+    l1 = ltn.Variable("label1", range(6))
+    l2 = ltn.Variable("label2", range(6))
+
+    formula_aggregator = ltn.Wrapper_Formula_Aggregator(ltn.fuzzy_ops.Aggreg_pMeanError(p=5))
+
     # axioms
     @tf.function
-    def axioms(features_x, labels_z, p_schedule=tf.constant(2.)):
+    def axioms(cite_a, cite_b, features_x, labels_z, p_schedule=tf.constant(2.)):
         features_x = ltn.Variable("x", features_x)
         labels_z = ltn.Variable("z", labels_z)
-        axiom = Forall(
+        cite_a = ltn.Variable("ca", cite_a)
+        cite_b = ltn.Variable("cb", cite_b)
+
+        axioms = []
+
+        # 
+        axioms.append(Forall(
                 ltn.diag(features_x,labels_z),
                 Exists(
-                    (d1),
-                    Document_type([features_x,d1]),
-                    mask=equals([d1, labels_z]),
-                    p=p_schedule
-                ),
-                p=2
+                    (l1),
+                    Document_type([features_x,l1]),
+                    mask=equals([l1, labels_z])
+                )
             )
+        )
+
+        axioms.append(Forall(
+                            ltn.diag(cite_a, cite_b),
+                            Exists(
+                                  (l1),
+                                  And(Document_type([cite_a,l1]),Document_type([cite_b,l1]))
+                                  )
+                            )
+                      )
         
-        sat = axiom.tensor
-        return sat
+        return formula_aggregator(axioms).tensor
 
     # initialize all layers
     features_x, labels_z = next(train_set.as_numpy_iterator())
-    axioms(features_x, labels_z)
+    axioms(cite_a, cite_b, features_x, labels_z)
 
     # training
     optimizer = tf.keras.optimizers.Adam(learning_rate)
@@ -102,9 +118,9 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     }
 
     @tf.function
-    def train_step(features_x, labels_z, **parameters):
+    def train_step(cite_a, cite_b, features_x, labels_z, **parameters):
         with tf.GradientTape() as tape:
-            loss = 1.- axioms(features_x, labels_z, **parameters)
+            loss = 1.- axioms(cite_a, cite_b, features_x, labels_z, **parameters)
         gradients = tape.gradient(loss, logits_model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
        
@@ -125,7 +141,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     best_accuracy = 0
     counter = 0
     for epoch in range(nb_epochs):
-        total_training_time += train_modified(train_set, train_step, scheduled_parameters, 1)
+        total_training_time += train_modified(cite_a, cite_b, train_set, train_step, scheduled_parameters, 1)
         val_accuracy = test_modified(val_set, test_step, metrics_dict, scheduled_parameters)
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
@@ -154,11 +170,11 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     return accuracy, total_training_time, testing_time
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 3
-batch_size = 16
+nb_epochs = 2
+batch_size = 128
 learning_rate = 0.001
 p_schedule = 1.
-use_dropout = True
+use_dropout = False
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -171,6 +187,7 @@ for seed in range(0, 10):
     train_set = get_dataset("train", batch_size)
     val_set = get_dataset("val", 1)
     test_set = get_dataset("test", 1)
+    cite_a, cite_b = get_cites()
 
     # generate name of folder that holds all the trained models
     model_file_name = "LTN_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
@@ -178,7 +195,7 @@ for seed in range(0, 10):
 
     # train and test
     accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        nb_epochs, learning_rate, p_schedule, use_dropout)
+        nb_epochs, learning_rate, p_schedule, use_dropout, cite_a, cite_b)
       
     # save results to a summary file
     information = {
