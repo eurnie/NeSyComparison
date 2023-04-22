@@ -132,8 +132,8 @@ label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 1
-batch_size = 256
+nb_epochs = 100
+batch_size = 16
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.1
@@ -157,9 +157,9 @@ init_size = 1.0
 ref_init_type = "random"
 lower_bound = -1.0
 upper_bound = 1.0
-is_show = False
+is_show = True
 is_fix_predicates = True
-early_stopping = False
+early_stopping = True
 #########################################################################################################
 
 for seed in range(0, 10):

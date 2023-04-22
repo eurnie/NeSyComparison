@@ -76,8 +76,8 @@ def train_and_test(dataset, model_file_name, dataList_train, obsList_train,
     return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-# dataset = "mnist"
-dataset = "fashion_mnist"
+dataset = "mnist"
+# dataset = "fashion_mnist"
 label_noise = 0
 #########################################################################################################
 
@@ -122,7 +122,7 @@ addition(A,B,N) :- digit(0,A,N1), digit(0,B,N2), N=N1+N2.
 nn(digit(1,X), [0,1,2,3,4,5,6,7,8,9]) :- img(X).
 '''
 
-for seed in range(0, 10):
+for seed in range(2, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
