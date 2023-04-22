@@ -97,7 +97,7 @@ use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(9, 10):
+for seed in range(0, 9):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
