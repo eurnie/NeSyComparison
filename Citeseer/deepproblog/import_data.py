@@ -14,6 +14,9 @@ citation_graph = data[0]
 x_values = citation_graph.x
 y_values = citation_graph.y
 
+cite_a = citation_graph.edge_index[0]
+cite_b = citation_graph.edge_index[1]
+
 def import_indices(dataset, seed):
     if (dataset == "train"):
         criteria = citation_graph.train_mask
@@ -43,6 +46,23 @@ class Citeseer_Documents(object):
 
     def __getitem__(self, item):
         return x_values[int(item[0])]
+    
+class Citeseer_Cites(object):
+    def __init__(self, cite_a, cite_b):
+        self.cites_a = cite_a
+        self.cites_b = cite_b
+
+    def __getitem__(self, item):
+        indices = []
+        for i in range(len(self.cites_a)):
+            if self.cites_a[i] == int(item[0]):
+                indices.append(i)
+
+        return_values = []
+        for index in indices:
+            return_values.append(self.cites_b[index])
+
+        return return_values
 
 def import_datasets(seed):
     train_set = CiteseerOperator(
@@ -98,3 +118,4 @@ class CiteseerOperator(Dataset, TorchDataset):
         return len(self.data)
 
 citeseer_examples = Citeseer_Documents(x_values)
+citeseer_cites = Citeseer_Cites(cite_a, cite_b)

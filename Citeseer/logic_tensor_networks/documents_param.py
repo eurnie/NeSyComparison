@@ -23,7 +23,7 @@ p_schedule = 1.
 use_dropout = False
 #########################################################################################################
 
-for batch_size in [2, 4, 8]:
+for batch_size in [4, 8]:
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
