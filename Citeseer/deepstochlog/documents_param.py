@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from torch.optim import Adam
 from deepstochlog.network import Network, NetworkStore
-from import_data import train_dataset, valid_dataset, queries_for_model, citations
+from import_data import get_dataset, citations
 from deepstochlog.dataloader import DataLoader
 from deepstochlog.model import DeepStochLogModel
 from deepstochlog.trainer import DeepStochLogTrainer, print_logger
@@ -35,6 +35,9 @@ random.seed(seed)
 numpy.random.seed(seed)
 torch.manual_seed(seed)
 
+train_dataset, queries_for_model = get_dataset("train", seed)
+val_dataset, _ = get_dataset("val", seed)
+
 if use_dropout:
     classifier_network = Network("classifier", Net_Dropout(), index_list=[Term(str(op)) for op in range(6)])
 else:
@@ -48,7 +51,7 @@ model = DeepStochLogModel.from_file(
     file_location=str((root_path / "documents.pl").absolute()),
     query=queries_for_model,
     networks=networks,
-    prolog_facts= citations,
+    prolog_facts=citations,
     verbose=False
 )
 proving_time = time.time() - proving_start
@@ -65,7 +68,6 @@ calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloa
 
 # training
 trainer = DeepStochLogTrainer(log_freq=100, accuracy_tester=calculate_model_accuracy)
-
 best_accuracy = 0
 
 for epoch in range(nb_epochs):
@@ -80,7 +82,7 @@ for epoch in range(nb_epochs):
         pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # testing
-    accuracy = calculate_accuracy(model, valid_dataset)[0]
+    accuracy = calculate_accuracy(model, val_dataset)[0]
 
     # save results to a summary file
     information = {

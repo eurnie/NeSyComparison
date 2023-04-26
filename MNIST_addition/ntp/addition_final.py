@@ -75,7 +75,7 @@ def show_rules(model: SimpleHoppy,
 def create_datasets(train_path, test_path, size_val):
     percentage_of_original_train_dataset = 1
     percentage_of_original_dev_dataset = 1
-    percentage_of_original_test_dataset = 1
+    percentage_of_original_test_dataset = 0.1
     
     split_index = round(size_val * 30000)
     output_file_names_list = []
@@ -133,10 +133,10 @@ label_noise = 0
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 16
+batch_size = 256
 learning_rate = 0.001
 use_dropout = False
-size_val = 0.1
+size_val = 0.001
 embedding_size = 10
 k_max = 4
 optimizer_name = "adam"

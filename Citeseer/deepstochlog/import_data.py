@@ -1,4 +1,5 @@
 import dgl
+import random
 import torch
 import torch_geometric
 from pathlib import Path
@@ -72,7 +73,8 @@ class CiteseerDataset(ContextualizedTermDataset):
         self,
         split: str,
         labels,
-        documents):
+        documents,
+        seed):
         if split == "train":
             self.ids = train_ids
         elif split =="valid":
@@ -103,6 +105,11 @@ class CiteseerDataset(ContextualizedTermDataset):
                 query_model = query.term
             self.queries_for_model.append(query_model)
 
+        # shuffle dataset
+        if split == "train":
+            rng = random.Random(seed)
+            rng.shuffle(self.dataset)
+
     def __len__(self):
         return len(self.dataset)
 
@@ -110,9 +117,17 @@ class CiteseerDataset(ContextualizedTermDataset):
         if type(item) is slice:
             return (self[i] for i in range(*item.indices(len(self))))
         return self.dataset[item]
+    
+def get_dataset(dataset_name, seed):
+    train_dataset = CiteseerDataset(split="train", documents=documents, labels=labels, seed=seed)
+    valid_dataset = CiteseerDataset(split="valid", documents=documents, labels=labels, seed=seed)
+    test_dataset = CiteseerDataset(split="test", documents=documents, labels=labels, seed=seed)
 
-train_dataset = CiteseerDataset(split="train", documents=documents, labels=labels)
-valid_dataset = CiteseerDataset(split="valid", documents=documents, labels=labels)
-test_dataset = CiteseerDataset(split="test", documents=documents, labels=labels)
+    queries_for_model = train_dataset.queries_for_model + valid_dataset.queries_for_model + test_dataset.queries_for_model
 
-queries_for_model = train_dataset.queries_for_model + valid_dataset.queries_for_model + test_dataset.queries_for_model
+    if dataset_name == "train":
+        return train_dataset, queries_for_model
+    elif dataset_name == "val":
+        return valid_dataset, queries_for_model
+    elif dataset_name == "test":
+        return test_dataset, queries_for_model

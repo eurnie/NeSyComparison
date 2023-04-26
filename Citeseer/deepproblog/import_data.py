@@ -1,4 +1,5 @@
 import torch_geometric
+import random
 from pathlib import Path
 from typing import Tuple
 from torch.utils.data import Dataset as TorchDataset
@@ -13,7 +14,7 @@ citation_graph = data[0]
 x_values = citation_graph.x
 y_values = citation_graph.y
 
-def import_indices(dataset):
+def import_indices(dataset, seed):
     if (dataset == "train"):
         criteria = citation_graph.train_mask
     elif (dataset == "val"):
@@ -28,6 +29,12 @@ def import_indices(dataset):
             indices.append(i)
             labels.append(y_values[i])
 
+    temp = list(zip(indices, labels))
+    rng = random.Random(seed)
+    rng.shuffle(temp)
+    indices, labels = zip(*temp)
+    indices, labels = list(indices), list(labels)
+
     return indices, labels
 
 class Citeseer_Documents(object):
@@ -37,10 +44,11 @@ class Citeseer_Documents(object):
     def __getitem__(self, item):
         return x_values[int(item[0])]
 
-def import_datasets():
+def import_datasets(seed):
     train_set = CiteseerOperator(
         dataset_name="train",
-        function_name="document_label"
+        function_name="document_label",
+        seed=seed
     )
     val_set = CiteseerOperator(
         dataset_name="val",
@@ -62,13 +70,14 @@ class CiteseerOperator(Dataset, TorchDataset):
     def __init__(
         self,
         dataset_name: str,
-        function_name: str
+        function_name: str,
+        seed=0
     ):
         super(CiteseerOperator, self).__init__()
         self.dataset_name = dataset_name
         self.dataset = x_values
         self.function_name = function_name
-        self.data, self.labels = import_indices(self.dataset_name)
+        self.data, self.labels = import_indices(self.dataset_name, seed)
 
     def to_query(self, i: int) -> Query:
         citeseer_ind = self.data[i]

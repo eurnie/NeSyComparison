@@ -52,7 +52,7 @@ def train(
     if csv_path is not None:
         csv_file.close()
 
-def train_modified(cite_a, cite_b, ds_train, train_step, scheduled_parameters, nb_epochs):
+def train_modified(cite_a, cite_b, ds_train, train_step, nb_epochs, scheduled_parameters):
     start_time = time.time()
     for epoch in range(0, nb_epochs):
         for batch_elements in ds_train:  

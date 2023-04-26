@@ -12,45 +12,22 @@ from neurasp.neurasp import NeurASP
 sys.path.append("..")
 from data.network_torch import Net, Net_Dropout
 
-def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val, obsList_val, 
-    nb_epochs, batch_size):
-    
-    # training
-    NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=nb_epochs, smPickle=None, 
-        bar=True, batchSize=batch_size)
-
-    # save trained model to a file
-    with open("results/param/{}".format(model_file_name), "wb") as handle:
-        pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    # testing
-    accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
-    return accuracy
-
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 2
+nb_epochs = 100
 batch_size = 8
 learning_rate = 0.001
 use_dropout = False
 #########################################################################################################
 
-# (2, 8, 0.01, False)
-# (3, 16, 0.01, False)
-# (1, 2, 0.01, False)
-# (2, 2, 0.01, False)
-# (2, 16, 0.01, False)
-# (1, 16, 0.01, False)
-# (1, 8, 0.01, False)
-# (3, 8, 0.01, False)
-# (2, 4, 0.01, False)
-# (3, 2, 0.01, False)
-# (3, 4, 0.01, False)
-# (1, 4, 0.01, False)
-
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
 citation_graph = data[0]
+
+# generate and shuffle dataset
+dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
+rng = random.Random(seed)
+rng.shuffle(dataset)
 
 # setting seeds for reproducibility
 random.seed(seed)
@@ -97,8 +74,16 @@ model_file_name = "NeurASP_param_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_s
     learning_rate, use_dropout)
 
 # train and test
-accuracy = train_and_test(model_file_name, dataList_train, obsList_train,
-    dataList_val, obsList_val, nb_epochs, batch_size)
+# training
+NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=nb_epochs, smPickle=None, 
+    bar=True, batchSize=batch_size)
+
+# save trained model to a file
+with open("results/param/{}".format(model_file_name), "wb") as handle:
+    pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# testing
+accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
 
 # save results to a summary file
 information = {

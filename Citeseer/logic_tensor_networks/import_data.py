@@ -1,10 +1,8 @@
 import tensorflow as tf
 import torch_geometric
-import torchvision.transforms as transforms
-import numpy as np
 from pathlib import Path
 
-def get_dataset(dataset, batch_size):
+def get_dataset(dataset, batch_size, seed):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
     citation_graph = data[0]
@@ -24,6 +22,7 @@ def get_dataset(dataset, batch_size):
 
     print("The", print_string, "set contains", len(x), "instances.")
     dataset_return = tf.data.Dataset.from_tensor_slices((x,y)).batch(batch_size)
+    dataset_return.shuffle(len(x), seed=seed, reshuffle_each_iteration=None)
     return dataset_return
 
 def get_cites():

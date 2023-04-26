@@ -7,7 +7,7 @@ class Net(tf.keras.Model):
        
         # classifier
         self.classifier = tf.keras.Sequential()
-        self.classifier.add(layers.Dense(120))
+        self.classifier.add(layers.Dense(840))
         self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(84))
         self.classifier.add(tf.keras.layers.Activation("relu"))
@@ -26,7 +26,7 @@ class Net_Dropout(tf.keras.Model):
 
         # classifier
         self.classifier = tf.keras.Sequential()
-        self.classifier.add(layers.Dense(120))
+        self.classifier.add(layers.Dense(840))
         self.classifier.add(tf.keras.layers.Activation("relu"))
         self.classifier.add(layers.Dense(84))
         self.classifier.add(tf.keras.layers.Activation("relu"))

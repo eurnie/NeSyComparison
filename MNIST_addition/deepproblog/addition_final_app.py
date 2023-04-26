@@ -83,8 +83,8 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
     return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-#dataset = "mnist"
-dataset = "fashion_mnist"
+dataset = "mnist"
+# dataset = "fashion_mnist"
 label_noise = 0
 #########################################################################################################
 
@@ -97,7 +97,7 @@ use_dropout = False
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(0, 9):
+for seed in range(9, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)

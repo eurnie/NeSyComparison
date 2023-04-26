@@ -5,9 +5,9 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.classifier =  nn.Sequential(
-            nn.Linear(3703, 120),
+            nn.Linear(3703, 840),
             nn.ReLU(),
-            nn.Linear(120, 84),
+            nn.Linear(840, 84),
             nn.ReLU(),
             nn.Linear(84, 6),
             nn.Softmax(1)
@@ -23,9 +23,9 @@ class Net_Dropout(nn.Module):
         super(Net_Dropout, self).__init__()
         self.classifier =  nn.Sequential(
             nn.Dropout(p=0.2),
-            nn.Linear(3703, 120),
+            nn.Linear(3703, 840),
             nn.ReLU(),
-            nn.Linear(120, 84),
+            nn.Linear(840, 84),
             nn.ReLU(),
             nn.Linear(84, 6),
             nn.Softmax(1)

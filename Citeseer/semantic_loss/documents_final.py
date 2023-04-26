@@ -16,8 +16,6 @@ from semantic_loss_pytorch import SemanticLoss
 sys.path.append("..")
 from data.network_torch import Net, Net_Dropout
 
-# https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html
-
 def import_data(dataset):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")

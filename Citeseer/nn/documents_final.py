@@ -17,27 +17,36 @@ from data.network_torch import Net, Net_Dropout
 
 # https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html
 
-def import_data(dataset):
+def import_data(dataset_name, seed):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
     citation_graph = data[0]
 
-    if (dataset == "train"):
-        x = citation_graph.x[citation_graph.train_mask]
-        y = citation_graph.y[citation_graph.train_mask]
+    if (dataset_name == "train"):
+        mask = citation_graph.train_mask
         print_string = "training"
-    elif (dataset == "val"):
-        x = citation_graph.x[citation_graph.val_mask]
-        y = citation_graph.y[citation_graph.val_mask]
+    elif (dataset_name == "val"):
+        mask = citation_graph.val_mask
         print_string = "validation"
-    elif (dataset == "test"):
-        x = citation_graph.x[citation_graph.test_mask]
-        y = citation_graph.y[citation_graph.test_mask]
+    elif (dataset_name == "test"):
+        mask = citation_graph.test_mask
         print_string = "testing"
 
-    dataset_return = [(x[i], y[i]) for i in range(len(x))]
-    print("The", print_string, "set contains", len(dataset_return), "instances.")
-    return dataset_return
+    indices = []
+    for i, bool in enumerate(mask):
+        if bool:
+            indices.append(i)
+
+    x = citation_graph.x[mask]
+    y = citation_graph.y[mask]
+
+    # generate and shuffle dataset
+    dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
+    rng = random.Random(seed)
+    rng.shuffle(dataset)
+
+    print("The", print_string, "set contains", len(dataset), "instances.")
+    return dataset
 
     # print("--- Summary of dataset ---")
     # print("Dataset name:", dataset)
@@ -64,7 +73,7 @@ def import_data(dataset):
 
 def train(dataloader, model, loss_fn, optimizer):
     model.train()
-    for (x, y) in dataloader:
+    for (_, x, y) in dataloader:
         # compute prediction error
         pred = model(x)
         loss = loss_fn(pred, y)
@@ -79,7 +88,7 @@ def test(dataloader, model):
     correct = 0
     total = 0
     with torch.no_grad():
-        for x, y in dataloader:
+        for (_, x, y) in dataloader:
             pred = model(x)
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
             total += len(x)
@@ -134,10 +143,10 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     return accuracy, total_training_time, testing_time    
     
 ############################################### PARAMETERS ##############################################
-nb_epochs = 10
+nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
-use_dropout = True
+use_dropout = False
 #########################################################################################################
 
 for seed in range(0, 10):
