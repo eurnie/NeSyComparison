@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net_NN, Net_NN_Dropout, Net_NN_Extra
+from data.network_torch import Net_NN
 
 def parse_data(dataset, filename, dataset_name, size_val):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
