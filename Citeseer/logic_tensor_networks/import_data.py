@@ -30,13 +30,10 @@ def get_cites():
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
     citation_graph = data[0]
 
-    list_1_return = []
-    list_2_return = []
-
     list_1 = citation_graph.edge_index[0]
     list_2 = citation_graph.edge_index[1]
-    for i in range(0, len(list_1)):
-        list_1_return.append(citation_graph.x[list_1[i]])
-        list_2_return.append(citation_graph.x[list_2[i]])
 
-    return list_1_return, list_2_return
+    cites_a = [citation_graph.x[list_1[i]] for i in range(len(list_1))]
+    cites_b = [citation_graph.x[list_2[i]] for i in range(len(list_2))]
+
+    return cites_a, cites_b

@@ -24,10 +24,10 @@ DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
 citation_graph = data[0]
 
-# generate and shuffle dataset
-dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
-rng = random.Random(seed)
-rng.shuffle(dataset)
+# # generate and shuffle dataset
+# dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
+# rng = random.Random(seed)
+# rng.shuffle(dataset)
 
 # setting seeds for reproducibility
 random.seed(seed)
