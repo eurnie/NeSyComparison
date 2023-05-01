@@ -15,15 +15,12 @@ from commons import train_modified, test_modified
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_tensorflow import Net, Net_Dropout, Net_Original
+from data.network_tensorflow import Net
 
 def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, 
-                   p_schedule, use_dropout):
+                   p_schedule, dropout_rate):
     # predicates
-    if use_dropout:
-        logits_model = Net_Dropout()
-    else:
-        logits_model = Net()
+    logits_model = Net(dropout_rate)
     Digit = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
 
     # variables
@@ -139,7 +136,7 @@ nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
 p_schedule = 1.
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -160,11 +157,11 @@ for seed in range(0, 10):
 
     # generate name of folder that holds all the trained models
     model_file_name = "label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
-        nb_epochs, batch_size, learning_rate, p_schedule, use_dropout, size_val)
+        nb_epochs, batch_size, learning_rate, p_schedule, dropout_rate, size_val)
 
     # train and test
     nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
-        test_set, nb_epochs, learning_rate, p_schedule, use_dropout)
+        test_set, nb_epochs, learning_rate, p_schedule, dropout_rate)
       
     # save results to a summary file
     information = {
@@ -174,7 +171,7 @@ for seed in range(0, 10):
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "p_schedule": p_schedule,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": float(accuracy),
         "training_time": float(training_time),

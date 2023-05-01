@@ -15,15 +15,12 @@ from sklearn.model_selection import KFold
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_tensorflow import Net, Net_Dropout, Net_Original
+from data.network_tensorflow import Net
 
 def train_and_test(model_file_name_dir, fold_nb, train_set, test_set, nb_epochs, learning_rate, p_schedule, 
-    use_dropout):
+    dropout_rate):
     # predicates
-    if use_dropout:
-        logits_model = Net_Dropout()
-    else:
-        logits_model = Net()
+    logits_model = Net(dropout_rate)
     Digit = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
 
     # variables
@@ -120,7 +117,7 @@ nb_epochs = 1
 batch_size = 128
 learning_rate = 0.001
 p_schedule = 1.
-use_dropout = True
+dropout_rate = 0
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -140,7 +137,7 @@ fold_nb = 1
 
 # generate name of folder that holds all the trained models
 model_file_name_dir = "LTN_kfold_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-    p_schedule, use_dropout)
+    p_schedule, dropout_rate)
 
 for train_index, test_index in KFold(10).split(train_labels):
     ds_train = [numpy.array(train_data[0])[train_index], numpy.array(train_data[1])[train_index]]
@@ -150,7 +147,7 @@ for train_index, test_index in KFold(10).split(train_labels):
     ds_train = tf.data.Dataset.from_tensor_slices(tuple(ds_train)+(labels_train,)).batch(batch_size)
     ds_test = tf.data.Dataset.from_tensor_slices(tuple(ds_test)+(labels_test,)).batch(1)
     fold_accuracy = train_and_test(model_file_name_dir, fold_nb, ds_train, ds_test, nb_epochs, 
-        learning_rate, p_schedule, use_dropout)
+        learning_rate, p_schedule, dropout_rate)
     print(fold_nb, "-- Fold accuracy: ", fold_accuracy)
     accuracies.append(float(fold_accuracy))
     fold_nb += 1
@@ -165,7 +162,7 @@ information = {
     "batch_size": batch_size,
     "learning_rate": learning_rate,
     "p_schedule": p_schedule,
-    "use_dropout": use_dropout,
+    "dropout_rate": dropout_rate,
     "accuracies": accuracies,
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir
