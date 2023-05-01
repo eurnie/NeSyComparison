@@ -18,19 +18,16 @@ from deepstochlog.utils import create_model_accuracy_calculator, calculate_accur
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 def train_and_test(dataset, model_file_name_dir, train_set_list, nb_epochs, batch_size, learning_rate, 
-    epsilon, use_dropout):
+    epsilon, dropout_rate):
 
     accuracies = []
 
     for fold_nb in range(1, 11):
         # create a network object containing the MNIST network and the index list
-        if use_dropout:
-            mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
-        else:
-            mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
+        mnist_classifier = Network("number", Net(dropout_rate), index_list=[Term(str(i)) for i in range(10)])
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         networks = NetworkStore(mnist_classifier)
 
@@ -91,7 +88,7 @@ nb_epochs = 1
 batch_size = 512
 learning_rate = 0.001
 epsilon = 0.00000001
-use_dropout = False
+dropout_rate = 0
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -110,11 +107,11 @@ train_set_list = import_datasets_kfold(dataset)
 
 # generate name of folder that holds all the trained models
 model_file_name_dir = "DeepStochLog_kfold_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, 
-    learning_rate, epsilon, use_dropout)
+    learning_rate, epsilon, dropout_rate)
 
 # train and test
 avg_accuracy, accuracies = train_and_test(dataset, model_file_name_dir, train_set_list, nb_epochs, 
-                                          batch_size, learning_rate, epsilon, use_dropout)
+                                          batch_size, learning_rate, epsilon, dropout_rate)
 
 # save results to a summary file
 information = {
@@ -124,7 +121,7 @@ information = {
     "batch_size": batch_size,
     "learning_rate": learning_rate,
     "epsilon": epsilon,
-    "use_dropout": use_dropout,
+    "dropout_rate": dropout_rate,
     "accuracies": accuracies,
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir

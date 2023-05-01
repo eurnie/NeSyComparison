@@ -14,18 +14,15 @@ from deepproblog.evaluate import get_confusion_matrix
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 def train_and_test(dataset, model_file_name_dir, train_set_list, method, nb_epochs, batch_size, 
-                   learning_rate, use_dropout):
+                   learning_rate, dropout_rate):
 
     accuracies = []
 
     for fold_nb in range(1, 11):
-        if use_dropout:
-            network = Net_Dropout()
-        else:
-            network = Net()
+        network = Net(dropout_rate)
         net = Network(network, "mnist_net", batching=True)
         net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
@@ -75,7 +72,7 @@ method = "exact"
 nb_epochs = 1
 batch_size = 8
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -94,11 +91,11 @@ train_set_list = import_datasets_kfold(dataset)
 
 # generate name of folder that holds all the trained models
 model_file_name_dir = "DeepProbLog_kfold_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, 
-    batch_size, learning_rate, use_dropout)
+    batch_size, learning_rate, dropout_rate)
 
 # train and test
 avg_accuracy, accuracies = train_and_test(dataset, model_file_name_dir, train_set_list, method, nb_epochs, 
-    batch_size, learning_rate, use_dropout)
+    batch_size, learning_rate, dropout_rate)
 
 # save results to a summary file
 information = {
@@ -108,7 +105,7 @@ information = {
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,
     "learning_rate": learning_rate,
-    "use_dropout": use_dropout,
+    "dropout_rate": dropout_rate,
     "accuracies": accuracies,
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir

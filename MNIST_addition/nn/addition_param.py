@@ -108,7 +108,7 @@ seed = 0
 nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -129,10 +129,7 @@ elif dataset == "fashion_mnist":
 train_set = parse_data(dataset, processed_data_path, "train", size_val)
 val_set = parse_data(dataset, processed_data_path, "val", size_val)
 
-if use_dropout:
-    model = Net_NN_Dropout()
-else:
-    model = Net_NN()
+model = Net_NN(dropout_rate)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
@@ -148,7 +145,7 @@ for epoch in range(nb_epochs):
 
     # generate name of file that holds the trained model
     model_file_name = "NN_param_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, 
-        batch_size, learning_rate, use_dropout, size_val)
+        batch_size, learning_rate, dropout_rate, size_val)
 
     # save trained model to a file
     with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
@@ -164,7 +161,7 @@ for epoch in range(nb_epochs):
         "nb_epochs": epoch + 1,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "model_file": model_file_name

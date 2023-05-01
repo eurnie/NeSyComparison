@@ -13,7 +13,7 @@ from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 class MNIST_Addition(Dataset):
     def __init__(self, dataset, examples, start_index, end_index):
@@ -43,7 +43,7 @@ seed = 0
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -114,10 +114,7 @@ for i1, i2, l in valDataset:
     obsList_val.append(':- not addition(i1, i2, {}).'.format(l))
 
 # define nnMapping and optimizers, initialze NeurASP object
-if use_dropout:
-    m = Net_Dropout()
-else:
-    m = Net()
+m = Net(dropout_rate)
 nnMapping = {'digit': m}
 optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
 NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
@@ -130,7 +127,7 @@ for epoch in range(nb_epochs):
     
     # generate name of file that holds the trained model
     model_file_name = "NeurASP_param_{}_{}_{}_{}_{}_{}".format(seed, 
-        epoch + 1, batch_size, learning_rate, use_dropout, size_val)
+        epoch + 1, batch_size, learning_rate, dropout_rate, size_val)
 
     # save trained model to a file
     with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
@@ -146,7 +143,7 @@ for epoch in range(nb_epochs):
         "nb_epochs": epoch + 1,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "model_file": model_file_name

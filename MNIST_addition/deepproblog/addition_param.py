@@ -14,7 +14,7 @@ from deepproblog.evaluate import get_confusion_matrix
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 ################################################# DATASET ###############################################
 dataset = "mnist"
@@ -27,7 +27,7 @@ method = "exact"
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -45,10 +45,7 @@ elif dataset == "fashion_mnist":
 # import train and val set
 train_set, val_set, _ = import_datasets(dataset, size_val)
 
-if use_dropout:
-    network = Net_Dropout()
-else:
-    network = Net()
+network = Net(dropout_rate)
 net = Network(network, "mnist_net", batching=True)
 net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
@@ -77,7 +74,7 @@ for epoch in range(nb_epochs):
 
     # generate name of folder that holds all the trained models
     model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, 
-        batch_size, learning_rate, use_dropout, size_val)
+        batch_size, learning_rate, dropout_rate, size_val)
     
     # save trained model to a file
     model.save_state(f'results/{method}/{dataset}/param/{model_file_name}')
@@ -93,7 +90,7 @@ for epoch in range(nb_epochs):
         "nb_epochs": epoch + 1,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "model_files": model_file_name

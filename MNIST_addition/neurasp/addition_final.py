@@ -14,7 +14,7 @@ from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 class MNIST_Addition(Dataset):
     def __init__(self, dataset, examples, start_index, end_index):
@@ -85,7 +85,7 @@ label_noise = 0
 nb_epochs = 100
 batch_size = 16
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -166,17 +166,14 @@ for seed in range(2, 10):
         obsList_test.append(':- not addition(i1, i2, {}).'.format(l))
 
     # define nnMapping and optimizers, initialze NeurASP object
-    if use_dropout:
-        m = Net_Dropout()
-    else:
-        m = Net()
+    m = Net(dropout_rate)
     nnMapping = {'digit': m}
     optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
     NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
 
     # generate name of file that holds the trained model
     model_file_name = "label_noise_{}/NeurASP_final_{}_{}_{}_{}_{}_{}".format(label_noise, 
-        seed, nb_epochs, batch_size, learning_rate, use_dropout, size_val)
+        seed, nb_epochs, batch_size, learning_rate, dropout_rate, size_val)
 
     # train and test the method on the MNIST addition dataset
     nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, dataList_train, 
@@ -189,7 +186,7 @@ for seed in range(2, 10):
         "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "training_time": training_time,

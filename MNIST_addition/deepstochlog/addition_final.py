@@ -18,15 +18,12 @@ from deepstochlog.utils import create_model_accuracy_calculator, calculate_accur
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
-                   learning_rate, epsilon, use_dropout):
+                   learning_rate, epsilon, dropout_rate):
     # create a network object containing the MNIST network and the index list
-    if use_dropout:
-        mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
-    else:
-        mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
+    mnist_classifier = Network("number", Net(dropout_rate), index_list=[Term(str(i)) for i in range(10)])
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     networks = NetworkStore(mnist_classifier)
 
@@ -104,7 +101,7 @@ nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
 epsilon = 0.00000001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -125,11 +122,11 @@ for seed in range(6, 10):
 
     # generate name of file that holds the trained model
     model_file_name = "label_noise_{}/DeepStochLog_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, 
-        seed, nb_epochs, batch_size, learning_rate, epsilon, use_dropout, size_val)
+        seed, nb_epochs, batch_size, learning_rate, epsilon, dropout_rate, size_val)
 
     # train and test
     nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
-        test_set, nb_epochs, batch_size, learning_rate, epsilon, use_dropout)
+        test_set, nb_epochs, batch_size, learning_rate, epsilon, dropout_rate)
 
     # save results to a summary file
     information = {
@@ -139,7 +136,7 @@ for seed in range(6, 10):
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "epsilon": epsilon,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "training_time": training_time,

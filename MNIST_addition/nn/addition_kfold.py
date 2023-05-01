@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader, SubsetRandomSampler
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net_NN, Net_NN_Dropout, Net_NN_Extra
+from data.network_torch import Net_NN
 
 def parse_data(dataset, filename):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
@@ -103,10 +103,7 @@ def train_and_test(dataset, model_file_name_dir, total_train_set, nb_epochs, bat
         train_dataloader = DataLoader(total_train_set, batch_size=batch_size, sampler=train_subsampler)
         test_dataloader = DataLoader(total_train_set, batch_size=1, sampler=valid_subsampler)
 
-        if use_dropout:
-            model = Net_NN_Dropout()
-        else:
-            model = Net_NN()
+        model = Net_NN(dropout_rate)
         loss_fn = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
@@ -140,7 +137,7 @@ seed = 0
 nb_epochs = 1
 batch_size = 8
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -161,11 +158,11 @@ train_set = parse_data(dataset, processed_data_path)
 
 # generate name of folder that holds all the trained models
 model_file_name_dir = "NN_kfold_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-    use_dropout)
+    dropout_rate)
 
 # train and test
 accuracies, avg_accuracy = train_and_test(dataset, model_file_name_dir, train_set, nb_epochs, 
-    batch_size, learning_rate, use_dropout)
+    batch_size, learning_rate, dropout_rate)
 
 # save results to a summary file
 information = {
@@ -174,7 +171,7 @@ information = {
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,
     "learning_rate": learning_rate,
-    "use_dropout": use_dropout,
+    "dropout_rate": dropout_rate,
     "accuracies": accuracies,
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir

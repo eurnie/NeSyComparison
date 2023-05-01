@@ -13,7 +13,7 @@ from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 class MNIST_Addition(Dataset):
     def __init__(self, dataset, examples, start_index, end_index):
@@ -33,15 +33,13 @@ class MNIST_Addition(Dataset):
         i1, i2, l = self.data[index]
         return self.dataset[i1][0], self.dataset[i2][0], l
 
-def train_and_test(dataset, model_file_name_dir, dataList_train_total, obsList_train_total, nb_epochs, batch_size):
+def train_and_test(dataset, model_file_name_dir, dataList_train_total, obsList_train_total, 
+                   nb_epochs, batch_size, dropout_rate):
     accuracies = []
 
     for fold_nb in range(1, 11):
         # define nnMapping and optimizers, initialze NeurASP object
-        if use_dropout:
-            m = Net_Dropout()
-        else:
-            m = Net()
+        m = Net(dropout_rate)
         nnMapping = {'digit': m}
         optimizers = {'digit': torch.optim.Adam(m.parameters(), lr=learning_rate)}
         NeurASPobj = NeurASP(dprogram, nnMapping, optimizers)
@@ -83,7 +81,7 @@ seed = 0
 nb_epochs = 1
 batch_size = 32
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 #########################################################################################################
 
 path = os.path.abspath(__file__)
@@ -149,11 +147,11 @@ for i in range(0, 30000, 3000):
 
 # generate name of folder that holds all the trained models
 model_file_name_dir = "NeurASP_kfold_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-    use_dropout)
+    dropout_rate)
 
 # train and test the method on the MNIST addition dataset
 accuracies, avg_accuracy = train_and_test(dataset, model_file_name_dir, dataList_train_total, 
-    obsList_train_total, nb_epochs, batch_size)
+    obsList_train_total, nb_epochs, batch_size, dropout_rate)
 
 # save results to a summary file
 information = {
@@ -162,7 +160,7 @@ information = {
     "nb_epochs": nb_epochs,
     "batch_size": batch_size,
     "learning_rate": learning_rate,
-    "use_dropout": use_dropout,
+    "use_dropout": dropout_rate,
     "accuracies": accuracies,
     "avg_accuracy": avg_accuracy,
     "model_files_dir": model_file_name_dir

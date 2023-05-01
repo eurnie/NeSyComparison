@@ -17,7 +17,7 @@ from deepstochlog.utils import create_model_accuracy_calculator, calculate_accur
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net
 
 ################################################# DATASET ###############################################
 dataset = "mnist"
@@ -30,7 +30,7 @@ nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
 epsilon = 0.00000001
-use_dropout = False
+dropout_rate = dropout_rate
 size_val = 0.1
 #########################################################################################################
 
@@ -49,10 +49,7 @@ elif dataset == "fashion_mnist":
 train_set, val_set, _ = import_datasets(dataset, size_val)
 
 # create a network object containing the MNIST network and the index list
-if use_dropout:
-    mnist_classifier = Network("number", Net_Dropout(), index_list=[Term(str(i)) for i in range(10)])
-else:
-    mnist_classifier = Network("number", Net(), index_list=[Term(str(i)) for i in range(10)])
+mnist_classifier = Network("number", Net(dropout_rate), index_list=[Term(str(i)) for i in range(10)])
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 networks = NetworkStore(mnist_classifier)
 
@@ -92,7 +89,7 @@ for epoch in range(nb_epochs):
 
     # generate name of file that holds the trained model
     model_file_name = "DeepStochLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, batch_size, 
-        learning_rate, epsilon, use_dropout, size_val)
+        learning_rate, epsilon, dropout_rate, size_val)
 
     # save trained model to a file
     with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
@@ -109,7 +106,7 @@ for epoch in range(nb_epochs):
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "epsilon": epsilon,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "model_file": model_file_name
