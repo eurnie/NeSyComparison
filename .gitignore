@@ -24,6 +24,8 @@ MNIST_addition/ntp/train.txt
 MNIST_addition/ntp/dev.txt
 MNIST_addition/ntp/test.txt
 Citeseer/data/CiteSeer/*
+Citeseer/data/Cora/*
+Citeseer/data/PubMed/*
 WarcraftShortestPath/data/Warcraft/*
 
 # Visual Studio Code

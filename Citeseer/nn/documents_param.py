@@ -10,39 +10,63 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
-def import_data(dataset_name, seed):
+# import the given dataset, shuffle it with the given seed and move the given ratio from the train
+# set to the test set 
+def import_datasets(dataset, move_to_test_set_ratio, seed):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
-    data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
+    data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
     citation_graph = data[0]
 
-    if (dataset_name == "train"):
-        mask = citation_graph.train_mask
-        print_string = "training"
-    elif (dataset_name == "val"):
-        mask = citation_graph.val_mask
-        print_string = "validation"
-    elif (dataset_name == "test"):
-        mask = citation_graph.test_mask
-        print_string = "testing"
+    # variable that holds the examples from the training set that will be added to the test set
+    test_set_to_add = []
 
-    indices = []
-    for i, bool in enumerate(mask):
-        if bool:
-            indices.append(i)
+    # create the train, val and test set
+    for dataset_name in ["train", "val", "test"]:
+        if (dataset_name == "train"):
+            mask = citation_graph.train_mask
+        elif (dataset_name == "val"):
+            mask = citation_graph.val_mask
+        elif (dataset_name == "test"):
+            mask = citation_graph.test_mask
 
-    x = citation_graph.x[mask]
-    y = citation_graph.y[mask]
+        indices = []
+        for i, bool in enumerate(mask):
+            if bool:
+                indices.append(i)
 
-    # generate and shuffle dataset
-    dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
-    rng = random.Random(seed)
-    rng.shuffle(dataset)
+        x = citation_graph.x[mask]
+        y = citation_graph.y[mask]
 
-    print("The", print_string, "set contains", len(dataset), "instances.")
-    return dataset
+        # shuffle dataset
+        dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
+        rng = random.Random(seed)
+        rng.shuffle(dataset)
 
+        # move train examples to the test set according to the given ratio
+        if dataset_name == "train":
+            if move_to_test_set_ratio > 0:
+                split_index = round(move_to_test_set_ratio * len(dataset))
+                train_set = dataset[split_index:]
+                for elem in dataset[:split_index]:
+                    test_set_to_add.append(elem)
+            else:
+                train_set = dataset
+        elif dataset_name == "val":
+            val_set = dataset
+        elif dataset_name == "test":
+            test_set = dataset
+            for elem in test_set_to_add:
+                test_set.append(elem)
+
+    print("The training set contains", len(train_set), "instances.")
+    print("The validation set contains", len(val_set), "instances.")
+    print("The testing set contains", len(test_set), "instances.")
+
+    return train_set, val_set, test_set
+
+# train the model
 def train(dataloader, model, loss_fn, optimizer):
     model.train()
     for (_, x, y) in dataloader:
@@ -55,6 +79,7 @@ def train(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
+# test the model
 def test(dataloader, model):
     model.eval()
     correct = 0
@@ -66,12 +91,17 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
+################################################# DATASET ###############################################
+dataset = "PubMed"
+move_to_test_set_ratio = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 2
-learning_rate = 0.01
-use_dropout = False
+batch_size = 16
+learning_rate = 0.001
+dropout_rate = 0
 #########################################################################################################
 
 # setting seeds for reproducibility
@@ -80,32 +110,35 @@ numpy.random.seed(seed)
 torch.manual_seed(seed)
 
 # import train and val set
-train_set = import_data("train", seed)
-val_set = import_data("val", seed)
-
-# create model and loss function
-if use_dropout:
-    model = Net_Dropout()
-else:
-    model = Net()
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
+train_set, val_set, _ = import_datasets(dataset, move_to_test_set_ratio, seed)
 train_dataloader = DataLoader(train_set, batch_size=batch_size)
 val_dataloader = DataLoader(val_set, batch_size=1)
 
+# create model
+if dataset == "CiteSeer":
+    model = Net_CiteSeer(dropout_rate)
+elif dataset == "Cora":
+    model = Net_Cora(dropout_rate)
+elif dataset == "PubMed":
+    model = Net_PubMed(dropout_rate)
+
+# create loss function
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
 best_accuracy = 0
 
-# training
+# training and testing
 for epoch in range(nb_epochs):
+    # training
     train(train_dataloader, model, loss_fn, optimizer)
 
     # generate name of file that holds the trained model
     model_file_name = "NN_param_{}_{}_{}_{}_{}".format(seed, epoch + 1, batch_size, learning_rate, 
-        use_dropout)
+        dropout_rate)
 
     # save trained model to a file
-    with open("results/param/{}".format(model_file_name), "wb") as handle:
+    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
@@ -118,11 +151,11 @@ for epoch in range(nb_epochs):
         "nb_epochs": epoch + 1,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "accuracy": accuracy,
         "model_file": model_file_name
     }
-    with open("results/summary_param.json", "a") as outfile:
+    with open(f'results/{dataset}/summary_param.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
