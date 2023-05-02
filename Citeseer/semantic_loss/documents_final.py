@@ -6,7 +6,6 @@ import numpy
 import time
 import torch
 import pickle
-import torch.nn.functional as F
 from torch import nn
 import torch_geometric
 from pathlib import Path
@@ -14,83 +13,130 @@ from torch.utils.data import DataLoader
 from semantic_loss_pytorch import SemanticLoss
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
-def import_data(dataset):
+# import the given dataset, shuffle it with the given seed and move the given ratio from the train
+# set to the test set 
+def import_datasets(dataset, move_to_test_set_ratio, seed):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
-    data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
+    data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
     citation_graph = data[0]
 
-    if (dataset == "train"):
-        x = citation_graph.x[citation_graph.train_mask]
-        y = citation_graph.y[citation_graph.train_mask]
-        print_string = "training"
-    elif (dataset == "val"):
-        x = citation_graph.x[citation_graph.val_mask]
-        y = citation_graph.y[citation_graph.val_mask]
-        print_string = "validation"
-    elif (dataset == "test"):
-        x = citation_graph.x[citation_graph.test_mask]
-        y = citation_graph.y[citation_graph.test_mask]
-        print_string = "testing"
+    # variable that holds the examples from the training set that will be added to the test set
+    test_set_to_add = []
+    test_set_to_add_ind = []
 
-    dataset_return = [(x[i], y[i]) for i in range(len(x))]
-    print("The", print_string, "set contains", len(dataset_return), "instances.")
-    return dataset_return
+    # create the train, val and test set
+    for dataset_name in ["train", "val", "test"]:
+        if (dataset_name == "train"):
+            mask = citation_graph.train_mask
+        elif (dataset_name == "val"):
+            mask = citation_graph.val_mask
+        elif (dataset_name == "test"):
+            mask = citation_graph.test_mask
 
-    # print("--- Summary of dataset ---")
-    # print("Dataset name:", dataset)
-    # print("Length of the dataset:", len(dataset))
-    # print("Number of classes:", dataset.num_classes)
-    # print("Number of features for each node:", dataset.num_node_features)
-    # graph = dataset[0]
-    # print("Summary of the graph:", graph)
-    # print("Undirected graph:", graph.is_undirected())
-    # nb_training_entries = graph.train_mask.sum().item()
-    # nb_validation_entries = graph.val_mask.sum().item()
-    # nb_testing_entries = graph.test_mask.sum().item()
-    # print(nb_training_entries, "training entries")
-    # print(nb_validation_entries, "validation entries")
-    # print(nb_testing_entries, "testing entries")
+        indices = []
+        for i, bool in enumerate(mask):
+            if bool:
+                indices.append(i)
 
-    # write links to file
-    # list_1 = citation_graph.edge_index[0]
-    # list_2 = citation_graph.edge_index[1]
-    # with open("test.txt", "a") as f:
-    #     for i in range(0, len(list_1)):
-    #             f.write("cite({},{}).".format(list_1[i], list_2[i]))
-    #             f.write("\n")
+        x = citation_graph.x[mask]
+        y = citation_graph.y[mask]
 
-def train(dataloader, model, sl, loss_fn, optimizer):
+        # shuffle dataset
+        dataset = [(indices[i], x[i], y[i]) for i in range(len(x))]
+        rng = random.Random(seed)
+        rng.shuffle(dataset)
+
+        # move train examples to the test set according to the given ratio
+        if dataset_name == "train":
+            if move_to_test_set_ratio > 0:
+                split_index = round(move_to_test_set_ratio * len(dataset))
+                train_set = dataset[split_index:]
+                for elem in dataset[:split_index]:
+                    test_set_to_add.append(elem)
+                    test_set_to_add_ind.append(elem[0])
+            else:
+                train_set = dataset
+        elif dataset_name == "val":
+            val_set = dataset
+        elif dataset_name == "test":
+            test_set = dataset
+            for elem in test_set_to_add:
+                test_set.append(elem)
+
+    # collect the cites
+    cites = []
+    cites_a = citation_graph.edge_index[0]
+    cites_b = citation_graph.edge_index[1]
+
+    for i in range(len(cites_a)):
+        cites.append((cites_a[i], cites_b[i]))
+
+    # list that holds the features of a document if this document belongs to the train set
+    # otherwise, this list holds None at the index of that document
+    ind_to_features = []
+    for i in range(len(citation_graph.x)):
+        if citation_graph.train_mask[i] and (not i in test_set_to_add_ind):
+            ind_to_features.append(citation_graph.x[i][None,:])
+        else:
+            ind_to_features.append(None)
+
+    print("The training set contains", len(train_set), "instances.")
+    print("The validation set contains", len(val_set), "instances.")
+    print("The testing set contains", len(test_set), "instances.")
+
+    return train_set, val_set, test_set, cites, ind_to_features
+
+# train the model
+def train(dataloader, model, cites, ind_to_features, sl, loss_fn, optimizer):
     model.train()
-    for (x, y) in dataloader:
-        # compute prediction error
+    for (indices, x, y) in dataloader:
+        loss = 0
         pred = model(x)
-        loss = loss_fn(pred, y) + sl(pred)
+
+        # loop over all examples in this batch
+        for i, ind in enumerate(indices):
+            # search for all cites
+            for (a, b) in cites:
+                if ind == a:
+                    # check if the cited example is a train example
+                    if ind_to_features[b] is not None:
+                        # predict the label of the cited train example and add semantic loss
+                        loss += sl(model(ind_to_features[b])-pred[i])
+
+        # compute prediction error
+        loss += loss_fn(pred, y) 
 
         # backpropagation
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+# test the model
 def test(dataloader, model):
     model.eval()
     correct = 0
     total = 0
     with torch.no_grad():
-        for x, y in dataloader:
+        for (_, x, y) in dataloader:
             pred = model(x)
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
             total += len(x)
     return correct / total
 
-def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, learning_rate, 
-                   use_dropout):
-    if use_dropout:
-        model = Net_Dropout()
-    else:
-        model = Net()
-    sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, cites, ind_to_features, 
+                   nb_epochs, batch_size, learning_rate, dropout_rate):
+    # create model
+    if dataset == "CiteSeer":
+        model = Net_CiteSeer(dropout_rate)
+    elif dataset == "Cora":
+        model = Net_Cora(dropout_rate)
+    elif dataset == "PubMed":
+        model = Net_PubMed(dropout_rate)
+
+    # create loss functions
+    sl = SemanticLoss(f'constraints/{dataset}/constraint.sdd', f'constraints/{dataset}/constraint.vtree')
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -104,7 +150,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     counter = 0
     for epoch in range(nb_epochs):
         start_time = time.time()
-        train(train_dataloader, model, sl, loss_fn, optimizer)
+        train(train_dataloader, model, cites, ind_to_features, sl, loss_fn, optimizer)
         total_training_time += time.time() - start_time
         val_accuracy = test(val_dataloader, model)
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
@@ -123,7 +169,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open("results/final/{}".format(model_file_name), "wb") as handle:
+    with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
@@ -133,11 +179,16 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
 
     return accuracy, total_training_time, testing_time    
     
+################################################# DATASET ###############################################
+dataset = "CiteSeer"
+move_to_test_set_ratio = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
-nb_epochs = 10
+nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
-use_dropout = True
+dropout_rate = 0
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -147,17 +198,16 @@ for seed in range(0, 10):
     torch.manual_seed(seed)
 
     # import train, val and test set
-    train_set = import_data("train")
-    val_set = import_data("val")
-    test_set = import_data("test")
+    train_set, val_set, test_set, cites, ind_to_features = import_datasets(dataset, move_to_test_set_ratio, 
+                                                                           seed)
 
     # generate name of file that holds the trained model
     model_file_name = "SL_final_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-        use_dropout)
+        dropout_rate)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set,
-        test_set, nb_epochs, batch_size, learning_rate, use_dropout)
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set,
+        test_set, cites, ind_to_features, nb_epochs, batch_size, learning_rate, dropout_rate)
     
     # save results to a summary file
     information = {
@@ -166,13 +216,13 @@ for seed in range(0, 10):
         "nb_epochs": nb_epochs,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "accuracy": accuracy,
         "training_time": training_time,
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open('results/{dataset}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

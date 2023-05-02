@@ -1,5 +1,5 @@
 c This file was generated with the constraints_to_cnf module in this project.
-c Starting from file 'constraints.txt'.
+c Starting from file 'constraints/CiteSeer/constraints.txt'.
 c There are 6 variables present in the constraints, and 6 total variables, given by the shape [6].
 c
 p cnf 6 6
