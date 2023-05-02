@@ -181,6 +181,8 @@ learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
 
+assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
+
 for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)

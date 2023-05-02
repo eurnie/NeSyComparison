@@ -104,6 +104,8 @@ learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
 
+assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
+
 for batch_size in [2, 4, 8, 16, 32, 64]:
     # setting seeds for reproducibility
     random.seed(seed)
