@@ -62,6 +62,8 @@ class Citeseer_Cites(object):
         for index in indices:
             return_values.append(self.cites_b[index])
 
+        print(return_values)
+
         return return_values
 
 def import_datasets(seed):

@@ -133,7 +133,7 @@ label_noise = 0
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 256
+batch_size = 512
 learning_rate = 0.001
 use_dropout = False
 size_val = 0.001
@@ -363,18 +363,18 @@ for seed in range(0, 10):
             xi_batch = torch.tensor(xi_exp_np, dtype=torch.long, device=device)
             xt_batch = torch.tensor(xt_exp_np, dtype=torch.float32, device=device)
 
-            for i in range(len(xp_batch)):
-                print("--------------------")
-                print(data.idx_to_predicate[xp_batch[i].item()])
-                print("---")
-                print(data.idx_to_entity[xs_batch[i].item()])
-                print("---")
-                print(data.idx_to_entity[xo_batch[i].item()])
-                print("---")
-                print(xi_batch[i].numpy())
-                print("---")
-                print(xt_batch[i].numpy())
-                print("--------------------")
+            # for i in range(len(xp_batch)):
+            #     print("--------------------")
+            #     print(data.idx_to_predicate[xp_batch[i].item()])
+            #     print("---")
+            #     print(data.idx_to_entity[xs_batch[i].item()])
+            #     print("---")
+            #     print(data.idx_to_entity[xo_batch[i].item()])
+            #     print("---")
+            #     print(xi_batch[i].numpy())
+            #     print("---")
+            #     print(xt_batch[i].numpy())
+            #     print("--------------------")
 
             # Disable masking
             # xi_batch = None

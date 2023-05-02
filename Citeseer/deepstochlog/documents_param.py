@@ -16,7 +16,12 @@ from deepstochlog.term import Term
 from citeseer_utils import create_model_accuracy_calculator, calculate_accuracy
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
+
+################################################# DATASET ###############################################
+dataset = "CiteSeer"
+move_to_test_set_ratio = 0
+#########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
@@ -24,10 +29,11 @@ nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
 epsilon = 0.00000001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
+assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 logger = print_logger
 
 # setting seeds for reproducibility
@@ -38,10 +44,12 @@ torch.manual_seed(seed)
 train_dataset, queries_for_model = get_dataset("train", seed)
 val_dataset, _ = get_dataset("val", seed)
 
-if use_dropout:
-    classifier_network = Network("classifier", Net_Dropout(), index_list=[Term(str(op)) for op in range(6)])
-else:
-    classifier_network = Network("classifier", Net(), index_list=[Term(str(op)) for op in range(6)])
+if dataset == "CiteSeer":
+    classifier_network = Network("classifier", Net_CiteSeer(dropout_rate), index_list=[Term(str(op)) for op in range(6)])
+elif dataset == "Cora":
+    classifier_network = Network("classifier", Net_Cora(dropout_rate), index_list=[Term(str(op)) for op in range(7)])
+elif dataset == "PubMed":
+    classifier_network = Network("classifier", Net_PubMed(dropout_rate), index_list=[Term(str(op)) for op in range(3)])
 
 networks = NetworkStore(classifier_network)
 
@@ -75,7 +83,7 @@ for epoch in range(nb_epochs):
 
     # generate name of file that holds the trained model
     model_file_name = "DeepStochLog_param_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, 
-        batch_size, learning_rate, epsilon, use_dropout, size_val)
+        batch_size, learning_rate, epsilon, dropout_rate, size_val)
 
     # save trained model to a file
     with open(f'results/param/{model_file_name}', "wb") as handle:
@@ -92,7 +100,7 @@ for epoch in range(nb_epochs):
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "epsilon": epsilon,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "model_file": model_file_name

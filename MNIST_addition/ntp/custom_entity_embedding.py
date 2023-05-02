@@ -7,7 +7,7 @@ from pathlib import Path
 from torch import nn
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_NTP
 
 class CustomEntityEmbeddings:
     def __init__(self, dataset, idx_to_entity, use_dropout):
@@ -34,10 +34,7 @@ class CustomEntityEmbeddings:
                 ),
             }
         self.idx_to_entity = idx_to_entity
-        if use_dropout:
-            self.neural_net = Net_Dropout()
-        else:
-            self.neural_net = Net()
+        self.neural_net = Net_NTP()
 
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.neural_net.parameters(), lr=0.001)

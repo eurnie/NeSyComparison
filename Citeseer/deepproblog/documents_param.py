@@ -13,7 +13,7 @@ from deepproblog.evaluate import get_confusion_matrix
 from import_data import import_datasets, citeseer_examples, citeseer_cites
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_CiteSeer
 
 ############################################### PARAMETERS ##############################################
 seed = 0
@@ -21,7 +21,7 @@ method = "exact"
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 #########################################################################################################
 
 for method in ["geometric_mean", "exact"]:
@@ -34,10 +34,7 @@ for method in ["geometric_mean", "exact"]:
         # import train and val set
         train_set, val_set, _ = import_datasets(seed)
 
-        if use_dropout:
-            network = Net_Dropout()
-        else:
-            network = Net()
+        network = Net_CiteSeer(dropout_rate)
 
         net = Network(network, "citeseer_net", batching=True)
         net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
@@ -60,7 +57,7 @@ for method in ["geometric_mean", "exact"]:
 
             # generate name of file that holds the trained model
             model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, batch_size, 
-                learning_rate, use_dropout)
+                learning_rate, dropout_rate)
 
             # save trained model to a file
             model.save_state(f'results/{method}/param/{model_file_name}')
@@ -76,7 +73,7 @@ for method in ["geometric_mean", "exact"]:
                 "nb_epochs": epoch + 1,
                 "batch_size": batch_size,
                 "learning_rate": learning_rate,
-                "use_dropout": use_dropout,
+                "dropout_rate": dropout_rate,
                 "accuracy": accuracy,
                 "model_file": model_file_name
             }
