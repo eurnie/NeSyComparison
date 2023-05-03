@@ -9,7 +9,6 @@ import json
 import os
 import tensorflow as tf
 from tensorflow.keras import layers
-from collections import defaultdict
 from import_data import get_mnist_op_dataset_val
 from commons import train_modified, test_modified
 
@@ -18,7 +17,7 @@ from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashi
 from data.network_tensorflow import Net
 
 def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, 
-                   p_schedule, dropout_rate):
+                   p_forall, p_exists, dropout_rate):
     # predicates
     logits_model = Net(dropout_rate)
     Digit = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
@@ -41,7 +40,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
 
     # axioms
     @tf.function
-    def axioms(images_x, images_y, labels_z, p_schedule=tf.constant(2.)):
+    def axioms(images_x, images_y, labels_z, p_forall, p_exists):
         images_x = ltn.Variable("x", images_x)
         images_y = ltn.Variable("y", images_y)
         labels_z = ltn.Variable("z", labels_z)
@@ -51,16 +50,16 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
                     (d1,d2),
                     And(Digit([images_x,d1]),Digit([images_y,d2])),
                     mask=equals([add([d1,d2]), labels_z]),
-                    p=p_schedule
+                    p=p_exists
                 ),
-                p=2
+                p=p_forall
             )
         sat = axiom.tensor
         return sat
 
     # initialize all layers
     images_x, images_y, labels_z = next(train_set.as_numpy_iterator())
-    axioms(images_x, images_y, labels_z)
+    axioms(images_x, images_y, labels_z, p_forall, p_exists)
 
     # training
     optimizer = tf.keras.optimizers.Adam(learning_rate)
@@ -72,32 +71,27 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     }
 
     @tf.function
-    def train_step(images_x, images_y, labels_z, **parameters):
+    def train_step(images_x, images_y, labels_z, p_forall, p_exists):
         with tf.GradientTape() as tape:
-            loss = 1.- axioms(images_x, images_y, labels_z, **parameters)
+            loss = 1.- axioms(images_x, images_y, labels_z, p_forall, p_exists)
         gradients = tape.gradient(loss, logits_model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
         
     @tf.function
-    def test_step(images_x, images_y, labels_z, **parameters):
+    def test_step(images_x, images_y, labels_z):
         predictions_x = tf.argmax(logits_model(images_x, training=False),axis=-1)
         predictions_y = tf.argmax(logits_model(images_y, training=False),axis=-1)
         predictions_z = predictions_x + predictions_y
         match = tf.equal(predictions_z,tf.cast(labels_z,predictions_z.dtype))
         metrics_dict['test_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
 
-    # the parameter p_schedule is the same in every epoch
-    scheduled_parameters = defaultdict(lambda: {})
-    for epoch in range(0, nb_epochs):
-        scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
-
     # training (with early stopping)
     total_training_time = 0
     best_accuracy = 0
     counter = 0
     for epoch in range(nb_epochs):
-        total_training_time += train_modified(train_set, train_step, scheduled_parameters, 1)
-        val_accuracy = test_modified(val_set, test_step, metrics_dict, scheduled_parameters)
+        total_training_time += train_modified(train_set, train_step, p_forall, p_exists, 1)
+        val_accuracy = test_modified(val_set, test_step, metrics_dict)
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
@@ -120,7 +114,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
             
     # testing
     start_time = time.time()
-    accuracy = test_modified(test_set, test_step, metrics_dict, scheduled_parameters)
+    accuracy = test_modified(test_set, test_step, metrics_dict)
     testing_time = time.time() - start_time
 
     return nb_epochs_done, accuracy, total_training_time, testing_time
@@ -135,7 +129,8 @@ label_noise = 0
 nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
-p_schedule = 1.
+p_forall = 1
+p_exists = 1
 dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
@@ -157,12 +152,12 @@ for seed in range(0, 10):
     train_set, val_set, test_set = get_mnist_op_dataset_val(dataset, size_val, batch_size)
 
     # generate name of folder that holds all the trained models
-    model_file_name = "label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
-        nb_epochs, batch_size, learning_rate, p_schedule, dropout_rate, size_val)
+    model_file_name = "label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+        nb_epochs, batch_size, learning_rate, p_forall, p_exists, dropout_rate, size_val)
 
     # train and test
-    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set, 
-        test_set, nb_epochs, learning_rate, p_schedule, dropout_rate)
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, 
+        train_set, val_set, test_set, nb_epochs, learning_rate, p_forall, p_exists, dropout_rate)
       
     # save results to a summary file
     information = {
@@ -171,7 +166,8 @@ for seed in range(0, 10):
         "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "p_schedule": p_schedule,
+        "p_forall": p_forall,
+        "p_exists": p_exists,
         "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": float(accuracy),
