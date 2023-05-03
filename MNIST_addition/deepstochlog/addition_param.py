@@ -30,7 +30,7 @@ nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
 epsilon = 0.00000001
-dropout_rate = 0.2
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -46,7 +46,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
     elif dataset == "fashion_mnist":
         generate_dataset_fashion_mnist(seed, 0)
 
-    # import train, val and test set
+    # import train and val set
     train_set, val_set, _ = import_datasets(dataset, size_val)
 
     # create a network object containing the MNIST network and the index list

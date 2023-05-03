@@ -27,7 +27,7 @@ method = "exact"
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
-dropout_rate = 0.2
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
