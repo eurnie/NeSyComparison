@@ -119,76 +119,75 @@ dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
-for batch_size in [2, 4, 8, 16, 32, 64]:
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+# setting seeds for reproducibility
+random.seed(seed)
+numpy.random.seed(seed)
+torch.manual_seed(seed)
 
-    # generate and shuffle dataset
-    if dataset == "mnist":
-        generate_dataset_mnist(seed, 0)
-        processed_data_path = "../data/MNIST/processed/"
-    elif dataset == "fashion_mnist":
-        generate_dataset_fashion_mnist(seed, 0)
-        processed_data_path = "../data/FashionMNIST/processed/"
+# generate and shuffle dataset
+if dataset == "mnist":
+    generate_dataset_mnist(seed, 0)
+    processed_data_path = "../data/MNIST/processed/"
+elif dataset == "fashion_mnist":
+    generate_dataset_fashion_mnist(seed, 0)
+    processed_data_path = "../data/FashionMNIST/processed/"
 
-    # import train and val set
-    train_set = parse_data(dataset, processed_data_path, "train", size_val)
-    val_set = parse_data(dataset, processed_data_path, "val", size_val)
+# import train and val set
+train_set = parse_data(dataset, processed_data_path, "train", size_val)
+val_set = parse_data(dataset, processed_data_path, "val", size_val)
 
-    train_dataloader = DataLoader(train_set, batch_size=batch_size)
-    val_dataloader = DataLoader(val_set, batch_size=1)
+train_dataloader = DataLoader(train_set, batch_size=batch_size)
+val_dataloader = DataLoader(val_set, batch_size=1)
 
-    # create model and loss functions
-    model = Net(dropout_rate)
-    sl = []
-    for sum in range(19):
-        sl.append(SemanticLoss(f'constraints/sum_{sum}/constraint.sdd', f'constraints/sum_{sum}/constraint.vtree'))
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+# create model and loss functions
+model = Net(dropout_rate)
+sl = []
+for sum in range(19):
+    sl.append(SemanticLoss(f'constraints/sum_{sum}/constraint.sdd', f'constraints/sum_{sum}/constraint.vtree'))
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    best_accuracy = 0
+best_accuracy = 0
 
-    # training
-    for epoch in range(nb_epochs):
-        train(train_dataloader, model, sl, optimizer)
+# training
+for epoch in range(nb_epochs):
+    train(train_dataloader, model, sl, optimizer)
 
-        # generate name of file that holds the trained model
-        model_file_name = "SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
-            epoch + 1, batch_size, learning_rate, dropout_rate, size_val)
+    # generate name of file that holds the trained model
+    model_file_name = "SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
+        epoch + 1, batch_size, learning_rate, dropout_rate, size_val)
 
-        # save trained model to a file
-        with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
-            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                
-        # testing
-        accuracy = test(val_dataloader, model)
+    # save trained model to a file
+    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
+        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
+    # testing
+    accuracy = test(val_dataloader, model)
 
-        # save results to a summary file
-        information = {
-            "algorithm": "SL",
-            "seed": seed,
-            "nb_epochs": epoch + 1,
-            "batch_size": batch_size,
-            "learning_rate": learning_rate,
-            "dropout_rate": dropout_rate,
-            "size_val": size_val,
-            "accuracy": accuracy,
-            "model_file": model_file_name
-        }
-        with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
-            json.dump(information, outfile)
-            outfile.write('\n')
+    # save results to a summary file
+    information = {
+        "algorithm": "SL",
+        "seed": seed,
+        "nb_epochs": epoch + 1,
+        "batch_size": batch_size,
+        "learning_rate": learning_rate,
+        "dropout_rate": dropout_rate,
+        "size_val": size_val,
+        "accuracy": accuracy,
+        "model_file": model_file_name
+    }
+    with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+        json.dump(information, outfile)
+        outfile.write('\n')
 
-        # print results
-        print("############################################")
-        print("Accuracy: {}".format(accuracy))
-        print("############################################")
+    # print results
+    print("############################################")
+    print("Accuracy: {}".format(accuracy))
+    print("############################################")
 
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            counter = 0
-        else:
-            if counter >= 2:
-                break
-            counter += 1
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        counter = 0
+    else:
+        if counter >= 2:
+            break
+        counter += 1
