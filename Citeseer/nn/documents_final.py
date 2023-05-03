@@ -21,7 +21,7 @@ def import_datasets(dataset, move_to_test_set_ratio, seed):
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
     citation_graph = data[0]
 
-    # variable that holds the examples from the training set that will be added to the test set
+    # variable that holds the examples from the train set that will be added to the test set
     test_set_to_add = []
 
     # create the train, val and test set

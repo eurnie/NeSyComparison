@@ -73,14 +73,10 @@ def import_datasets(dataset, move_to_test_set_ratio, seed):
     for i in range(len(cites_a)):
         cites.append((cites_a[i], cites_b[i]))
 
-    # list that holds the features of a document if this document belongs to the train set
-    # otherwise, this list holds None at the index of that document
+    # list that holds the features of all the documents
     ind_to_features = []
     for i in range(len(citation_graph.x)):
-        if citation_graph.train_mask[i] and (not i in test_set_to_add_ind):
-            ind_to_features.append(citation_graph.x[i][None,:])
-        else:
-            ind_to_features.append(None)
+        ind_to_features.append(citation_graph.x[i][None,:])
 
     print("The training set contains", len(train_set), "instances.")
     print("The validation set contains", len(val_set), "instances.")
@@ -100,10 +96,8 @@ def train(dataloader, model, cites, ind_to_features, sl, loss_fn, optimizer):
             # search for all cites
             for (a, b) in cites:
                 if ind == a:
-                    # check if the cited example is a train example
-                    if ind_to_features[b] is not None:
-                        # predict the label of the cited train example and add semantic loss
-                        loss += sl(model(ind_to_features[b])-pred[i])
+                    # predict the label of the cited example and add semantic loss
+                    loss += sl(model(ind_to_features[b])-pred[i])
 
         # compute prediction error
         loss += loss_fn(pred, y) 
