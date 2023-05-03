@@ -35,6 +35,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
+    tf.random.set_seed(seed)
 
     # generate and shuffle dataset
     if dataset == "mnist":

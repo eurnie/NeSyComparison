@@ -145,6 +145,7 @@ for seed in range(0, 10):
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
+    tf.random.set_seed(seed)
 
     # generate and shuffle dataset
     if dataset == "mnist":
