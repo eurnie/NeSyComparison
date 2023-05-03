@@ -15,11 +15,6 @@ ax = fig.add_subplot(111)
  
 bp = ax.boxplot(data, vert = 0)
 
-# x-axis labels
 ax.set_yticklabels(['NN baseline', 'DeepProbLog', 'DeepProblog (approximate)', 'DeepStochLog', 'Logic Tensor Networks', 'NeurASP', 'Semantic Loss'])
-
-# Adding title
 plt.title("MNIST addition")
- 
-# show plot
 plt.show()
