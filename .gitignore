@@ -28,10 +28,10 @@ Citeseer/data/Cora/*
 Citeseer/data/PubMed/*
 WarcraftShortestPath/data/Warcraft/*
 
-# files with logic for semantic loss
-*.vtree
-*.sdd
-dimacs.txt
+# # files with logic for semantic loss
+# *.vtree
+# *.sdd
+# dimacs.txt
 
 # Visual Studio Code
 .vscode/*
