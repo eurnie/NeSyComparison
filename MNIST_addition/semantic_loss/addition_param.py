@@ -5,7 +5,6 @@ import json
 import torch
 import torchvision
 import pickle
-import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torch import nn
 from torch.utils.data import DataLoader
@@ -14,7 +13,7 @@ from pathlib import Path
 
 sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_torch import Net_NN, Net_NN_Dropout
+from data.network_torch import Net
 
 def parse_data(dataset, filename, dataset_name, size_val):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
@@ -69,20 +68,24 @@ def parse_data(dataset, filename, dataset_name, size_val):
         index_digit_1 = int(entries[i].split(" ")[0])
         index_digit_2 = int(entries[i].split(" ")[1])
         sum = int(entries[i].split(" ")[2])
-        first = datasets[dataset_used][index_digit_1][0][0]
-        second = datasets[dataset_used][index_digit_2][0][0]
-        new_tensor = torch.cat((first, second), 0)
-        new_tensor = new_tensor[None, :]
-        dataset.append((new_tensor, sum))
+        first = datasets[dataset_used][index_digit_1][0]
+        second = datasets[dataset_used][index_digit_2][0]
+        dataset.append((first, second, sum))
     
     return dataset
 
-def train(dataloader, model, sl, loss_fn, optimizer):
+def train(dataloader, model, sl, optimizer):
     model.train()
-    for (x, y) in dataloader:
-        # compute prediction error
-        pred = model(x)
-        loss = loss_fn(pred, y) + sl(pred)
+    for (img1, img2, y) in dataloader:
+        # predict sum
+        pred_digit_1 = model(img1)
+        pred_digit_2 = model(img2)
+        pred = torch.cat((pred_digit_1, pred_digit_2), 1)
+
+        # calculate loss
+        loss = 0
+        for i, sum in enumerate(y):
+            loss += sl[sum.item()](pred[i][None, :])
 
         # backpropagation
         optimizer.zero_grad()
@@ -94,10 +97,12 @@ def test(dataloader, model):
     correct = 0
     total = 0
     with torch.no_grad():
-        for x, y in dataloader:
-            pred = model(x)
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-            total += len(x)
+        for img1, img2, y in dataloader:
+            pred_digit_1 = model(img1)
+            pred_digit_2 = model(img2)
+            pred = pred_digit_1.argmax(1) + pred_digit_2.argmax(1)
+            correct += (pred == y).type(torch.float).sum().item()
+            total += len(img1)
     return correct / total
 
 ################################################# DATASET ###############################################
@@ -108,9 +113,9 @@ dataset = "mnist"
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 64
+batch_size = 2
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -127,30 +132,29 @@ elif dataset == "fashion_mnist":
     generate_dataset_fashion_mnist(seed, 0)
     processed_data_path = "../data/FashionMNIST/processed/"
 
-# import train, val and test set
+# import train and val set
 train_set = parse_data(dataset, processed_data_path, "train", size_val)
 val_set = parse_data(dataset, processed_data_path, "val", size_val)
 
-if use_dropout:
-    model = Net_NN_Dropout()
-else:
-    model = Net_NN()
-sl = SemanticLoss('constraint.sdd', 'constraint.vtree')
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
 train_dataloader = DataLoader(train_set, batch_size=batch_size)
 val_dataloader = DataLoader(val_set, batch_size=1)
+
+# create model and loss functions
+model = Net(dropout_rate)
+sl = []
+for sum in range(19):
+    sl.append(SemanticLoss(f'constraints/sum_{sum}/constraint.sdd', f'constraints/sum_{sum}/constraint.vtree'))
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 best_accuracy = 0
 
 # training
 for epoch in range(nb_epochs):
-    train(train_dataloader, model, sl, loss_fn, optimizer)
+    train(train_dataloader, model, sl, optimizer)
 
     # generate name of file that holds the trained model
     model_file_name = "SL_param_{}_{}_{}_{}_{}_{}".format(seed, 
-        epoch + 1, batch_size, learning_rate, use_dropout, size_val)
+        epoch + 1, batch_size, learning_rate, dropout_rate, size_val)
 
     # save trained model to a file
     with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
@@ -166,7 +170,7 @@ for epoch in range(nb_epochs):
         "nb_epochs": epoch + 1,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "model_file": model_file_name

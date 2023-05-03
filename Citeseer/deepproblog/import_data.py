@@ -53,6 +53,7 @@ class Citeseer_Cites(object):
         self.cites_b = cite_b
 
     def __getitem__(self, item):
+        print("----------------")
         indices = []
         for i in range(len(self.cites_a)):
             if self.cites_a[i] == int(item[0]):
