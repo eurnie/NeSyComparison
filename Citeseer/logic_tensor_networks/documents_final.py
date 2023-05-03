@@ -182,6 +182,7 @@ for seed in range(0, 10):
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
+    tf.random.set_seed(seed)
 
     # import train, val and test set
     train_set = get_dataset("train", batch_size)

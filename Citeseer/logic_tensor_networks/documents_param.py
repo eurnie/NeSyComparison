@@ -27,6 +27,7 @@ use_dropout = False
 random.seed(seed)
 numpy.random.seed(seed)
 torch.manual_seed(seed)
+tf.random.set_seed(seed)
 
 # import train and val set
 train_set = get_dataset("train", batch_size, seed)
