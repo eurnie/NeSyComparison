@@ -156,14 +156,14 @@ def train_and_test(dataset, label_noise, model_file_name, train_set, val_set,
     return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
+# dataset = "mnist"
+dataset = "fashion_mnist"
 label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 2
+batch_size = 32
 learning_rate = 0.001
 dropout_rate = 0
 size_val = 0.1
