@@ -180,7 +180,7 @@ move_to_test_set_ratio = 0
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 64
+batch_size = 8
 learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
@@ -218,7 +218,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open('results/{dataset}/summary_final.json', "a") as outfile:
+    with open(f'results/{dataset}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
