@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class Net(nn.Module):
-    def __init__(self, dropout_rate):
+    def __init__(self, dropout_rate=0):
         super(Net, self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(1, 6, 5),
@@ -28,7 +28,7 @@ class Net(nn.Module):
         return x
 
 class Net_NN(nn.Module):
-    def __init__(self, dropout_rate):
+    def __init__(self, dropout_rate=0):
         super(Net_NN, self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(1, 6, 5),
