@@ -41,7 +41,6 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
 
     # variables
     l1 = ltn.Variable("label1", range(6))
-
     formula_aggregator = ltn.Wrapper_Formula_Aggregator(ltn.fuzzy_ops.Aggreg_pMeanError(p=5))
 
     # axioms
@@ -151,7 +150,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
 
 ################################################# DATASET ###############################################
 dataset = "CiteSeer"
-move_to_test_set_ratio = 0.10
+move_to_test_set_ratio = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
