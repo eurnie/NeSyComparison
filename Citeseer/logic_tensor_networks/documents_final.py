@@ -9,30 +9,22 @@ import json
 import os
 import tensorflow as tf
 from tensorflow.keras import layers
-from collections import defaultdict
-from import_data import get_dataset, get_cites
+from import_data import import_datasets
 from commons import train_modified, test_modified
 
 sys.path.append("..")
-from data.network_tensorflow import Net, Net_Dropout
+from data.network_tensorflow import Net_CiteSeer, Net_Cora, Net_PubMed
 
-def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, p_schedule, 
-    use_dropout, cite_a, cite_b):
-
-    # with open('../data/CiteSeer/cites.txt') as f:
-    #     lines = f.readlines()
-    # cites = []
-    # for line in lines:
-    #     cite_1 = int(line.split(",")[0].split("(")[-1])
-    #     cite_2 = int(line.split(",")[1].split(")")[0])
-    #     cites.append((cite_1, cite_2))
-    # cite_set = tf.data.Dataset.from_tensor_slices(cites)
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, 
+    p_forall, p_exists, p_forall_cites, p_exists_cites, dropout_rate, cite_a, cite_b):
 
     # predicates
-    if use_dropout:
-        logits_model = Net_Dropout()
-    else:
-        logits_model = Net()
+    if dataset == "CiteSeer":
+        logits_model = Net_CiteSeer(dropout_rate)
+    elif dataset == "Cora":
+        logits_model = Net_Cora(dropout_rate)
+    elif dataset == "PubMed":
+        logits_model = Net_PubMed(dropout_rate)
     Document_type = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
 
     # operators
@@ -47,34 +39,14 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     add = ltn.Function.Lambda(lambda inputs: inputs[0]+inputs[1])
     equals = ltn.Predicate.Lambda(lambda inputs: inputs[0] == inputs[1])
 
-    # # axioms
-    # @tf.function
-    # def axioms(images_x, images_y, labels_z, p_schedule=tf.constant(2.)):
-    #     images_x = ltn.Variable("x", images_x)
-    #     images_y = ltn.Variable("y", images_y)
-    #     labels_z = ltn.Variable("z", labels_z)
-    #     axiom = Forall(
-    #             ltn.diag(images_x,images_y,labels_z),
-    #             Exists(
-    #                 (d1,d2),
-    #                 And(Digit([images_x,d1]),Digit([images_y,d2])),
-    #                 mask=equals([add([d1,d2]), labels_z]),
-    #                 p=p_schedule
-    #             ),
-    #             p=2
-    #         )
-    #     sat = axiom.tensor
-    #     return sat
-
     # variables
     l1 = ltn.Variable("label1", range(6))
-    l2 = ltn.Variable("label2", range(6))
 
     formula_aggregator = ltn.Wrapper_Formula_Aggregator(ltn.fuzzy_ops.Aggreg_pMeanError(p=5))
 
     # axioms
     @tf.function
-    def axioms(cite_a, cite_b, features_x, labels_z, p_schedule=tf.constant(2.)):
+    def axioms(cite_a, cite_b, features_x, labels_z, p_forall, p_exists, p_forall_cites, p_exists_cites):
         features_x = ltn.Variable("x", features_x)
         labels_z = ltn.Variable("z", labels_z)
         cite_a = ltn.Variable("ca", cite_a)
@@ -82,14 +54,15 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
 
         axioms = []
 
-        # 
         axioms.append(Forall(
                 ltn.diag(features_x,labels_z),
                 Exists(
                     (l1),
                     Document_type([features_x,l1]),
-                    mask=equals([l1, labels_z])
-                )
+                    mask=equals([l1, labels_z]),
+                    p=p_exists
+                ),
+                p=p_forall
             )
         )
 
@@ -97,8 +70,10 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
                             ltn.diag(cite_a, cite_b),
                             Exists(
                                   (l1),
-                                  And(Document_type([cite_a,l1]),Document_type([cite_b,l1]))
-                                  )
+                                  And(Document_type([cite_a,l1]),Document_type([cite_b,l1])),
+                                  p=p_exists_cites
+                                  ),
+                            p=p_forall_cites
                             )
                       )
         
@@ -106,7 +81,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
 
     # initialize all layers
     features_x, labels_z = next(train_set.as_numpy_iterator())
-    axioms(cite_a, cite_b, features_x, labels_z)
+    axioms(cite_a, cite_b, features_x, labels_z, p_forall, p_exists, p_forall_cites, p_exists_cites)
 
     # training
     optimizer = tf.keras.optimizers.Adam(learning_rate)
@@ -118,63 +93,76 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, lea
     }
 
     @tf.function
-    def train_step(cite_a, cite_b, features_x, labels_z, **parameters):
+    def train_step(cite_a, cite_b, features_x, labels_z, p_forall, p_exists, p_forall_cites, p_exists_cites):
         with tf.GradientTape() as tape:
-            loss = 1.- axioms(cite_a, cite_b, features_x, labels_z, **parameters)
+            loss = 1.- axioms(cite_a, cite_b, features_x, labels_z, p_forall, p_exists, p_forall_cites, p_exists_cites)
         gradients = tape.gradient(loss, logits_model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, logits_model.trainable_variables))
        
     @tf.function
-    def test_step(images_x, labels_z, **parameters):
+    def test_step(images_x, labels_z):
         predictions_x = tf.argmax(logits_model(images_x, training=False),axis=-1)
 
         match = tf.equal(predictions_x,tf.cast(labels_z,predictions_x.dtype))
         metrics_dict['test_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
 
-    # the parameter p_schedule is the same in every epoch
-    scheduled_parameters = defaultdict(lambda: {})
-    for epoch in range(0, nb_epochs):
-        scheduled_parameters[epoch] = {"p_schedule":tf.constant(p_schedule)}
-
     # training (with early stopping)
     total_training_time = 0
     best_accuracy = 0
     counter = 0
+    nb_epochs_done = 0
     for epoch in range(nb_epochs):
-        total_training_time += train_modified(cite_a, cite_b, train_set, train_step, scheduled_parameters, 1)
-        val_accuracy = test_modified(val_set, test_step, metrics_dict, scheduled_parameters)
+        total_training_time += train_modified(cite_a, cite_b, train_set, train_step,
+                                              p_forall, p_exists, p_forall_cites, p_exists_cites, 1)
+        val_accuracy = test_modified(val_set, test_step, metrics_dict)
         print("Val accuracy after epoch", epoch, ":", val_accuracy)
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
             with open("best_model.pickle", "wb") as handle:
-                pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(logits_model.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
+            nb_epochs_done = epoch + 1
         else:
             if counter >= 0:
                 break
             counter += 1
-    with open("best_model.pickle", "rb") as handle:
-        logits_model = pickle.load(handle)
 
+    # load best model
+    if dataset == "CiteSeer":
+        logits_model = Net_CiteSeer(0)
+    elif dataset == "Cora":
+        logits_model = Net_Cora(0)
+    elif dataset == "PubMed":
+        logits_model = Net_PubMed(0)
+    with open("best_model.pickle", "rb") as handle:
+        logits_model.classifier = pickle.load(handle)
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open("results/final/{}".format(model_file_name), "wb") as handle:
-        pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
+        pickle.dump(logits_model.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
     start_time = time.time()
-    accuracy = test_modified(test_set, test_step, metrics_dict, scheduled_parameters)
+    accuracy = test_modified(test_set, test_step, metrics_dict)
     testing_time = time.time() - start_time
 
-    return accuracy, total_training_time, testing_time
+    return nb_epochs_done, accuracy, total_training_time, testing_time
+
+################################################# DATASET ###############################################
+dataset = "CiteSeer"
+move_to_test_set_ratio = 0.10
+#########################################################################################################
 
 ############################################### PARAMETERS ##############################################
-nb_epochs = 2
-batch_size = 128
+nb_epochs = 100
+batch_size = 64
 learning_rate = 0.001
-p_schedule = 1.
-use_dropout = False
+p_forall = 1
+p_exists = 1
+p_forall_cites = 1
+p_exists_cites = 1
+dropout_rate = 0
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -184,35 +172,36 @@ for seed in range(0, 10):
     torch.manual_seed(seed)
     tf.random.set_seed(seed)
 
-    # import train, val and test set
-    train_set = get_dataset("train", batch_size)
-    val_set = get_dataset("val", 1)
-    test_set = get_dataset("test", 1)
-    cite_a, cite_b = get_cites()
+    # import train, val and test set + the citation network
+    train_set, val_set, test_set, cites_a, cites_b = import_datasets(dataset, move_to_test_set_ratio, batch_size, seed)
 
-    # generate name of folder that holds all the trained models
-    model_file_name = "LTN_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-        p_schedule, use_dropout)
+    # generate name of file that holds the trained model
+    model_file_name = "LTN_final_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, 
+        learning_rate, p_forall, p_exists, p_forall_cites, p_exists_cites, dropout_rate)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        nb_epochs, learning_rate, p_schedule, use_dropout, cite_a, cite_b)
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, 
+        train_set, val_set, test_set, nb_epochs, learning_rate, p_forall, p_exists, p_forall_cites, 
+        p_exists_cites, dropout_rate, cites_a, cites_b)
       
     # save results to a summary file
     information = {
         "algorithm": "LTN",
         "seed": seed,
-        "nb_epochs": nb_epochs,
+        "nb_epochs_done": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "p_schedule": p_schedule,
-        "use_dropout": use_dropout,
+        "p_forall": p_forall,
+        "p_exists": p_exists,
+        "p_forall_cites": p_forall_cites,
+        "p_exists_cites": p_exists_cites,
+        "dropout_rate": dropout_rate,
         "accuracy": float(accuracy),
         "training_time": float(training_time),
         "testing_time": float(testing_time),
         "model_file": model_file_name
     }
-    with open("results/summary_final.json", "a") as outfile:
+    with open(f'results/{dataset}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
