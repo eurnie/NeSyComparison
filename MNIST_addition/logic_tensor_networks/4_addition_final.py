@@ -104,8 +104,6 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
                 break
             counter += 1
 
-    os.remove("best_model.pickle")
-
     # load best model
     logits_model = Net(0)
     with open("best_model.pickle", "rb") as handle:
