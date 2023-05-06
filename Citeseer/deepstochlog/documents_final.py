@@ -56,6 +56,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     total_training_time = 0
     best_accuracy = 0
     counter = 0
+    nb_epochs_done = 0
     for epoch in range(nb_epochs):
         total_training_time += trainer.train(model, optimizer, train_dataloader, 1, epsilon)
         print(f'Training for epoch {epoch + 1} done.')
@@ -66,8 +67,9 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
             with open("best_model.pickle", "wb") as handle:
                 pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
+            nb_epochs_done = epoch + 1
         else:
-            if counter >= 1:
+            if counter >= 2:
                 break
             counter += 1
     with open("best_model.pickle", "rb") as handle:
@@ -85,7 +87,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     accuracy = calculate_accuracy(model, test_set)[0]
     testing_time = time.time() - start_time
 
-    return accuracy, total_training_time, testing_time
+    return nb_epochs_done, accuracy, total_training_time, testing_time
 
 ################################################# DATASET ###############################################
 dataset = "CiteSeer"
