@@ -1,4 +1,3 @@
-import dgl
 import random
 import torch
 import torch_geometric
@@ -7,42 +6,54 @@ from deepstochlog.term import Term, List
 from deepstochlog.context import ContextualizedTerm, Context
 from deepstochlog.dataset import ContextualizedTermDataset
 
-DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
-dataset = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
-citation_graph = dataset[0]
-documents = citation_graph.x
-labels = citation_graph.y.numpy()
-
-def import_indices(dataset):
-    if (dataset == "train"):
-        criteria = citation_graph.train_mask
-    elif (dataset == "val"):
-        criteria = citation_graph.val_mask
-    elif (dataset == "test"):
-        criteria = citation_graph.test_mask
-
+def create_indices(mask):
     indices = []
-    for i in range(len(documents)):
-        if criteria[i]:
+    for i in range(len(mask)):
+        if mask[i]:
             indices.append(i)
-
     return indices
 
-train_ids = import_indices("train")
-val_ids = import_indices("val")
-test_ids = import_indices("test")
+def import_data(dataset, move_to_test_set_ratio, seed):
+    DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
+    dataset = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
+    citation_graph = dataset[0]
+    documents = citation_graph.x
+    labels = citation_graph.y.numpy()
+    
+    train_ids = create_indices(citation_graph.train_mask)
+    val_ids = create_indices(citation_graph.val_mask)
+    test_ids = create_indices(citation_graph.test_mask)
 
-edges = []
-citations = []
+    # move train examples to the test set according to the given ratio
+    if move_to_test_set_ratio > 0:
+        split_index = round(move_to_test_set_ratio * len(train_ids))
+        
+        for elem in train_ids[:split_index]:
+            test_ids.append(elem)
 
-list_1 = citation_graph.edge_index[0]
-list_2 = citation_graph.edge_index[1]
-for eid in range(len(list_1)):
-    a = list_1[eid]
-    b = list_2[eid]
-    edges.append((a,b))
-    citations.append("cite(%d, %d)." % (a,b))
-citations = "\n".join(citations)
+        train_ids = train_ids[split_index:] 
+
+    # shuffle train set
+    rng = random.Random(seed)
+    rng.shuffle(train_ids)
+
+    edges = []
+    citations = []
+
+    list_1 = citation_graph.edge_index[0]
+    list_2 = citation_graph.edge_index[1]
+    for eid in range(len(list_1)):
+        a = list_1[eid]
+        b = list_2[eid]
+        edges.append((a,b))
+        citations.append("cite(%d, %d)." % (a,b))
+    citations = "\n".join(citations)
+
+    print("The training set contains", len(train_ids), "instances.")
+    print("The validation set contains", len(val_ids), "instances.")
+    print("The testing set contains", len(test_ids), "instances.")
+
+    return train_ids, val_ids, test_ids, documents, labels, citations
 
 ####################
 
@@ -70,17 +81,9 @@ citations = "\n".join(citations)
 
 class CiteseerDataset(ContextualizedTermDataset):
     def __init__(
-        self,
-        split: str,
-        labels,
-        documents,
-        seed):
-        if split == "train":
-            self.ids = train_ids
-        elif split =="valid":
-            self.ids = val_ids
-        elif split == "test":
-            self.ids = test_ids
+        self, split, ids, labels, documents):
+        if split == "train" or split =="valid" or split == "test":
+            self.ids = ids
         else:
             raise Exception("Unknown split %s" % split)
         self.labels = labels
@@ -105,11 +108,6 @@ class CiteseerDataset(ContextualizedTermDataset):
                 query_model = query.term
             self.queries_for_model.append(query_model)
 
-        # shuffle dataset
-        if split == "train":
-            rng = random.Random(seed)
-            rng.shuffle(self.dataset)
-
     def __len__(self):
         return len(self.dataset)
 
@@ -118,16 +116,13 @@ class CiteseerDataset(ContextualizedTermDataset):
             return (self[i] for i in range(*item.indices(len(self))))
         return self.dataset[item]
     
-def get_dataset(dataset_name, seed):
-    train_dataset = CiteseerDataset(split="train", documents=documents, labels=labels, seed=seed)
-    valid_dataset = CiteseerDataset(split="valid", documents=documents, labels=labels, seed=seed)
-    test_dataset = CiteseerDataset(split="test", documents=documents, labels=labels, seed=seed)
+def get_datasets(dataset, move_to_test_set_ratio, seed):
+    train_ids, val_ids, test_ids, documents, labels, citations = import_data(dataset, move_to_test_set_ratio, seed)
+
+    train_dataset = CiteseerDataset(split="train", ids=train_ids, documents=documents, labels=labels)
+    valid_dataset = CiteseerDataset(split="valid", ids=val_ids, documents=documents, labels=labels)
+    test_dataset = CiteseerDataset(split="test", ids=test_ids, documents=documents, labels=labels)
 
     queries_for_model = train_dataset.queries_for_model + valid_dataset.queries_for_model + test_dataset.queries_for_model
 
-    if dataset_name == "train":
-        return train_dataset, queries_for_model
-    elif dataset_name == "val":
-        return valid_dataset, queries_for_model
-    elif dataset_name == "test":
-        return test_dataset, queries_for_model
+    return train_dataset, valid_dataset, test_dataset, queries_for_model, citations

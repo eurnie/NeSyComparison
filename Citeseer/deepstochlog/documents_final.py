@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from torch.optim import Adam
 from deepstochlog.network import Network, NetworkStore
-from import_data import train_dataset, valid_dataset, test_dataset, queries_for_model, citations
+from import_data import get_datasets
 from deepstochlog.dataloader import DataLoader
 from deepstochlog.model import DeepStochLogModel
 from deepstochlog.trainer import DeepStochLogTrainer, print_logger
@@ -17,14 +17,16 @@ from deepstochlog.term import Term
 from citeseer_utils import create_model_accuracy_calculator, calculate_accuracy
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
-def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
-                   learning_rate, epsilon, use_dropout):
-    if use_dropout:
-        classifier_network = Network("classifier", Net_Dropout(), index_list=[Term(str(op)) for op in range(6)])
-    else:
-        classifier_network = Network("classifier", Net(), index_list=[Term(str(op)) for op in range(6)])
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, batch_size, 
+                   learning_rate, epsilon, dropout_rate):
+    if dataset == "CiteSeer":
+        classifier_network = Network("classifier", Net_CiteSeer(dropout_rate), index_list=[Term(str(op)) for op in range(6)])
+    elif dataset == "Cora":
+        classifier_network = Network("classifier", Net_Cora(dropout_rate), index_list=[Term(str(op)) for op in range(7)])
+    elif dataset == "PubMed":
+        classifier_network = Network("classifier", Net_PubMed(dropout_rate), index_list=[Term(str(op)) for op in range(3)])
 
     networks = NetworkStore(classifier_network)
 
@@ -75,7 +77,7 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
     os.remove("best_model.pickle")
 
     # save trained model to a file
-    with open(f'results/final/{model_file_name}', "wb") as handle:
+    with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
         pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # testing
@@ -85,12 +87,17 @@ def train_and_test(model_file_name, train_set, val_set, test_set, nb_epochs, bat
 
     return accuracy, total_training_time, testing_time
 
+################################################# DATASET ###############################################
+dataset = "CiteSeer"
+move_to_test_set_ratio = 0
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
-nb_epochs = 1
-batch_size = 64
+nb_epochs = 100
+batch_size = 32
 learning_rate = 0.001
 epsilon = 0.00000001
-use_dropout = False
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
@@ -102,30 +109,32 @@ for seed in range(0, 10):
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
+    train_dataset, val_dataset, test_dataset, queries_for_model, citations = get_datasets(dataset, move_to_test_set_ratio, seed)
+
     # generate name of file that holds the trained model
     model_file_name = "DeepStochLog_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, 
-        batch_size, learning_rate, epsilon, use_dropout, size_val)
+        batch_size, learning_rate, epsilon, dropout_rate, size_val)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_dataset, 
-        valid_dataset, test_dataset, nb_epochs, batch_size, learning_rate, epsilon, use_dropout)
+    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, 
+        train_dataset, val_dataset, test_dataset, nb_epochs, batch_size, learning_rate, epsilon, dropout_rate)
 
     # save results to a summary file
     information = {
         "algorithm": "DeepStochLog",
         "seed": seed,
-        "nb_epochs": nb_epochs,
+        "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "epsilon": epsilon,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "size_val": size_val,
         "accuracy": accuracy,
         "training_time": training_time,
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open(f'results/summary_final.json', "a") as outfile:
+    with open(f'results/{dataset}/summary_final.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 
