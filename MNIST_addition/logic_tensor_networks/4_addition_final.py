@@ -97,20 +97,24 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
             best_accuracy = val_accuracy
             nb_epochs_done = epoch + 1
             with open("best_model.pickle", "wb") as handle:
-                pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(logits_model.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)
             counter = 0
         else:
             if counter >= 2:
                 break
             counter += 1
-    with open("best_model.pickle", "rb") as handle:
-        logits_model = pickle.load(handle)
 
+    os.remove("best_model.pickle")
+
+    # load best model
+    logits_model = Net(0)
+    with open("best_model.pickle", "rb") as handle:
+        logits_model.classifier = pickle.load(handle)
     os.remove("best_model.pickle")
 
     # save trained model to a file
     with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
-        pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(logits_model.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
     # testing
     start_time = time.time()
@@ -122,7 +126,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
 ################################################# DATASET ###############################################
 dataset = "mnist"
 # dataset = "fashion_mnist"
-label_noise = 0.50
+label_noise = 0.5
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
