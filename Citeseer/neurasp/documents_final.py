@@ -152,34 +152,17 @@ for seed in range(0, 10):
     dataList_val = []
     obsList_val = []
     for index_1, doc_1, label_1 in valDataset:
-        is_cited = False
-        for i in range(0, len(cites_a)):
-                if (cites_a[i] == index_1):
-                    dataList_val.append({'doc_1': doc_1, 'doc_2': ind_to_features[cites_b[i]].unsqueeze(0)})
-                    obsList_val.append(f':- not document_label(doc_1, doc_2, {label_1}, {ind_to_labels_val[cites_b[i]]}, 1).')
-                    is_cited = True
-                    break
-
-        if not is_cited:
-            dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
-            obsList_val.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
+        dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+        obsList_val.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
 
     assert len(valDataset) == len(dataList_val)
 
     dataList_test = []
     obsList_test = []
     for index_1, doc_1, label_1 in testDataset:
-        is_cited = False
-        for i in range(0, len(cites_a)):
-                if (cites_a[i] == index_1):
-                    dataList_test.append({'doc_1': doc_1, 'doc_2': ind_to_features[cites_b[i]].unsqueeze(0)})
-                    obsList_test.append(f':- not document_label(doc_1, doc_2, {label_1}, {ind_to_labels_test[cites_b[i]]}, 1).')
-                    is_cited = True
-                    break
-
-        if not is_cited:
-            dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc})
-            obsList_test.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
+        dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+        obsList_test.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
+ 
 
     assert len(testDataset) == len(dataList_test)
 

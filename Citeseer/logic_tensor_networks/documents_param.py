@@ -24,9 +24,9 @@ nb_epochs = 100
 batch_size = 64
 learning_rate = 0.001
 p_forall = 1
-p_exists = 1
+p_exists = 2
 p_forall_cites = 1
-p_exists_cites = 1
+p_exists_cites = 2
 dropout_rate = 0
 #########################################################################################################
 

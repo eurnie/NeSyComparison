@@ -97,17 +97,8 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
     dataList_val = []
     obsList_val = []
     for index_1, doc_1, label_1 in valDataset:
-        is_cited = False
-        for i in range(0, len(cites_a)):
-                if (cites_a[i] == index_1):
-                    dataList_val.append({'doc_1': doc_1, 'doc_2': ind_to_features[cites_b[i]].unsqueeze(0)})
-                    obsList_val.append(f':- not document_label(doc_1, doc_2, {label_1}, {ind_to_labels_val[cites_b[i]]}, 1).')
-                    is_cited = True
-                    break
-
-        if not is_cited:
-            dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
-            obsList_val.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
+        dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+        obsList_val.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
 
     assert len(valDataset) == len(dataList_val)
 
