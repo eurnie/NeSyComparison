@@ -54,3 +54,7 @@
 {"algorithm": "SL", "seed": 0, "nb_epochs": 6, "batch_size": 64, "learning_rate": 0.001, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9526666666666667, "model_file": "SL_param_0_6_64_0.001_0_0.1"}
 {"algorithm": "SL", "seed": 0, "nb_epochs": 7, "batch_size": 64, "learning_rate": 0.001, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9643333333333334, "model_file": "SL_param_0_7_64_0.001_0_0.1"}
 {"algorithm": "SL", "seed": 0, "nb_epochs": 8, "batch_size": 64, "learning_rate": 0.001, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9593333333333334, "model_file": "SL_param_0_8_64_0.001_0_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.01, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.01, "model_file": "SL_param_0_1_2_0.01_0_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 2, "batch_size": 2, "learning_rate": 0.01, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.01, "model_file": "SL_param_0_2_2_0.01_0_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 3, "batch_size": 2, "learning_rate": 0.01, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.01, "model_file": "SL_param_0_3_2_0.01_0_0.1"}
+{"algorithm": "SL", "seed": 0, "nb_epochs": 4, "batch_size": 2, "learning_rate": 0.01, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.01, "model_file": "SL_param_0_4_2_0.01_0_0.1"}

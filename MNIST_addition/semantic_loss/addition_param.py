@@ -114,7 +114,7 @@ dataset = "mnist"
 seed = 0
 nb_epochs = 100
 batch_size = 2
-learning_rate = 0.001
+learning_rate = 0.01
 dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
