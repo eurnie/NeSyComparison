@@ -86,102 +86,71 @@ for seed in range(0, 10):
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
     citation_graph = data[0]
 
-    cites_a = citation_graph.edge_index[0]
-    cites_b = citation_graph.edge_index[1]
-
     trainDataset = []
     valDataset = []
     testDataset = []
-    ind_to_labels_train = []
-    ind_to_labels_val = []
-    ind_to_labels_test = []
     ind_to_features = torch.tensor([])
 
-    # import train and val set
+    # import train, val and test set
     for i in range(round(len(citation_graph.x))):
         if citation_graph.train_mask[i]:
-            trainDataset.append((i, citation_graph.x[i].unsqueeze(0), citation_graph.y[i]))
-            ind_to_labels_train.append(citation_graph.y[i])
-            ind_to_labels_val.append('no_label')
-            ind_to_labels_test.append('no_label')
+            trainDataset.append((i, citation_graph.y[i]))
         elif citation_graph.val_mask[i]:
-            valDataset.append((i, citation_graph.x[i].unsqueeze(0), citation_graph.y[i]))
-            ind_to_labels_train.append('no_label')
-            ind_to_labels_val.append(citation_graph.y[i])
-            ind_to_labels_test.append('no_label')
+            valDataset.append((i, citation_graph.y[i]))
         elif citation_graph.test_mask[i]:
-            testDataset.append((i, citation_graph.x[i].unsqueeze(0), citation_graph.y[i]))
-            ind_to_labels_train.append('no_label')
-            ind_to_labels_val.append('no_label')
-            ind_to_labels_test.append(citation_graph.y[i])
+            testDataset.append((i, citation_graph.y[i]))
 
         ind_to_features = torch.cat((ind_to_features, citation_graph.x[i].unsqueeze(0)), dim=0)
-        
+
     # move train examples to the test set according to the given ratio
     if move_to_test_set_ratio > 0:
         split_index = round(move_to_test_set_ratio * len(trainDataset))
-        
         for elem in trainDataset[:split_index]:
             testDataset.append(elem)
         trainDataset = trainDataset[split_index:]
 
-        for elem in ind_to_labels_train[:split_index]:
-            ind_to_labels_test.append(elem)
-        ind_to_labels_train = ind_to_labels_train[split_index:]
-        
     print("The training set contains", len(trainDataset), "instances.")
     print("The validation set contains", len(valDataset), "instances.")
     print("The testing set contains", len(testDataset), "instances.")
 
-    dummy_doc = torch.zeros(1, len(citation_graph.x[0]))
+    # dataList_dictionary = {}
+    # for i in range(len(ind_to_features)):
+    #     dataList_dictionary[f'document_{i}'] = ind_to_features[i].unsqueeze(0)
+
+    # cites_a = citation_graph.edge_index[0]
+    # cites_b = citation_graph.edge_index[1]
+    # for i in range(0, len(cites_a)):
+    #         program += f'cite({cites_a[i]},{cites_b[i]}).\n'
+
+    # for i in range(0, len(ind_to_features)):
+    #     program += f'doc(document_{i}).\n'
+
+    # with open("generated_program.txt", "a") as f:
+    #     f.write(program)
 
     dataList_train = []
     obsList_train = []
-    for index_1, doc_1, label_1 in trainDataset:
-        is_cited = False
-        for i in range(0, len(cites_a)):
-                if (cites_a[i] == index_1):
-                    dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[cites_b[i]].unsqueeze(0)})
-                    obsList_train.append(f':- not document_label(doc_1, doc_2, {label_1}, {ind_to_labels_train[cites_b[i]]}, 1).')
-                    is_cited = True
-
-        if not is_cited:
-            dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc})
-            obsList_train.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
+    for index, label in trainDataset:
+        dataList_train.append({'document': ind_to_features[index].unsqueeze(0)})
+        obsList_train.append(f':- not document_label(document, {label}).')
+        # dataList_train.append(dataList_dictionary)
+        # obsList_train.append(f':- not document_label(document_{index}, {label}).')
 
     dataList_val = []
     obsList_val = []
-    for index_1, doc_1, label_1 in valDataset:
-        is_cited = False
-        for i in range(0, len(cites_a)):
-                if (cites_a[i] == index_1):
-                    dataList_val.append({'doc_1': doc_1, 'doc_2': ind_to_features[cites_b[i]].unsqueeze(0)})
-                    obsList_val.append(f':- not document_label(doc_1, doc_2, {label_1}, {ind_to_labels_val[cites_b[i]]}, 1).')
-                    is_cited = True
-                    break
-
-        if not is_cited:
-            dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
-            obsList_val.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
-
-    assert len(valDataset) == len(dataList_val)
+    for index, label in valDataset:
+        dataList_val.append({'document': ind_to_features[index].unsqueeze(0)})
+        obsList_val.append(f':- not document_label(document, {label}).')
+        # dataList_val.append(dataList_dictionary)
+        # obsList_val.append(f':- not document_label(document_{index}, {label}).')
 
     dataList_test = []
     obsList_test = []
-    for index_1, doc_1, label_1 in testDataset:
-        is_cited = False
-        for i in range(0, len(cites_a)):
-                if (cites_a[i] == index_1):
-                    dataList_test.append({'doc_1': doc_1, 'doc_2': ind_to_features[cites_b[i]].unsqueeze(0)})
-                    obsList_test.append(f':- not document_label(doc_1, doc_2, {label_1}, {ind_to_labels_test[cites_b[i]]}, 1).')
-                    is_cited = True
-                    break
-
-        if not is_cited:
-            dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc})
-            obsList_test.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
-
-    assert len(testDataset) == len(dataList_test)
+    for index, label in testDataset:
+        dataList_test.append({'document': ind_to_features[index].unsqueeze(0)})
+        obsList_test.append(f':- not document_label(document, {label}).')
+        # dataList_test.append(dataList_dictionary)
+        # obsList_test.append(f':- not document_label(document_{index}, {label}).')
 
     # define nnMapping and optimizers, initialze NeurASP object
     if dataset == "CiteSeer":
