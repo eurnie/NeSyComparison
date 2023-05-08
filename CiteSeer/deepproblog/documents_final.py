@@ -77,13 +77,13 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
 
 ################################################# DATASET ###############################################
 dataset = "CiteSeer"
-move_to_test_set_ratio = 0.5
+move_to_test_set_ratio = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 method = "exact"
-nb_epochs = 1
-batch_size = 8
+nb_epochs = 100
+batch_size = 64
 learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
@@ -95,15 +95,15 @@ for seed in range(0, 10):
     torch.manual_seed(seed)
 
     # import train, val and test set
-    train_set, val_set, test_set = import_datasets()
+    train_set, val_set, test_set = import_datasets(move_to_test_set_ratio, seed)
 
     # generate name of file that holds the trained model
-    model_file_name = "DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
-        learning_rate, dropout_rate, move_to_test_set_ratio)
+    model_file_name = "DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, 
+        batch_size, learning_rate, dropout_rate, move_to_test_set_ratio)
 
     # train and test
-    accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        method, nb_epochs, batch_size, learning_rate, dropout_rate)
+    accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, 
+        val_set, test_set, method, nb_epochs, batch_size, learning_rate, dropout_rate)
     
     # save results to a summary file
     information = {

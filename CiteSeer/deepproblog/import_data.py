@@ -35,7 +35,7 @@ def import_indices(dataset, move_to_test_set_ratio, seed):
     # move train examples to the test set according to the given ratio
     if move_to_test_set_ratio > 0:
         if dataset == "train":
-            split_index = round(move_to_test_set_ratio * len(dataset))
+            split_index = round(move_to_test_set_ratio * len(labels))
             indices = indices[split_index:]
             labels = labels[split_index:]
         elif dataset == "test":
@@ -45,6 +45,8 @@ def import_indices(dataset, move_to_test_set_ratio, seed):
                 if citation_graph.train_mask[i]:
                     indices_train.append(i)
                     labels_train.append(y_values[i])
+
+            split_index = round(move_to_test_set_ratio * len(labels_train))
         
             for index in indices_train[:split_index]:
                 indices.append(index)
