@@ -1,0 +1,1 @@
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 6, "batch_size": 64, "learning_rate": 0.001, "p_forall": 2, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.17319999635219574, "training_time": 510.1898772716522, "testing_time": 20.474802494049072, "model_file": "label_noise_0.5/LTN_final_0_100_64_0.001_2_1_0_0.1"}
