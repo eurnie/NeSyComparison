@@ -30,7 +30,7 @@ p_exists_cites = 1
 dropout_rate = 0
 #########################################################################################################
 
-for batch_size in [2, 4, 8, 16, 32, 64]:
+for batch_size in [256, 128, 32, 16, 8, 4, 2]:
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
