@@ -8,7 +8,7 @@ import torch
 import pickle
 import torch_geometric
 from pathlib import Path
-from program import CiteSeer_dprogram_only_neural_network, Cora_dprogram_only_neural_network, PubMed_dprogram_only_neural_network
+from program import CiteSeer_dprogram, Cora_dprogram, PubMed_dprogram
 from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
@@ -37,7 +37,7 @@ def train_and_test(model_file_name, dataList_train, obsList_train, dataList_val,
             counter = 0
             nb_epochs_done = epoch + 1
         else:
-            if counter >= 1:
+            if counter >= 2:
                 break
             counter += 1
     with open("best_model.pickle", "rb") as handle:
@@ -63,7 +63,7 @@ move_to_test_set_ratio = 0
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 64
+batch_size = 2
 learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
@@ -75,11 +75,11 @@ for seed in range(0, 10):
     torch.manual_seed(seed)
 
     if dataset == "CiteSeer":
-        program = CiteSeer_dprogram_only_neural_network
+        program = CiteSeer_dprogram
     elif dataset == "Cora":
-        program = Cora_dprogram_only_neural_network
+        program = Cora_dprogram
     elif dataset == "PubMed":
-        program = PubMed_dprogram_only_neural_network
+        program = PubMed_dprogram
 
     # import dataset
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')

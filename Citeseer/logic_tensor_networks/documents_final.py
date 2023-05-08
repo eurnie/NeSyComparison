@@ -122,7 +122,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
             counter = 0
             nb_epochs_done = epoch + 1
         else:
-            if counter >= 0:
+            if counter >= 2:
                 break
             counter += 1
 
