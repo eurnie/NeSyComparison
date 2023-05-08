@@ -1,9 +1,0 @@
-c This file was generated with the constraints_to_cnf module in this project.
-c Starting from file 'constraints/PubMed/constraints.txt'.
-c There are 3 variables present in the constraints, and 3 total variables, given by the shape [3].
-c
-p cnf 3 3
--1 0
--2 0
--3 0
-

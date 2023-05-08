@@ -1,0 +1,13 @@
+c This file was generated with the constraints_to_cnf module in this project.
+c Starting from file 'constraints/Cora/constraints.txt'.
+c There are 7 variables present in the constraints, and 7 total variables, given by the shape [7].
+c
+p cnf 7 7
+-1 0
+-2 0
+-3 0
+-4 0
+-5 0
+-6 0
+-7 0
+

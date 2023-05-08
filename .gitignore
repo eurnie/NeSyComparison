@@ -1,13 +1,16 @@
 # ignore all saved models
-Citeseer/**/results/*
-WarcraftShortestPath/**/results/*
-
 MNIST_addition/**/results/**/mnist/final/label_noise_*/*
 MNIST_addition/**/results/**/mnist/param/*
 MNIST_addition/**/results/**/mnist/kfold/*
 MNIST_addition/**/results/**/fashion_mnist/final/label_noise_*/*
 MNIST_addition/**/results/**/fashion_mnist/param/*
 MNIST_addition/**/results/**/fashion_mnist/kfold/*
+
+CiteSeer/**/results/**/CiteSeer/*
+CiteSeer/**/results/**/Cora/*
+CiteSeer/**/results/**/PubMed/*
+
+WarcraftShortestPath/**/results/*
 
 # show json summary files
 !MNIST_addition/**/results/**/mnist/final/label_noise_*/*.json
@@ -16,6 +19,8 @@ MNIST_addition/**/results/**/fashion_mnist/kfold/*
 !MNIST_addition/**/results/**/fashion_mnist/final/label_noise_*/*.json
 !MNIST_addition/**/results/**/fashion_mnist/kfold/*.json
 !MNIST_addition/**/results/**/fashion_mnist/param/*.json
+
+!CiteSeer/**/results/**/*.json
 
 # datasets
 MNIST_addition/data/MNIST/*
