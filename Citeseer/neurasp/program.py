@@ -15,6 +15,7 @@ class(X,Y) :- document_label_neural(0,X,Y).
 nn(document_label_neural(1,X), [0,1,2,3,4,5]) :- document(X).
 '''
 
+
 Cora_dprogram = '''
 document(doc_1).
 document(doc_2).

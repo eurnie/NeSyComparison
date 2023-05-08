@@ -68,7 +68,7 @@ learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
 
-for seed in range(0, 10):
+for seed in range(5, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
@@ -163,7 +163,6 @@ for seed in range(0, 10):
         dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc})
         obsList_test.append(f':- not document_label(doc_1, empty, {label_1}, no_label, 0).')
  
-
     assert len(testDataset) == len(dataList_test)
 
     # define nnMapping and optimizers, initialze NeurASP object
