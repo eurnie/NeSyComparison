@@ -47,7 +47,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
     counter = 0
     for epoch in range(nb_epochs):
         start_time = time.time()
-        train = train_model(model, loader, 1, log_iter=10, profile=0)
+        train = train_model(model, loader, 1, log_iter=100, profile=0)
         total_training_time += time.time() - start_time
         val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
         print("Val accuracy after epoch", epoch, ":", val_accuracy)

@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 x = [0, 0.1, 0.25, 0.5]
-fill_between = False
+fill_between = True
+alpha = 0.2
 
 deepproblog_000 = [97.90, 97.66, 97.94, 97.64, 97.62, 97.84, 97.76, 97.82, 97.80, 97.80]
 deepproblog_app_000 = [97.54, 97.52, 80.80, 80.08, 62.46, 62.84, 64.16, 62.46, 63.24, 65.44]
@@ -10,7 +11,7 @@ deepstochlog_000 = [97.52, 97.92, 97.68, 97.82, 97.76, 97.70, 97.72, 97.46, 97.9
 ltn_000 = [96.84, 97.14, 96.24, 79.40, 62.30, 79.10, 97.64, 63.88, 97.52, 64.72]
 neurasp_000 = [97.68, 96.98, 97.98, 97.14, 98.04, 97.58, 97.52, 98.02, 97.60, 97.96]
 nn_000 = [59.72, 65.14, 60.70, 55.06, 71.32, 75.22, 72.70, 74.60, 67.20, 61.60]
-sl_000 = [82.72, 82.56, 81.14, 88.88, 81.42, 80.96, 84.08, 87.22, 74.34, 88.76]
+sl_000 = [97.26, 97.06, 97.30, 96.56, 97.64, 97.62, 97.12, 97.04, 97.40, 97.28]
 
 deepproblog_010 = [96.66, 96.98, 97.04, 97.02, 97.02, 96.64, 97.58, 97.20, 96.16, 97.58]
 deepproblog_app_010 = [64.94, 79.02, 64.80, 64.48, 50.90, 60.22, 96.98, 61.80, 79.34, 96.40]
@@ -74,28 +75,28 @@ max_sl = [max(lst) for lst in sl_results]
 
 plt.plot(x, avg_deepproblog, label='DeepProbLog')
 if fill_between:
-    plt.fill_between(x, min_deepproblog, max_deepproblog, alpha=0.5)
+    plt.fill_between(x, min_deepproblog, max_deepproblog, alpha=alpha)
 plt.plot(x, avg_deepproblog_app, label='DeepProbLog (approximate)')
 if fill_between:
-    plt.fill_between(x, min_deepproblog_app, max_deepproblog_app, alpha=0.5)
+    plt.fill_between(x, min_deepproblog_app, max_deepproblog_app, alpha=alpha)
 plt.plot(x, avg_deepstochlog, label='DeepStochLog')
 if fill_between:
-    plt.fill_between(x, min_deepstochlog, max_deepstochlog, alpha=0.5)
+    plt.fill_between(x, min_deepstochlog, max_deepstochlog, alpha=alpha)
 plt.plot(x, avg_ltn, label='Logic Tensor Networks')
 if fill_between:
-    plt.fill_between(x, min_ltn, max_ltn, alpha=0.5)
+    plt.fill_between(x, min_ltn, max_ltn, alpha=alpha)
 plt.plot(x, avg_neurasp, label='NeurASP')
 if fill_between:
-    plt.fill_between(x, min_neurasp, max_neurasp, alpha=0.5)
+    plt.fill_between(x, min_neurasp, max_neurasp, alpha=alpha)
 plt.plot(x, avg_nn, label='NN baseline')
 if fill_between:
-    plt.fill_between(x, min_nn, max_nn, alpha=0.5)
+    plt.fill_between(x, min_nn, max_nn, alpha=alpha)
 plt.plot(x, avg_sl, label='Semantic Loss')
 if fill_between:
-    plt.fill_between(x, min_sl, max_sl, alpha=0.5)
+    plt.fill_between(x, min_sl, max_sl, alpha=alpha)
 plt.xlabel("Label noise rate")
 plt.ylabel("Accuracy on test set")
-plt.title("MNIST addition with label noise")
+# plt.title("MNIST addition with label noise")
 plt.yticks(np.arange(0, 101, 5))
 # plt.ylim([50, 100])
 plt.legend(loc="lower right")

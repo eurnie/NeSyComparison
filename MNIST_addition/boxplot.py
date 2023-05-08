@@ -16,6 +16,6 @@ ax = fig.add_subplot(111)
 bp = ax.boxplot(data, vert = 0)
 
 ax.set_yticklabels(['NN baseline', 'DeepProbLog', 'DeepProblog (approximate)', 'DeepStochLog', 'Logic Tensor Networks', 'NeurASP', 'Semantic Loss'])
-plt.title("MNIST addition")
+# plt.title("MNIST addition")
 plt.xlabel("Accuracy test set (%)")
 plt.show()

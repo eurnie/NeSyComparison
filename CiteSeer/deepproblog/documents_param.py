@@ -22,14 +22,14 @@ move_to_test_set_ratio = 0
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-method = "geometric_mean"
+method = "exact"
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
 
-for batch_size in [2, 4, 8, 16, 32, 64]:
+for batch_size in [64, 32, 16, 8, 4, 2]:
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
@@ -61,7 +61,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
 
     # training
     for epoch in range(nb_epochs):
-        train_model(model, loader, 1, log_iter=10, profile=0)
+        train_model(model, loader, 1, log_iter=100, profile=0)
 
         # generate name of file that holds the trained model
         model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, batch_size, 
