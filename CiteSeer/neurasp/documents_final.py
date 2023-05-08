@@ -68,7 +68,7 @@ learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
 
-for seed in range(5, 10):
+for seed in range(0, 10):
     # setting seeds for reproducibility
     random.seed(seed)
     numpy.random.seed(seed)
