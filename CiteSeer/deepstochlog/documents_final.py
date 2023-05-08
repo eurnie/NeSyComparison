@@ -100,7 +100,6 @@ batch_size = 32
 learning_rate = 0.001
 epsilon = 0.00000001
 dropout_rate = 0
-size_val = 0.1
 #########################################################################################################
 
 logger = print_logger
@@ -115,7 +114,7 @@ for seed in range(0, 10):
 
     # generate name of file that holds the trained model
     model_file_name = "DeepStochLog_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, 
-        batch_size, learning_rate, epsilon, dropout_rate, size_val)
+        batch_size, learning_rate, epsilon, dropout_rate, move_to_test_set_ratio)
 
     # train and test
     nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, 
@@ -130,13 +129,12 @@ for seed in range(0, 10):
         "learning_rate": learning_rate,
         "epsilon": epsilon,
         "dropout_rate": dropout_rate,
-        "size_val": size_val,
         "accuracy": accuracy,
         "training_time": training_time,
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open(f'results/{dataset}/summary_final.json', "a") as outfile:
+    with open(f'results/{dataset}/summary_final_{move_to_test_set_ratio}.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

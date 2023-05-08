@@ -204,7 +204,6 @@ for seed in range(0, 10):
     information = {
         "algorithm": "NN",
         "seed": seed,
-        "move_to_test_set_ratio": move_to_test_set_ratio,
         "nb_epochs": nb_epochs_done,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
@@ -214,7 +213,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open(f'results/{dataset}/summary_final.json', "a") as outfile:
+    with open(f'results/{dataset}/summary_final_{move_to_test_set_ratio}.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

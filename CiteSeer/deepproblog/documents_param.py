@@ -10,14 +10,19 @@ from deepproblog.model import Model
 from deepproblog.network import Network
 from deepproblog.train import train_model
 from deepproblog.evaluate import get_confusion_matrix
-from import_data import import_datasets, citeseer_examples, citeseer_cites
+from import_data import import_datasets, citeseer_examples
 
 sys.path.append("..")
-from data.network_torch import Net_CiteSeer
+from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
+
+################################################# DATASET ###############################################
+dataset = "CiteSeer"
+move_to_test_set_ratio = 0
+#########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-method = "exact"
+method = "geometric_mean"
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
@@ -31,21 +36,25 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
     torch.manual_seed(seed)
 
     # import train and val set
-    train_set, val_set, _ = import_datasets(seed)
+    train_set, val_set, _ = import_datasets(move_to_test_set_ratio, seed)
 
-    network = Net_CiteSeer(dropout_rate)
+    if dataset == "CiteSeer":
+        network = Net_CiteSeer(dropout_rate)
+    elif dataset == "Cora":
+        network = Net_CiteSeer(dropout_rate)
+    elif dataset == "PubMed":
+        network = Net_CiteSeer(dropout_rate)
 
-    net = Network(network, "citeseer_net", batching=True)
+    net = Network(network, "document_net", batching=True)
     net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
-    model = Model("documents.pl", [net])
+    model = Model(f'documents_{dataset}.pl', [net])
     if method == "exact":
         model.set_engine(ExactEngine(model), cache=False)
     elif method == "geometric_mean":
         model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))   
 
     model.add_tensor_source("citeseer", citeseer_examples)
-    model.add_tensor_source("connected", citeseer_cites)
     loader = DataLoader(train_set, batch_size, False)
 
     best_accuracy = 0
@@ -59,7 +68,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
             learning_rate, dropout_rate)
 
         # save trained model to a file
-        model.save_state(f'results/{method}/param/{model_file_name}')
+        model.save_state(f'results/{method}/{dataset}/param/{model_file_name}')
 
         # testing
         accuracy = get_confusion_matrix(model, val_set, verbose=0).accuracy()
@@ -76,7 +85,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
             "accuracy": accuracy,
             "model_file": model_file_name
         }
-        with open(f'results/{method}/summary_param.json', "a") as outfile:
+        with open(f'results/{method}/{dataset}/summary_param.json', "a") as outfile:
             json.dump(information, outfile)
             outfile.write('\n')
 

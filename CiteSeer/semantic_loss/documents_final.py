@@ -200,8 +200,8 @@ for seed in range(0, 10):
                                                                            seed)
 
     # generate name of file that holds the trained model
-    model_file_name = "SL_final_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
-        dropout_rate)
+    model_file_name = "SL_final_{}_{}_{}_{}_{}_{}".format(seed, nb_epochs, batch_size, learning_rate, 
+        dropout_rate, move_to_test_set_ratio)
 
     # train and test
     nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, 
@@ -221,7 +221,7 @@ for seed in range(0, 10):
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open(f'results/{dataset}/summary_final.json', "a") as outfile:
+    with open(f'results/{dataset}/summary_final_{move_to_test_set_ratio}.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

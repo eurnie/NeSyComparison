@@ -15,19 +15,21 @@ from deepproblog.evaluate import get_confusion_matrix
 from import_data import import_datasets, citeseer_examples
 
 sys.path.append("..")
-from data.network_torch import Net, Net_Dropout
+from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
-def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epochs, batch_size, 
-        learning_rate, use_dropout):
-    if use_dropout:
-        network = Net_Dropout()
-    else:
-        network = Net()
+def train_and_test(dataset, model_file_name, train_set, val_set, test_set, method, nb_epochs, batch_size, 
+        learning_rate, dropout_rate):
+    if dataset == "CiteSeer":
+        network = Net_CiteSeer(dropout_rate)
+    elif dataset == "Cora":
+        network = Net_CiteSeer(dropout_rate)
+    elif dataset == "PubMed":
+        network = Net_CiteSeer(dropout_rate)
 
-    net = Network(network, "citeseer_net", batching=True)
+    net = Network(network, "document_net", batching=True)
     net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
-    model = Model("documents.pl", [net])
+    model = Model(f'documents_{dataset}.pl', [net])
     if method == "exact":
         model.set_engine(ExactEngine(model), cache=False)
     elif method == "geometric_mean":
@@ -73,12 +75,17 @@ def train_and_test(model_file_name, train_set, val_set, test_set, method, nb_epo
 
     return accuracy, total_training_time, testing_time
 
+################################################# DATASET ###############################################
+dataset = "CiteSeer"
+move_to_test_set_ratio = 0.5
+#########################################################################################################
+
 ############################################### PARAMETERS ##############################################
 method = "exact"
 nb_epochs = 1
 batch_size = 8
 learning_rate = 0.001
-use_dropout = False
+dropout_rate = 0
 #########################################################################################################
 
 for seed in range(0, 10):
@@ -91,12 +98,12 @@ for seed in range(0, 10):
     train_set, val_set, test_set = import_datasets()
 
     # generate name of file that holds the trained model
-    model_file_name = "DeepProbLog_final_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
-        learning_rate, use_dropout)
+    model_file_name = "DeepProbLog_final_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, method, nb_epochs, batch_size, 
+        learning_rate, dropout_rate, move_to_test_set_ratio)
 
     # train and test
     accuracy, training_time, testing_time = train_and_test(model_file_name, train_set, val_set, test_set, 
-        method, nb_epochs, batch_size, learning_rate, use_dropout)
+        method, nb_epochs, batch_size, learning_rate, dropout_rate)
     
     # save results to a summary file
     information = {
@@ -106,13 +113,13 @@ for seed in range(0, 10):
         "nb_epochs": nb_epochs,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
-        "use_dropout": use_dropout,
+        "dropout_rate": dropout_rate,
         "accuracy": accuracy,
         "training_time": training_time,
         "testing_time": testing_time,
         "model_file": model_file_name
     }
-    with open(f'results/{method}/summary_final.json', "a") as outfile:
+    with open(f'results/{method}/{dataset}/summary_final_{move_to_test_set_ratio}.json', "a") as outfile:
         json.dump(information, outfile)
         outfile.write('\n')
 

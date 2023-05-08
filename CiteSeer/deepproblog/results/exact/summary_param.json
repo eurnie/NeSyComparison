@@ -1,0 +1,6 @@
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.0, "model_file": "DeepProbLog_param_0_exact_1_2_0.001_0"}
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.0, "model_file": "DeepProbLog_param_0_exact_1_2_0.001_0"}
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.0, "model_file": "DeepProbLog_param_0_exact_1_2_0.001_0"}
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.0, "model_file": "DeepProbLog_param_0_exact_1_2_0.001_0"}
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.0, "model_file": "DeepProbLog_param_0_exact_1_2_0.001_0"}
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.5083333333333333, "model_file": "DeepProbLog_param_0_exact_1_2_0.001_0"}
