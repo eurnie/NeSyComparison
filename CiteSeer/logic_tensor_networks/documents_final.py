@@ -155,11 +155,11 @@ move_to_test_set_ratio = 0
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 64
+batch_size = 128
 learning_rate = 0.001
-p_forall = 1
+p_forall = 2
 p_exists = 1
-p_forall_cites = 1
+p_forall_cites = 2
 p_exists_cites = 1
 dropout_rate = 0
 #########################################################################################################
