@@ -4,6 +4,7 @@ import numpy as np
 x = [0, 0.1, 0.25, 0.5]
 fill_between = True
 alpha = 0.2
+font_size = '20'
 
 deepproblog_000 = [97.90, 97.66, 97.94, 97.64, 97.62, 97.84, 97.76, 97.82, 97.80, 97.80]
 deepproblog_app_000 = [97.54, 97.52, 80.80, 80.08, 62.46, 62.84, 64.16, 62.46, 63.24, 65.44]
@@ -72,6 +73,8 @@ max_nn = [max(lst) for lst in nn_results]
 avg_sl = [sum(lst) / len(lst) for lst in sl_results]
 min_sl = [min(lst) for lst in sl_results]
 max_sl = [max(lst) for lst in sl_results]
+
+plt.rcParams['font.size'] = font_size
 
 plt.plot(x, avg_deepproblog, label='DeepProbLog')
 if fill_between:

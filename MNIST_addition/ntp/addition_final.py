@@ -16,13 +16,17 @@ import numpy as np
 import random
 import copy
 import sys
-import os
 from tabulate import tabulate
 from tensorflow.python import debug as tf_debug
-import sklearn
 import logging
 import torch
 from import_data import generate_dataset
+
+from custom_embedding import CustomEmbedding
+
+sys.path.append("..")
+from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
+from data.network_tensorflow import Net_NTP
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -34,15 +38,14 @@ label_noise = 0
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 100
-batch_size = 32
+nb_epochs = 10
+batch_size = 64
 learning_rate = 0.001
-p_schedule = 1.
-dropout_rate = 0.2
+dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
-for seed in range(0, 10):
+for seed in range(0, 1):
     # setting seeds for reproducibility
     random.seed(seed)
     np.random.seed(seed)
@@ -53,62 +56,67 @@ for seed in range(0, 10):
     generate_dataset(dataset, label_noise, size_val, seed)
 
     conf = load_conf("default.conf")
-    experiment_prefix = conf["meta"]["experiment_prefix"]
-    experiment_dir = get_timestamped_dir("./out/"+experiment_prefix,
-                                        conf["meta"]["name"],
-                                        link_to_latest=True)
-    save_conf(experiment_dir+conf["meta"]["file_name"], conf)
+    experiment_prefix = "mnist_addition"
+    experiment_dir = get_timestamped_dir("./out", link_to_latest=True)
 
-    # pprint(conf)
+    # value for L2 regularization (0.0 means no regularization)
+    L2 = 0.0
 
-    DEBUG = conf["meta"]["debug"]
-    OUTPUT_PREDICTIONS = conf["meta"]["output_predictions"]
+    # parameters for training
+    EPSILON =  1e-10
+
+    # (dis)able debug mode
+    DEBUG = False
+
+    # path to file that holds rule templates (None if no such file)
+    # TEMPLATES_PATH = 'mnist_addition.nlt'
+    TEMPLATES_PATH = None
+
+    ################################################
+
+    # clip gradient during learning
+    CLIP = None
+
+    OUTPUT_PREDICTIONS = True
     CHECK_NUMERICS = conf["meta"]["check_numerics"]
     TFDBG = conf["meta"]["tfdbg"]
-    TEST_GRAPH_CREATION = conf["meta"]["test_graph_creation"]
-    TRAIN = conf["meta"]["train"]
+    TRAIN = True
     TEST_TIME_NEURAL_LINK_PREDICTION = \
         conf["meta"]["test_time_neural_link_prediction"]
     TEST_TIME_BATCHING = conf["meta"]["test_time_batching"]
     # ENSEMBLE = conf["meta"]["ensemble"]
     EXPERIMENT = conf["meta"]["experiment_prefix"]
-
-    TEMPLATES_PATH = conf["data"]["templates"]
-
+    
     INPUT_SIZE = conf["model"]["input_size"]
     UNIFICATION = conf["model"]["unification"]
-    L2 = conf["model"]["l2"]
-    UNIT_NORMALIZE = conf["model"]["unit_normalize"]
+    # normalize embeddings
+    UNIT_NORMALIZE = False
     K_MAX = conf["model"]["k_max"]
     NEURL_LINK_PREDICTOR = conf["model"]["neural_link_predictor"]
     TRAIN_0NTP = conf["model"]["train_0ntp"]
     KEEP_PROB = conf["model"]["keep_prob"]
     MAX_DEPTH = conf["model"]["max_depth"]
-
     TRAIN_NTP = TRAIN_0NTP or TEMPLATES_PATH is not None
-
     if NEURL_LINK_PREDICTOR is None and not TRAIN_0NTP:
         raise AttributeError("Can't train non-0NTP without link predictor")
-
     REPORT_INTERVAL = conf["training"]["report_interval"]
-    NUM_EPOCHS = conf["training"]["num_epochs"]
-    CLIP = conf["training"]["clip"]
-    LEARNING_RATE = conf["training"]["learning_rate"]
-    EPSILON = conf["training"]["epsilon"]
-    OPTIMIZER = 'Adam'
+    NUM_EPOCHS = nb_epochs
     POS_PER_BATCH = conf["training"]["pos_per_batch"]
     NEG_PER_POS = conf["training"]["neg_per_pos"]
     SAMPLING_SCHEME = conf["training"]["sampling_scheme"]
     MEAN_LOSS = conf["training"]["mean_loss"]
     INIT = conf["training"]["init"]
-
     NUM_CORRUPTIONS = 0
     if SAMPLING_SCHEME == "all":
         NUM_CORRUPTIONS = 4
     else:
         NUM_CORRUPTIONS = 2
     BATCH_SIZE = POS_PER_BATCH + POS_PER_BATCH * NEG_PER_POS * NUM_CORRUPTIONS
-    kb = load_from_file(conf["data"]["kb"])
+
+    ##############################
+
+    # load training knowledge base (rules + training examples)
+    kb = load_from_file('mnist_addition.nl')
 
     print("Batch size: %d, pos: %d, neg: %d, corrupted: %d" %
         (BATCH_SIZE, POS_PER_BATCH, NEG_PER_POS, NUM_CORRUPTIONS))
@@ -118,27 +126,21 @@ for seed in range(0, 10):
         kb = augment_with_templates(kb, rule_templates)
     kb = normalize(kb)
 
-    
+    embeddings_modified = Net_NTP(dataset, dropout_rate)
 
     nkb, kb_ids, vocab, emb, predicate_ids, constant_ids = \
         kb2nkb(kb, INPUT_SIZE, unit_normalize=UNIT_NORMALIZE,
-            keep_prob=KEEP_PROB)
+               keep_prob=KEEP_PROB)
     
-
-
+    # emb = CustomEmbedding(vocab, emb_pred, emb_const, predicate_ids, constant_ids)
+    
     known_facts = kb_ids2known_facts(kb_ids)
 
-    # using same embedding matrix
-    # tf.get_variable_scope().reuse_variables()
     goal_struct = rule2struct(normalize([[Atom('p1', ["c0", "c1"])]])[0])
-    if EXPERIMENT == "animals":
-        goal_struct = rule2struct(normalize([[Atom('p1', ["c0"])]])[0])
-
 
     def embed(goal, emb, keep_prob=1.0):
         return [embed_symbol(x, emb, unit_normalize=UNIT_NORMALIZE,
-                            keep_prob=keep_prob) for x in goal]
-
+                             keep_prob=keep_prob) for x in goal]
     def get_mask_id(kb, goal_struct, goal):
         if goal_struct in kb:
             facts = kb[goal_struct][0]
@@ -157,24 +159,18 @@ for seed in range(0, 10):
         return None
 
     mask_indices = tf.placeholder("int32", [POS_PER_BATCH, 2], name="mask_indices")
-
     goal_placeholder = [tf.placeholder("int32", [BATCH_SIZE], name="goal_%d" % i)
                         for i in range(0, len(goal_struct[0]))]
-
-    goal_emb = embed(goal_placeholder, emb, KEEP_PROB)
+    goal_emb = embed(goal_placeholder, emb)
 
     num_facts = len(kb_ids[goal_struct][0][0])
-
     mask = tf.Variable(np.ones([num_facts, BATCH_SIZE], np.float32),
                     trainable=False, name="fact_mask")
-
     mask_set = tf.scatter_nd_update(mask, mask_indices, [0.0]*POS_PER_BATCH)
-
     mask_unset = tf.scatter_nd_update(mask, mask_indices, [1.0]*POS_PER_BATCH)
-
     target = tf.placeholder("float32", [BATCH_SIZE], name="target")
 
-    AGGREGATION_METHOD = conf["model"]["aggregate_fun"]
+    AGGREGATION_METHOD = "Max"
     aggregation_fun = None
     if AGGREGATION_METHOD == "Max":
         def fun(x):
@@ -211,7 +207,6 @@ for seed in range(0, 10):
                 return corrupt_goal(goal, args, tries-1)
             else:
                 return goal_corrupted
-
 
     def get_batches():
         facts = kb_ids[goal_struct][0]
@@ -274,29 +269,14 @@ for seed in range(0, 10):
 
         return GeneratorWithRestart(generator)
 
-
     train_feed_dicts = get_batches()
-
-    # for _ in range(6):
-    #     for x in train_feed_dicts:
-    #         for key in x:
-    #             val = x[key]
-    #             print(key, val)
-    #         print()
-    #     print("---")
-    # os._exit(-1)
 
     prove_success = prove(nkb, goal_emb, goal_struct, mask, trace=True,
                         aggregation_fun=aggregation_fun, k_max=K_MAX,
                         train_0ntp=TRAIN_0NTP, max_depth=MAX_DEPTH)
 
     print("Graph creation complete.")
-    # print("Variables")
-    # for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
-    #     print("\t", v)
 
-    if TEST_GRAPH_CREATION:
-        exit(1)
     if DEBUG and TRAIN_NTP:
         prove_success = tfprint(prove_success, "NTP success:\n")
 
@@ -312,10 +292,6 @@ for seed in range(0, 10):
             # loss = tf.maximum(x, 0) - x * target + tf.log(1 + tf.exp(-tf.abs(x)))
 
     prover_loss = caculate_loss(prove_success, target)
-
-    print('----------------------------------------------------')
-    print(prover_loss)
-    print('----------------------------------------------------')
 
     if DEBUG:
         prover_loss = tfprint(prover_loss, "NTP loss:\n")
@@ -338,12 +314,7 @@ for seed in range(0, 10):
         if TEST_TIME_NEURAL_LINK_PREDICTION:
             test_time_prediction = \
                 tf.maximum(neural_link_prediction_success, prove_success)
-
-        # # fixme: refactor!
-        # if ENSEMBLE:
-        #     prove_success = \
-        #         tf.maximum(neural_link_prediction_success, prove_success)
-        #     loss = caculate_loss(prove_success, target)
+            
     else:
         loss = prover_loss
         test_time_prediction = prove_success
@@ -357,9 +328,7 @@ for seed in range(0, 10):
         loss = tf.reduce_sum(loss)
 
     # loss = tf.reduce_sum(loss)
-
     # loss = tfprint(loss, "loss reduced:\n")
-
 
     def pre_run(sess, epoch, feed_dict, loss, predict):
         results = sess.run(mask_set, {mask_indices: feed_dict[mask_indices]})
@@ -380,16 +349,7 @@ for seed in range(0, 10):
 
     summary_writer = tf.summary.FileWriter(experiment_dir)
 
-    optim = None
-    if OPTIMIZER == "Adam":
-        optim = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE, epsilon=EPSILON)
-    if OPTIMIZER == "AdaGrad":
-        optim = tf.train.AdagradOptimizer(learning_rate=LEARNING_RATE)
-    elif OPTIMIZER == "SGD":
-        optim = tf.train.GradientDescentOptimizer(learning_rate=LEARNING_RATE)
-
-
-
+    optim = tf.train.AdamOptimizer(learning_rate, epsilon=EPSILON)
     gradients = optim.compute_gradients(loss)
     variables = [x[1] for x in gradients]
     gradients = [x[0] for x in gradients]
@@ -460,6 +420,7 @@ for seed in range(0, 10):
     def unstack_rules(rule):
         rules = []
         num_rules = len(rule[0].predicate)
+        # num_rules = rule[0].predicate.shape[0]
         for i in range(num_rules):
             current_rule = []
             confidence = 1.0
@@ -479,7 +440,6 @@ for seed in range(0, 10):
                 current_rule.append(Atom(predicate, arguments))
             rules.append((current_rule, confidence))
         return rules
-
 
     predicate_ids_with_placholders = copy.deepcopy(predicate_ids)
     predicate_ids = []
@@ -504,8 +464,8 @@ for seed in range(0, 10):
                             atom_sym.append(sym[0])
                     rule_sym.append(Atom(atom_sym[0], atom_sym[1:]))
 
-                rules = unstack_rules(rule_sym)
 
+                rules = unstack_rules(rule_sym)
                 rules.sort(key=lambda x: -x[1])
 
                 # filtering for highly confident rules
@@ -513,6 +473,7 @@ for seed in range(0, 10):
 
                 f.write(str(struct) + "\n")
                 for rule, confidence in rules:
+
                     f.write("%s\t%s\n" % (confidence, rule2string(rule)))
                 f.write("\n")
         f.close()
@@ -547,7 +508,6 @@ for seed in range(0, 10):
             id = vocab.sym2id[sym]
             vec = sess.run(emb[id])
             table.append([sym, id, vec])
-        # print(tabulate(table))  # tablefmt='orgtbl'
 
         def predict(predicate, arg1, arg2):
             feed_dict = {}
@@ -589,325 +549,80 @@ for seed in range(0, 10):
                 table.append(row)
         print(tabulate(table, headers=["e1", "e2"] + headers))
 
-    # # --- Embedding Visualization
-    # from tensorflow.contrib.tensorboard.plugins import projector
-    # saver = tf.train.Saver()
-    # saver.save(sess, os.path.join(experiment_dir, "model.ckpt"), 0)
-    # #saver.save(sess, "model.ckpt", 0)
+    # evaluation
+    test_set = "test.txt"
 
-    # # Use the same LOG_DIR where you stored your checkpoint.
-    # summary_writer = tf.summary.FileWriter(experiment_dir)
+    test_digit_1 = []
+    test_digit_2 = []
+    y = []
+    with open(test_set, "r") as f:
+        for line in f.readlines():
+            line_splitted = line.split(" ")
+            
+            test_digit_1.append(line_splitted[0])
+            test_digit_2.append(line_splitted[1])
+            y.append(int(line_splitted[2][:-1]))
 
-    # # Format:
-    # # tensorflow/contrib/tensorboard/plugins/projector/projector_config.proto
-    # config = projector.ProjectorConfig()
-    # # You can add multiple embeddings. Here we add only one.
-    # embedding = config.embeddings.add()
-    # embedding.tensor_name = emb.name
+    nb_possible_results = 19
 
-    # with open(experiment_dir + "metadata.tsv", "w") as f:
-    #     f.write("Symbol\tClass\n")
-    #     for i, id in enumerate(vocab.id2sym):
-    #         sym = vocab.id2sym[id]
-    #         typ = ""
-    #         if is_parameter(sym):
-    #             typ = "Param"
-    #         elif id in predicate_ids:
-    #             typ = "Predicate"
-    #         else:
-    #             typ = "Constant"
-    #         f.write("%s\t%s\n" % (sym, typ))
-    #     f.close()
-
-    # # Link this tensor to its metadata file (e.g. labels).
-    # embedding.metadata_path = 'metadata.tsv'
-
-    # # Saves a configuration file that TensorBoard will read during startup.
-    # projector.visualize_embeddings(summary_writer, config)
-
-##################################### EVAL ####################################################""
-
-    # # --- Evaluation for Countries
-    # if conf["meta"]["experiment_prefix"] == "mnist":
-    #     test_set = conf["meta"]["test_set"]
-
-    #     test_digit_1 = []
-    #     test_digit_2 = []
-    #     sum = []
-    #     with open(test_set, "r") as f:
-    #         for line in f.readlines():
-    #             line_splitted = line.split("(")
-                
-    #             test_digit_1.append(line_splitted[1].split(",")[0])
-    #             test_digit_2.append(line_splitted[1].split(",")[1][:-3])
-    #             sum.append(line_splitted[0])
-
-    #     print(test_digit_1)
-    #     print(test_digit_2)
-    #     print(sum)
-
-    #     # regions_set = set(regions)
-
-    #     ground_truth = load_from_file("mnist_addition.nl")
-
-    #     # country2region = {}
-    #     # for atom in ground_truth:
-    #     #     atom = atom[0]
-    #     #     if atom.predicate == "locatedIn":
-    #     #         country, region = atom.arguments
-    #     #         if region in regions:
-    #     #             country2region[country] = region
-
-    #     # print(test_countries)
-    #     # print(regions)
-
-    #     goal_placeholder = [
-    #         tf.placeholder("int32", [len(regions)], name="goal_%d" % i)
-    #         for i in range(0, len(goal_struct[0]))]
-
-    #     goal_emb = embed(goal_placeholder, emb, keep_prob=1.0)
-
-    #     prove_success_test_time = \
-    #         prove(nkb, goal_emb, goal_struct, mask_var=None, trace=True,
-    #             aggregation_fun=aggregation_fun, k_max=K_MAX,
-    #             train_0ntp=TRAIN_0NTP, max_depth=MAX_DEPTH)
-    #     if NEURL_LINK_PREDICTOR is not None:
-    #         neural_link_prediction_success_test_time = \
-    #             tf.squeeze(neural_link_predict(goal_emb, model=NEURL_LINK_PREDICTOR))
-    #         if TEST_TIME_NEURAL_LINK_PREDICTION:
-    #             prove_success_test_time = \
-    #                 tf.maximum(prove_success_test_time,
-    #                         neural_link_prediction_success_test_time)
-
-    #     locatedIn_ids = [vocab("locatedIn")] * len(regions)
-    #     regions_ids = [vocab(region) for region in regions]
-
-    #     def predict(country):
-    #         feed_dict = {}
-
-    #         country_ids = [vocab(country)] * len(regions)
-    #         goal = [locatedIn_ids, country_ids, regions_ids]
-
-    #         for k, d in zip(goal_placeholder, goal):
-    #             feed_dict[k] = d
-
-    #         success = prove_success_test_time
-
-    #         if AGGREGATION_METHOD == "LogSumExp":
-    #             success = tf.sigmoid(success)
-
-    #         if TEST_TIME_NEURAL_LINK_PREDICTION:
-    #             success = tf.squeeze(success)
-
-    #         success_val = sess.run(success, feed_dict=feed_dict)
-
-    #         return success_val
-
-    #     scores_pl = tf.placeholder(tf.float32, [len(regions)])
-    #     target_pl = tf.placeholder(tf.int32, [len(regions)])
-    #     auc = tf.contrib.metrics.streaming_auc(scores_pl, target_pl, curve='PR',
-    #                                         num_thresholds=1000)
-    #     # sess.run(tf.local_variables_initializer())
-
-    #     table = []
-
-    #     auc_val = 0.0
-
-    #     scores_all = list()
-    #     target_all = list()
-
-    #     for country in test_countries:
-    #         known_kb = country2region[country]
-    #         ix = regions.index(known_kb)
-    #         print(country, known_kb, ix)
-    #         scores = predict(country)
-
-    #         # fixme: just for sanity checking; remove afterwards
-    #         # scores = np.random.rand(5)
-
-    #         table.append([country] + list(scores))
-
-    #         target = np.zeros(len(regions), np.int32)
-    #         target[ix] = 1
-
-    #         #auc_val, _ = sess.run(auc, feed_dict={
-    #         #    target_pl: target, scores_pl: scores})
-
-    #         scores_all += list(scores)
-    #         target_all += list(target)
-
-    #     print(tabulate(table, headers=["country"] + regions))
-
-    #     auc_val = \
-    #         sklearn.metrics.average_precision_score(target_all, scores_all)
-
-    #     print(auc_val)
-
-    #     import time
-    #     date = time.strftime("%Y-%m-%d")
-    #     time = time.strftime("%H-%M-%S")
-    #     config_name = conf["meta"]["name"]
-    #     config_str = str(conf)
-    #     kb = conf["data"]["kb"]
-    #     templates = conf["data"]["templates"]
-    #     model = conf["model"]["name"]
-    #     corpus = kb.split("_")[1][:2]
-    #     with open(conf["meta"]["result_file"], "a") as f:
-    #         f.write("%s\t%s\t%s\t%4.3f\t%s\t%s\t%s\t%s\n" %
-    #                 (model, corpus, templates, auc_val, date, time, config_name,
-    #                 config_str))
-
-    # --- Evaluation for UMLS
-    # if EXPERIMENT in ["umls", "kinship", "nations", "animals"]:
     goal_placeholder = [
-        tf.placeholder("int32", [BATCH_SIZE], name="goal_%d" % i)
+        tf.placeholder("int32", [nb_possible_results], name="goal_%d" % i)
         for i in range(0, len(goal_struct[0]))]
 
     goal_emb = embed(goal_placeholder, emb, keep_prob=1.0)
 
     prove_success_test_time = \
         prove(nkb, goal_emb, goal_struct, mask_var=None, trace=True,
-            aggregation_fun=aggregation_fun, k_max=K_MAX,
-            train_0ntp=TRAIN_0NTP, max_depth=MAX_DEPTH)
-
+                aggregation_fun=aggregation_fun, k_max=K_MAX,
+                train_0ntp=TRAIN_0NTP, max_depth=MAX_DEPTH)
     if NEURL_LINK_PREDICTOR is not None:
         neural_link_prediction_success_test_time = \
-            tf.squeeze(
-                neural_link_predict(goal_emb, model=NEURL_LINK_PREDICTOR))
-
+            tf.squeeze(neural_link_predict(goal_emb, model=NEURL_LINK_PREDICTOR))
         if TEST_TIME_NEURAL_LINK_PREDICTION:
             prove_success_test_time = \
                 tf.maximum(prove_success_test_time,
-                        neural_link_prediction_success_test_time)
+                            neural_link_prediction_success_test_time)
 
-    entities = []
-    with open("entities.txt", "r") as f:
-        for entity in f.readlines():
-            entities.append(entity[:-1])
-    # print(entities)
-    entities = [vocab(entity) for entity in entities]
-    # print(entities)
+    sums = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+            'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen']
+    sums_ids = [vocab(x) for x in sums]
 
-    test_kb = load_from_file("mnist_addition.nl")
-    known_kb = load_from_file("test.nl")
-
-    known = set()
-    for atom in known_kb:
-        atom = atom[0]
-        if len(atom.arguments) > 1:
-            known.add(tuple([
-                vocab(atom.predicate),
-                vocab(atom.arguments[0]),
-                vocab(atom.arguments[1])
-            ]))
-        elif EXPERIMENT == "animals":
-            known.add(tuple([
-                vocab(atom.predicate),
-                vocab(atom.arguments[0])
-            ]))
-
-    test = []
-    for atom in test_kb:
-        atom = atom[0]
-        if len(atom.arguments) > 1:
-            test.append(tuple([
-                vocab(atom.predicate),
-                vocab(atom.arguments[0]),
-                vocab(atom.arguments[1])
-            ]))
-        elif EXPERIMENT == "animals":
-            test.append(tuple([
-                vocab(atom.predicate),
-                vocab(atom.arguments[0])
-            ]))
-
-    cached_scores = {}
-    to_score = set()
-    for s, i, j in test:
-        corrupts_i = [(s, x, j) for x in entities
-                    if (s, x, j) not in known and x != i]
-        corrupts_j = [(s, i, x) for x in entities
-                    if (s, i, x) not in known and x != j]
-        for atom in corrupts_i:
-            to_score.add(atom)
-        for atom in corrupts_j:
-            to_score.add(atom)
-        to_score.add((s, i, j))
-
-
-    def chunks(ls, n):
-        for i in range(0, len(ls), n):
-            yield ls[i:i + n]
-
-    to_score = list(chunks(list(to_score), BATCH_SIZE))
-    for batch in to_score:
-        s_np = np.zeros([BATCH_SIZE], dtype=np.int32)
-        i_np = np.zeros([BATCH_SIZE], dtype=np.int32)
-        j_np = np.zeros([BATCH_SIZE], dtype=np.int32)
-        for i, atom in enumerate(batch):
-            s_np[i] = atom[0]
-            i_np[i] = atom[1]
-            j_np[i] = atom[2]
+    def predict(image_1, image_2):
         feed_dict = {}
-        for k, d in zip(goal_placeholder, [s_np, i_np, j_np]):
+
+        image_1_ids = [vocab(image_1)] * nb_possible_results
+        image_2_ids = [vocab(image_2)] * nb_possible_results
+        goal = [sums_ids, image_1_ids, image_2_ids]
+
+        for k, d in zip(goal_placeholder, goal):
             feed_dict[k] = d
-        scores = sess.run(prove_success_test_time, feed_dict)
-        for i, atom in enumerate(batch):
-            cached_scores[atom] = scores[i]
 
-    MRR = 0.0
-    HITS1 = 0.0
-    HITS3 = 0.0
-    HITS5 = 0.0
-    HITS10 = 0.0
-    counter = 0.0
+        success = prove_success_test_time
 
-    for s, i, j in test:
-        corrupts_i = [(s, x, j) for x in entities
-                    if (s, x, j) not in known and x != i]
+        if AGGREGATION_METHOD == "LogSumExp":
+            success = tf.sigmoid(success)
 
-        corrupts_j = [(s, i, x) for x in entities
-                    if (s, i, x) not in known and x != j]
+        if TEST_TIME_NEURAL_LINK_PREDICTION:
+            success = tf.squeeze(success)
 
-        for to_score in [corrupts_i, corrupts_j]:
-            to_score.append((s, i, j))
+        success_val = sess.run(success, feed_dict=feed_dict)
 
-            scores = [cached_scores[(s, a, b)] for s, a, b in to_score]
+        return success_val
 
-            predict = scores[-1]
-            scores = sorted(scores)[::-1]
-            rank = scores.index(predict) + 1
+    correct = 0
+    for i in range(len(test_digit_1)):
+        print(i)
+        scores = predict(test_digit_1[i], test_digit_2[i])
+        print(np.argmax(scores), 'vs', y[i])
+        if np.argmax(scores) == y[i]:
+            correct += 1
 
-            counter += 1.0
-            if rank <= 1:
-                HITS1 += 1.0
-            if rank <= 3:
-                HITS3 += 1.0
-            if rank <= 5:
-                HITS5 += 1.0
-            if rank <= 10:
-                HITS10 += 1.0
+    accuracy = correct / len(test_digit_1)
 
-            MRR += 1.0 / rank
+    training_time = 0
+    testing_time = 0
 
-    MRR /= counter
-    HITS1 /= counter
-    HITS3 /= counter
-    HITS5 /= counter
-    HITS10 /= counter
-
-    metrics = "%4.2f|%4.2f|%4.2f|%4.2f|%4.2f" % \
-            (MRR, HITS1, HITS3, HITS5, HITS10)
-    import time
-    date = time.strftime("%Y-%m-%d")
-    time = time.strftime("%H-%M-%S")
-    config_name = conf["meta"]["name"]
-    config_str = str(conf)
-    kb = conf["data"]["kb"]
-    templates = conf["data"]["templates"]
-    model = conf["model"]["name"]
-    corpus = conf["meta"]["experiment_prefix"]
-    with open(conf["meta"]["result_file"], "a") as f:
-        f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" %
-                (model, corpus, templates, metrics, date, time, config_name,
-                config_str))
+    print("############################################")
+    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+        training_time, testing_time))
+    print("############################################")

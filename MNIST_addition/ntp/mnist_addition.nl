@@ -98,6 +98,7 @@ sixteen(X,Y) :- digit(X,d9), digit(Y,d7).
 seventeen(X,Y) :- digit(X,d8), digit(Y,d9).
 seventeen(X,Y) :- digit(X,d9), digit(Y,d8).
 eighteen(X,Y) :- digit(X,d9), digit(Y,d9).
+
 six(train-52198,train-15910).
 nine(train-1101,train-30043).
 ten(train-5093,train-32756).
@@ -125,4 +126,14 @@ six(train-24784,train-52487).
 nine(train-58656,train-26377).
 eight(train-50551,train-24724).
 six(train-35348,train-6837).
+
+unknown(train-24413,train-42772).
+unknown(train-6584,train-51319).
+unknown(train-6641,train-34757).
+
+unknown(test-9770,test-3631).
+unknown(test-7059,test-421).
+unknown(test-9878,test-7213).
+unknown(test-7847,test-9353).
+unknown(test-6686,test-5617).
 
