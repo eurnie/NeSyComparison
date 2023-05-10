@@ -4,8 +4,7 @@ from ntp.prover import prove, representation_match, is_tensor, is_parameter, neu
 from ntp.tp import rule2string
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
-from pprint import pprint
-
+tf.enable_eager_execution()
 from ntp.jtr.train import train
 from ntp.jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook, TensorHook
 from ntp.jtr.preprocess.batch import GeneratorWithRestart
@@ -22,11 +21,8 @@ import logging
 import torch
 from import_data import generate_dataset
 
-from custom_embedding import CustomEmbedding
-
 sys.path.append("..")
-from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
-from data.network_tensorflow import Net_NTP
+from data.network_NTP import Net_NTP
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -53,7 +49,7 @@ for seed in range(0, 1):
     tf.set_random_seed(seed)
 
     # generate and shuffle dataset
-    generate_dataset(dataset, label_noise, size_val, seed)
+    # generate_dataset(dataset, label_noise, size_val, seed)
 
     conf = load_conf("default.conf")
     experiment_prefix = "mnist_addition"
@@ -72,6 +68,9 @@ for seed in range(0, 1):
     # TEMPLATES_PATH = 'mnist_addition.nlt'
     TEMPLATES_PATH = None
 
+    # size of predicate embeddings
+    INPUT_SIZE = 10
+
     ################################################
 
     # clip gradient during learning
@@ -87,7 +86,7 @@ for seed in range(0, 1):
     # ENSEMBLE = conf["meta"]["ensemble"]
     EXPERIMENT = conf["meta"]["experiment_prefix"]
     
-    INPUT_SIZE = conf["model"]["input_size"]
+
     UNIFICATION = conf["model"]["unification"]
     # normalize embeddings
     UNIT_NORMALIZE = False
@@ -115,6 +114,11 @@ for seed in range(0, 1):
 
     ##############################
 
+    session_config = tf.ConfigProto()
+    session_config.gpu_options.allow_growth = True
+
+    sess = tf.Session(config=session_config)
+
     # load training knowledge base (rules + training examples)
     kb = load_from_file('mnist_addition.nl')
 
@@ -126,16 +130,11 @@ for seed in range(0, 1):
         kb = augment_with_templates(kb, rule_templates)
     kb = normalize(kb)
 
-    embeddings_modified = Net_NTP(dataset, dropout_rate)
-
     nkb, kb_ids, vocab, emb, predicate_ids, constant_ids = \
         kb2nkb(kb, INPUT_SIZE, unit_normalize=UNIT_NORMALIZE,
-               keep_prob=KEEP_PROB)
-    
-    # emb = CustomEmbedding(vocab, emb_pred, emb_const, predicate_ids, constant_ids)
+               keep_prob=KEEP_PROB, emb=Net_NTP, dataset=dataset, dropout_rate=dropout_rate)
     
     known_facts = kb_ids2known_facts(kb_ids)
-
     goal_struct = rule2struct(normalize([[Atom('p1', ["c0", "c1"])]])[0])
 
     def embed(goal, emb, keep_prob=1.0):
@@ -371,10 +370,7 @@ for seed in range(0, 1):
                     modes=["mean_abs", "std", "norm", "max", "min"],
                     global_statistics=True, summary_writer=summary_writer))
 
-    session_config = tf.ConfigProto()
-    session_config.gpu_options.allow_growth = True
 
-    sess = tf.Session(config=session_config)
 
     if TFDBG:
         sess = tf_debug.LocalCLIDebugWrapperSession(sess)
@@ -549,7 +545,7 @@ for seed in range(0, 1):
                 table.append(row)
         print(tabulate(table, headers=["e1", "e2"] + headers))
 
-    # evaluation
+    print('--------- START EVALUATION ---------')
     test_set = "test.txt"
 
     test_digit_1 = []
