@@ -43,12 +43,12 @@ class SimpleAdditionDataset(Sequence):
         self.mnist_dataset = get_mnist_data(dataset, dataset_name)
         self.ct_term_dataset = []
 
-        if self.dataset == "mnist":
+        if self.dataset == "MNIST":
             if (dataset_name == "train"):
                 dataset, labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
             elif (dataset_name == "test"):
                 dataset, labels = parse_data("../data/MNIST/processed/test.txt", start_index, end_index)
-        elif self.dataset == "fashion_mnist":
+        elif self.dataset == "FashioMNIST":
             if (dataset_name == "train"):
                 dataset, labels = parse_data("../data/FashionMNIST/processed/train.txt", start_index, end_index)
             elif (dataset_name == "test"):
@@ -82,9 +82,9 @@ class SimpleAdditionDataset(Sequence):
         return self.ct_term_dataset[item]
 
 def get_mnist_data(dataset, dataset_name) -> MNIST:
-    if dataset == "mnist":
+    if dataset == "MNIST":
         return datasets_mnist[dataset_name]
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         return datasets_fashion_mnist[dataset_name]
     
 def parse_data(filename, start, end):
