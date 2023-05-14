@@ -175,7 +175,7 @@ for dropout_rate in [0, 0.2]:
                         
                     # save results to a summary file
                     information = {
-                        "algorithm": "SL",
+                        "algorithm": "NN",
                         "seed": seed,
                         "nb_epochs": nb_epochs_done,
                         "batch_size": batch_size,

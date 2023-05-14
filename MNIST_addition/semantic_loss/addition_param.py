@@ -134,10 +134,9 @@ for dropout_rate in [0, 0.2]:
                     # generate and shuffle dataset
                     if dataset == "mnist":
                         generate_dataset_mnist(seed, 0)
-                        processed_data_path = "../data/MNIST/processed/"
                     elif dataset == "fashion_mnist":
                         generate_dataset_fashion_mnist(seed, 0)
-                        processed_data_path = "../data/FashionMNIST/processed/"
+                    processed_data_path = f'../data/{dataset}/processed/'
 
                     # import train and val set
                     train_set = parse_data(dataset, processed_data_path, "train", size_val)
@@ -157,49 +156,45 @@ for dropout_rate in [0, 0.2]:
                     elif optimizer_name == "SGD":
                         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
+                    # training (with early stopping)
                     best_accuracy = 0
-
-                    # training
+                    counter = 0
                     for epoch in range(nb_epochs):
                         train(train_dataloader, model, sl, optimizer)
-
-                        # generate name of file that holds the trained model
-                        model_file_name = "SL_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
-                            epoch + 1, batch_size, learning_rate, optimizer_name, dropout_rate, size_val)
-
-                        # save trained model to a file
-                        with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
-                            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                                
-                        # testing
-                        accuracy = test(val_dataloader, model)
-
-                        # save results to a summary file
-                        information = {
-                            "algorithm": "SL",
-                            "seed": seed,
-                            "nb_epochs": epoch + 1,
-                            "batch_size": batch_size,
-                            "learning_rate": learning_rate,
-                            "optimizer": optimizer_name,
-                            "dropout_rate": dropout_rate,
-                            "size_val": size_val,
-                            "accuracy": accuracy,
-                            "model_file": model_file_name
-                        }
-                        with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
-                            json.dump(information, outfile)
-                            outfile.write('\n')
-
-                        # print results
-                        print("############################################")
-                        print("Accuracy: {}".format(accuracy))
-                        print("############################################")
-
-                        if accuracy > best_accuracy:
-                            best_accuracy = accuracy
+                        val_accuracy = test(val_dataloader, model)
+                        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+                        if val_accuracy > best_accuracy:
+                            best_accuracy = val_accuracy
+                            nb_epochs_done = epoch + 1
+                            with open("best_model.pickle", "wb") as handle:
+                                pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
                             counter = 0
                         else:
                             if counter >= 2:
                                 break
                             counter += 1
+                    with open("best_model.pickle", "rb") as handle:
+                        model = pickle.load(handle)
+
+                    os.remove("best_model.pickle")
+
+                    # save trained model to a file
+                    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
+                        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                        
+                    # save results to a summary file
+                    information = {
+                        "algorithm": "SL",
+                        "seed": seed,
+                        "nb_epochs": nb_epochs_done,
+                        "batch_size": batch_size,
+                        "learning_rate": learning_rate,
+                        "optimizer": optimizer_name,
+                        "dropout_rate": dropout_rate,
+                        "size_val": size_val,
+                        "accuracy": best_accuracy,
+                        "model_file": model_file_name
+                    }
+                    with open(f'results/{dataset}/summary_param.json', "a") as outfile:
+                        json.dump(information, outfile)
+                        outfile.write('\n')
