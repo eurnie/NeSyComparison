@@ -40,6 +40,7 @@ dataset = "mnist"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
+method = "sampling"
 nb_epochs = 100
 batch_size = 32
 learning_rate = 0.001
@@ -131,7 +132,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
             epoch + 1, batch_size, learning_rate, dropout_rate, size_val)
 
         # save trained model to a file
-        with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
+        with open(f'results/{method}/{dataset}/param/{model_file_name}', "wb") as handle:
             pickle.dump(NeurASPobj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         # testing
@@ -141,6 +142,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
         information = {
             "algorithm": "NeurASP",
             "seed": seed,
+            "method": method,
             "nb_epochs": epoch + 1,
             "batch_size": batch_size,
             "learning_rate": learning_rate,
@@ -149,7 +151,7 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
             "accuracy": accuracy,
             "model_file": model_file_name
         }
-        with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+        with open(f'results/{method}/{dataset}/param/summary_param.json', "a") as outfile:
             json.dump(information, outfile)
             outfile.write('\n')
 
