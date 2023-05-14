@@ -107,7 +107,6 @@ def test(dataloader, model):
 
 ################################################# DATASET ###############################################
 dataset = "MNIST"
-# dataset = "FashionMNIST"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -157,7 +156,7 @@ for dropout_rate in [0, 0.2]:
                         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
                     # training (with early stopping)
-                    best_accuracy = 0
+                    best_accuracy = -1
                     counter = 0
                     for epoch in range(nb_epochs):
                         train(train_dataloader, model, sl, optimizer)

@@ -16,8 +16,41 @@ sys.path.append("..")
 from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashion_mnist
 from data.network_tensorflow import Net
 
-def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_epochs, learning_rate, 
-                   p_forall, p_exists, dropout_rate):
+################################################# DATASET ###############################################
+dataset = "MNIST"
+label_noise = 0
+#########################################################################################################
+
+############################################### PARAMETERS ##############################################
+nb_epochs = 100
+batch_size = 64
+learning_rate = 0.001
+p_forall = 2
+p_exists = 1
+dropout_rate = 0
+size_val = 0.1
+#########################################################################################################
+
+for seed in range(0, 10):
+    # setting seeds for reproducibility
+    random.seed(seed)
+    numpy.random.seed(seed)
+    torch.manual_seed(seed)
+    tf.random.set_seed(seed)
+
+    # generate and shuffle dataset
+    if dataset == "mnist":
+        generate_dataset_mnist(seed, label_noise)
+    elif dataset == "fashion_mnist":
+        generate_dataset_fashion_mnist(seed, label_noise)
+
+    # import train, val and test set
+    train_set, val_set, test_set = get_mnist_op_dataset_val(dataset, size_val, batch_size)
+
+    # generate name of folder that holds all the trained models
+    model_file_name = "label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
+        nb_epochs, batch_size, learning_rate, p_forall, p_exists, dropout_rate, size_val)
+
     # predicates
     logits_model = Net(dropout_rate)
     Digit = ltn.Predicate(ltn.utils.LogitsToPredicateModel(logits_model))
@@ -119,48 +152,6 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, nb_ep
     accuracy = test_modified(test_set, test_step, metrics_dict)
     testing_time = time.time() - start_time
 
-    return nb_epochs_done, accuracy, total_training_time, testing_time
-
-################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
-label_noise = 0
-#########################################################################################################
-
-############################################### PARAMETERS ##############################################
-nb_epochs = 100
-batch_size = 64
-learning_rate = 0.001
-p_forall = 2
-p_exists = 1
-dropout_rate = 0
-size_val = 0.1
-#########################################################################################################
-
-for seed in range(0, 10):
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
-    tf.random.set_seed(seed)
-
-    # generate and shuffle dataset
-    if dataset == "mnist":
-        generate_dataset_mnist(seed, label_noise)
-    elif dataset == "fashion_mnist":
-        generate_dataset_fashion_mnist(seed, label_noise)
-
-    # import train, val and test set
-    train_set, val_set, test_set = get_mnist_op_dataset_val(dataset, size_val, batch_size)
-
-    # generate name of folder that holds all the trained models
-    model_file_name = "label_noise_{}/LTN_final_{}_{}_{}_{}_{}_{}_{}_{}".format(label_noise, seed, 
-        nb_epochs, batch_size, learning_rate, p_forall, p_exists, dropout_rate, size_val)
-
-    # train and test
-    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, 
-        train_set, val_set, test_set, nb_epochs, learning_rate, p_forall, p_exists, dropout_rate)
-      
     # save results to a summary file
     information = {
         "algorithm": "LTN",

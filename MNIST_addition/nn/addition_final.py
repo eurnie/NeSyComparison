@@ -103,7 +103,6 @@ def test(dataloader, model):
 
 ################################################# DATASET ###############################################
 dataset = "MNIST"
-# dataset = "FashionMNIST"
 label_noise = 0
 #########################################################################################################
 
@@ -164,7 +163,7 @@ for seed in range(0, 10):
 
         # training (with early stopping)
         total_training_time = 0
-        best_accuracy = 0
+        best_accuracy = -1
         counter = 0
         for epoch in range(nb_epochs):
             start_time = time.time()

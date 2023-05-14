@@ -101,7 +101,6 @@ def test(dataloader, model):
 
 ################################################# DATASET ###############################################
 dataset = "MNIST"
-# dataset = "FashionMNIST"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -148,7 +147,7 @@ for dropout_rate in [0, 0.2]:
                     val_dataloader = DataLoader(val_set, batch_size=1)
 
                     # training (with early stopping)
-                    best_accuracy = 0
+                    best_accuracy = -1
                     counter = 0
                     for epoch in range(nb_epochs):
                         train(train_dataloader, model, loss_fn, optimizer)
