@@ -4,7 +4,7 @@ from ntp.prover import prove, representation_match, is_tensor, is_parameter, neu
 from ntp.tp import rule2string
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
-tf.enable_eager_execution()
+tf.disable_eager_execution()
 from ntp.jtr.train import train
 from ntp.jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook, TensorHook
 from ntp.jtr.preprocess.batch import GeneratorWithRestart
@@ -20,9 +20,7 @@ from tensorflow.python import debug as tf_debug
 import logging
 import torch
 from import_data import generate_dataset
-
-sys.path.append("..")
-from data.network_NTP import Net_NTP
+from network_NTP import Net_NTP
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -369,7 +367,6 @@ for seed in range(0, 1):
             TensorHook(REPORT_INTERVAL, gradients, prefix="gradients_",
                     modes=["mean_abs", "std", "norm", "max", "min"],
                     global_statistics=True, summary_writer=summary_writer))
-
 
 
     if TFDBG:

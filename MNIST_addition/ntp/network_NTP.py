@@ -75,6 +75,10 @@ class Net_NTP(tf.keras.Model):
         # print(tf.nn.embedding_lookup(params=self.embedding_matrix_predicates, ids=[1, 2, 3]))
         # print(self.call([1, 2, 3]))
         # print('--------------------------------')
+    def embedding_matrix_predicates(self):
+        # load MNIST
+        # embed everything
+
 
     def call(self, inputs, training=True):
         output = tf.Variable(tf.zeros((0, 10), dtype=tf.float32))
@@ -85,7 +89,7 @@ class Net_NTP(tf.keras.Model):
                     'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 
                     'sixteen', 'seventeen', 'eighteen', 'd0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 
                     'd7', 'd8', 'd9']:
-                row = tf.reshape(self.embedding_matrix_predicates[ind], (1, 10))
+                row = tf.reshape(self.embedding_matrix_predicates()[ind], (1, 10))
             elif sym is None:
                 emb = tf.Variable(tf.zeros((1, 10), dtype=tf.float32))
                 row = tf.reshape(emb, (1, 10))

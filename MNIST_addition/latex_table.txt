@@ -1,0 +1,19 @@
+\begin{table}
+\begin{adjustbox}{width=1.3\textwidth, pagecenter}
+\begin{tabular}{lcccccccccccc}
+\toprule
+\multicolumn{1}{c}{} & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & \textbf{AVG} & \textbf{STD} \\ 
+\midrule
+DeepProbLog & 97.90 & 97.66 & 97.94 & 97.64 & 97.62 & 97.84 & 97.76 & 97.82 & 97.80 & 97.80 & \textbf{97.78} & \textbf{0.11} \\ 
+DeepProbLog (approximate) & 97.54 & 97.52 & 80.80 & 80.08 & 62.46 & 62.84 & 64.16 & 62.46 & 63.24 & 65.44 & \textbf{73.65} & \textbf{14.40} \\ 
+DeepStochLog & 97.52 & 97.92 & 97.68 & 97.82 & 97.76 & 97.70 & 97.72 & 97.46 & 97.90 & 97.30 & \textbf{97.68} & \textbf{0.20} \\ 
+Logic Tensor Networks & 96.84 & 97.14 & 96.24 & 79.40 & 62.30 & 79.10 & 97.64 & 63.88 & 97.52 & 64.72 & \textbf{83.48} & \textbf{15.44} \\ 
+NeurASP & 97.68 & 96.98 & 97.98 & 97.14 & 98.04 & 97.58 & 97.52 & 98.02 & 97.60 & 97.96 & \textbf{97.65} & \textbf{0.37} \\ 
+NN baseline & 59.72 & 65.14 & 60.70 & 55.06 & 71.32 & 75.22 & 72.70 & 74.60 & 67.20 & 61.60 & \textbf{66.33} & \textbf{6.99} \\ 
+Semantic Loss & 97.26 & 97.06 & 97.30 & 96.56 & 97.64 & 97.62 & 97.12 & 97.04 & 97.40 & 97.28 & \textbf{97.23} & \textbf{0.31} \\ 
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\caption{Accuracy on the test set for the MNIST addition problem. The columns indicate the seed that was used for shuffling the training dataset and initializing the neural networks. The final two columns show the average accuracy and the standard deviation for each method.}
+\label{tab:ok}
+\end{table}
