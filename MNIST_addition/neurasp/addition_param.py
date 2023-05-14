@@ -168,7 +168,7 @@ for method in ['exact', 'sampling']:
                             "accuracy": best_accuracy,
                             "model_file": model_file_name
                         }
-                        with open(f'results/{method}/{dataset}/param/summary_param.json', "a") as outfile:
+                        with open(f'results/{method}/{dataset}/summary_param.json', "a") as outfile:
                             json.dump(information, outfile)
                             outfile.write('\n')
 

@@ -51,9 +51,9 @@ def parse_data(filename):
 
 def get_mnist_data_as_numpy(dataset):
     """Returns numpy arrays of images and labels"""
-    if dataset == "mnist":
+    if dataset == "MNIST":
         datasets = datasets_mnist
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         datasets = datasets_fashion_mnist
 
     img_train = datasets["train"].data.numpy()
@@ -100,10 +100,10 @@ def get_mnist_op_dataset(dataset, batch_size):
 
 def get_mnist_op_dataset_val(dataset, size_val, batch_size):
     img_train, _, img_test, _ = get_mnist_data_as_numpy(dataset)
-    if dataset == "mnist":
+    if dataset == "MNIST":
         train_data_processed, train_labels = parse_data("../data/MNIST/processed/train.txt")
         test_data_processed, label_result_test = parse_data("../data/MNIST/processed/test.txt")
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         train_data_processed, train_labels = parse_data("../data/FashionMNIST/processed/train.txt")
         test_data_processed, label_result_test = parse_data("../data/FashionMNIST/processed/test.txt")
     
@@ -131,9 +131,9 @@ def get_mnist_op_dataset_val(dataset, size_val, batch_size):
 
 def get_mnist_op_dataset_k_fold(dataset):
     img_train, _, _, _ = get_mnist_data_as_numpy(dataset)
-    if dataset == "mnist":
+    if dataset == "MNIST":
         train_data_processed, label_result_train = parse_data("../data/MNIST/processed/train.txt")
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         train_data_processed, label_result_train = parse_data("../data/FashionMNIST/processed/train.txt")
 
     img_per_operand_train_1 = [img_train[i[0]] for i in train_data_processed]
@@ -148,9 +148,9 @@ def get_mnist_op_dataset_log_iter(dataset, batch_size, log_iter):
     such that op(image_x1,...,image_xn)= label.
     """   
     img_train, _, _, _ = get_mnist_data_as_numpy(dataset)
-    if dataset == "mnist":
+    if dataset == "MNIST":
         train_data_processed, label_result_train = parse_data("../data/MNIST/processed/train.txt")
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         train_data_processed, label_result_train = parse_data("../data/FashionMNIST/processed/train.txt")
 
     img_per_operand_train_1 = [img_train[i[0]] for i in train_data_processed]

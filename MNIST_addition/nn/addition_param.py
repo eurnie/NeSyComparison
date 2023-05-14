@@ -169,7 +169,7 @@ for dropout_rate in [0, 0.2]:
                     os.remove("best_model.pickle")
 
                     # save trained model to a file
-                    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
+                    with open(model_file_location, "wb") as handle:
                         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
                         
                     # save results to a summary file

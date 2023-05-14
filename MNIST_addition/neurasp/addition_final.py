@@ -188,7 +188,7 @@ for seed in range(0, 10):
             "testing_time": testing_time,
             "model_file": model_file_name
         }
-        with open(f'results/{method}/{dataset}/final/summary_final_{label_noise}.json', "a") as outfile:
+        with open(f'results/{method}/{dataset}/summary_final_{label_noise}.json', "a") as outfile:
             json.dump(information, outfile)
             outfile.write('\n')
 
