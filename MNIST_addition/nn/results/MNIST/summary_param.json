@@ -1,0 +1,1 @@
+{"algorithm": "NN", "seed": 0, "nb_epochs": 6, "batch_size": 2, "learning_rate": 0.001, "optimizer": "Adam", "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.488, "model_file": "NN_param_0_100_0.1_0_Adam_0.001_2"}
