@@ -42,9 +42,9 @@ def parse_data(dataset, filename, dataset_name, size_val):
         ),
     }
 
-    if dataset == "mnist":
+    if dataset == "MNIST":
         datasets = datasets_mnist
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         datasets = datasets_fashion_mnist
 
     split_index = round(size_val * 30000)
@@ -101,71 +101,15 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
-def train_and_test(dataset, model_file_name, train_set, val_set, test_set, 
-    nb_epochs, batch_size, learning_rate, dropout_rate):
-    model = Net_NN(dropout_rate)
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-
-    train_dataloader = DataLoader(train_set, batch_size=batch_size)
-    val_dataloader = DataLoader(val_set, batch_size=1)
-    test_dataloader = DataLoader(test_set, batch_size=1)
-
-    # display image and label
-    # train_features, train_labels = next(iter(train_dataloader))
-    # print(f"Feature batch shape: {train_features.size()}")
-    # print(f"Labels batch shape: {train_labels.size()}")
-    # img = train_features[0].squeeze()
-    # label = train_labels[0]
-    # plt.imshow(img, cmap="gray")
-    # plt.show()
-    # print(f"Label: {label}")
-
-    # training (with early stopping)
-    total_training_time = 0
-    best_accuracy = 0
-    counter = 0
-    for epoch in range(nb_epochs):
-        start_time = time.time()
-        train(train_dataloader, model, loss_fn, optimizer)
-        total_training_time += time.time() - start_time
-        val_accuracy = test(val_dataloader, model)
-        print("Val accuracy after epoch", epoch, ":", val_accuracy)
-        if val_accuracy > best_accuracy:
-            best_accuracy = val_accuracy
-            nb_epochs_done = epoch + 1
-            with open("best_model.pickle", "wb") as handle:
-                pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            counter = 0
-        else:
-            if counter >= 2:
-                break
-            counter += 1
-    with open("best_model.pickle", "rb") as handle:
-        model = pickle.load(handle)
-
-    os.remove("best_model.pickle")
-
-    # save trained model to a file
-    with open(f'results/{dataset}/final/{model_file_name}', "wb") as handle:
-        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            
-    # testing
-    start_time = time.time()
-    accuracy = test(test_dataloader, model)
-    testing_time = time.time() - start_time
-
-    return nb_epochs_done, accuracy, total_training_time, testing_time
-
 ################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
+dataset = "MNIST"
+# dataset = "FashionMNIST"
 label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
+optimizer_name = "Adam"
 batch_size = 64
 learning_rate = 0.001
 dropout_rate = 0
@@ -173,52 +117,106 @@ size_val = 0.1
 #########################################################################################################
 
 for seed in range(0, 10):
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
-
-    # generate and shuffle dataset
-    if dataset == "mnist":
-        generate_dataset_mnist(seed, label_noise)
-        processed_data_path = "../data/MNIST/processed/"
-    elif dataset == "fashion_mnist":
-        generate_dataset_fashion_mnist(seed, label_noise)
-        processed_data_path = "../data/FashionMNIST/processed/"
-
-    # import train, val and test set
-    train_set = parse_data(dataset, processed_data_path, "train", size_val)
-    val_set = parse_data(dataset, processed_data_path, "val", size_val)
-    test_set = parse_data(dataset, processed_data_path, "test", size_val)
-
     # generate name of file that holds the trained model
-    model_file_name = "label_noise_{}/NN_final_{}_{}_{}_{}_{}_{}".format(label_noise, seed, nb_epochs, 
+    model_file_name = "NN_final_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, label_noise, nb_epochs, optimizer_name,
         batch_size, learning_rate, dropout_rate, size_val)
-
-    # train and test
-    nb_epochs_done, accuracy, training_time, testing_time = train_and_test(dataset, model_file_name, train_set, val_set,
-        test_set, nb_epochs, batch_size, learning_rate, dropout_rate)
+    model_file_location = f'results/{dataset}/final/label_noise_{label_noise}/{model_file_name}'
     
-    # save results to a summary file
-    information = {
-        "algorithm": "NN",
-        "seed": seed,
-        "nb_epochs": nb_epochs_done,
-        "batch_size": batch_size,
-        "learning_rate": learning_rate,
-        "dropout_rate": dropout_rate,
-        "size_val": size_val,
-        "accuracy": accuracy,
-        "training_time": training_time,
-        "testing_time": testing_time,
-        "model_file": model_file_name
-    }
-    with open(f'results/{dataset}/final/label_noise_{label_noise}/summary_final.json', "a") as outfile:
-        json.dump(information, outfile)
-        outfile.write('\n')
+    if not os.path.isfile(model_file_location):
+        # setting seeds for reproducibility
+        random.seed(seed)
+        numpy.random.seed(seed)
+        torch.manual_seed(seed)
 
-    # print results
-    print("############################################")
-    print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
-        training_time, testing_time))
-    print("############################################")
+        # generate and shuffle dataset
+        if dataset == "MNIST":
+            generate_dataset_mnist(seed, label_noise)
+        elif dataset == "FashionMNIST":
+            generate_dataset_fashion_mnist(seed, label_noise)
+        processed_data_path = f'../data/{dataset}/processed/'
+
+        # import train, val and test set
+        train_set = parse_data(dataset, processed_data_path, "train", size_val)
+        val_set = parse_data(dataset, processed_data_path, "val", size_val)
+        test_set = parse_data(dataset, processed_data_path, "test", size_val)
+       
+        # create model and optimizer
+        model = Net_NN(dropout_rate)
+        loss_fn = nn.CrossEntropyLoss()
+        if optimizer_name == "Adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        elif optimizer_name == "SGD":
+            optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+        train_dataloader = DataLoader(train_set, batch_size=batch_size)
+        val_dataloader = DataLoader(val_set, batch_size=1)
+        test_dataloader = DataLoader(test_set, batch_size=1)
+
+        # display image and label
+        # train_features, train_labels = next(iter(train_dataloader))
+        # print(f"Feature batch shape: {train_features.size()}")
+        # print(f"Labels batch shape: {train_labels.size()}")
+        # img = train_features[0].squeeze()
+        # label = train_labels[0]
+        # plt.imshow(img, cmap="gray")
+        # plt.show()
+        # print(f"Label: {label}")
+
+        # training (with early stopping)
+        total_training_time = 0
+        best_accuracy = 0
+        counter = 0
+        for epoch in range(nb_epochs):
+            start_time = time.time()
+            train(train_dataloader, model, loss_fn, optimizer)
+            total_training_time += time.time() - start_time
+            val_accuracy = test(val_dataloader, model)
+            print("Val accuracy after epoch", epoch, ":", val_accuracy)
+            if val_accuracy > best_accuracy:
+                best_accuracy = val_accuracy
+                nb_epochs_done = epoch + 1
+                with open("best_model.pickle", "wb") as handle:
+                    pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                counter = 0
+            else:
+                if counter >= 2:
+                    break
+                counter += 1
+        with open("best_model.pickle", "rb") as handle:
+            model = pickle.load(handle)
+
+        os.remove("best_model.pickle")
+
+        # save trained model to a file
+        with open(model_file_location, "wb") as handle:
+            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                
+        # testing
+        start_time = time.time()
+        accuracy = test(test_dataloader, model)
+        testing_time = time.time() - start_time
+
+        # save results to a summary file
+        information = {
+            "algorithm": "NN",
+            "seed": seed,
+            "nb_epochs": nb_epochs_done,
+            "optimizer": optimizer_name,
+            "batch_size": batch_size,
+            "learning_rate": learning_rate,
+            "dropout_rate": dropout_rate,
+            "size_val": size_val,
+            "accuracy": accuracy,
+            "training_time": total_training_time,
+            "testing_time": testing_time,
+            "model_file": model_file_name
+        }
+        with open(f'results/{dataset}/final/summary_final_{label_noise}.json', "a") as outfile:
+            json.dump(information, outfile)
+            outfile.write('\n')
+
+        # print results
+        print("############################################")
+        print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+            total_training_time, testing_time))
+        print("############################################")

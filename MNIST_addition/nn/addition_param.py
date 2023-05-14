@@ -1,3 +1,4 @@
+import os
 import random
 import numpy
 import sys
@@ -39,9 +40,9 @@ def parse_data(dataset, filename, dataset_name, size_val):
         ),
     }
 
-    if dataset == "mnist":
+    if dataset == "MNIST":
         datasets = datasets_mnist
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         datasets = datasets_fashion_mnist
 
     split_index = round(size_val * 30000)
@@ -99,8 +100,8 @@ def test(dataloader, model):
     return correct / total
 
 ################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
+dataset = "MNIST"
+# dataset = "FashionMNIST"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -110,79 +111,81 @@ size_val = 0.1
 #########################################################################################################
 
 for dropout_rate in [0, 0.2]:
-    for optimizer in ["Adam", "SGD"]:
+    for optimizer_name in ["Adam", "SGD"]:
         for learning_rate in [0.001, 0.0001]:
-            for batch_size in [2, 4, 8, 16, 32, 64]:
-                # setting seeds for reproducibility
-                random.seed(seed)
-                numpy.random.seed(seed)
-                torch.manual_seed(seed)
+            for batch_size in [2, 8, 32, 128]:
+                # generate name of file that holds the trained model
+                model_file_name = "SL_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
+                    nb_epochs, size_val, dropout_rate, optimizer_name, learning_rate, batch_size)
+                model_file_location = f'results/{dataset}/param/{model_file_name}'
+                
+                if not os.path.isfile(model_file_location):
+                    # setting seeds for reproducibility
+                    random.seed(seed)
+                    numpy.random.seed(seed)
+                    torch.manual_seed(seed)
 
-                # generate and shuffle dataset
-                if dataset == "mnist":
-                    generate_dataset_mnist(seed, 0)
-                    processed_data_path = "../data/MNIST/processed/"
-                elif dataset == "fashion_mnist":
-                    generate_dataset_fashion_mnist(seed, 0)
-                    processed_data_path = "../data/FashionMNIST/processed/"
+                    # generate and shuffle dataset
+                    if dataset == "MNIST":
+                        generate_dataset_mnist(seed, 0)
+                    elif dataset == "FashionMNIST":
+                        generate_dataset_fashion_mnist(seed, 0)
+                    processed_data_path = f'../data/{dataset}/processed/'
 
-                # import train, val and test set
-                train_set = parse_data(dataset, processed_data_path, "train", size_val)
-                val_set = parse_data(dataset, processed_data_path, "val", size_val)
+                    # import train, val and test set
+                    train_set = parse_data(dataset, processed_data_path, "train", size_val)
+                    val_set = parse_data(dataset, processed_data_path, "val", size_val)
 
-                model = Net_NN(dropout_rate)
-                loss_fn = nn.CrossEntropyLoss()
-                if optimizer == "Adam":
-                    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-                elif optimizer == "SGD":
-                    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+                    # create model and optimizer
+                    model = Net_NN(dropout_rate)
+                    loss_fn = nn.CrossEntropyLoss()
+                    if optimizer_name == "Adam":
+                        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+                    elif optimizer_name == "SGD":
+                        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-                train_dataloader = DataLoader(train_set, batch_size=batch_size)
-                val_dataloader = DataLoader(val_set, batch_size=1)
+                    train_dataloader = DataLoader(train_set, batch_size=batch_size)
+                    val_dataloader = DataLoader(val_set, batch_size=1)
 
-                best_accuracy = 0
+                    # training (with early stopping)
+                    best_accuracy = 0
+                    counter = 0
+                    for epoch in range(nb_epochs):
+                        train(train_dataloader, model, loss_fn, optimizer)
+                        val_accuracy = test(val_dataloader, model)
+                        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+                        if val_accuracy > best_accuracy:
+                            best_accuracy = val_accuracy
+                            nb_epochs_done = epoch + 1
+                            with open("best_model.pickle", "wb") as handle:
+                                pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                            counter = 0
+                        else:
+                            if counter >= 2:
+                                break
+                            counter += 1
+                    with open("best_model.pickle", "rb") as handle:
+                        model = pickle.load(handle)
 
-                # training
-                for epoch in range(nb_epochs):
-                    train(train_dataloader, model, loss_fn, optimizer)
-
-                    # generate name of file that holds the trained model
-                    model_file_name = "SL_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
-                        epoch + 1, batch_size, learning_rate, optimizer, dropout_rate, size_val)
+                    os.remove("best_model.pickle")
 
                     # save trained model to a file
                     with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
                         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
                         
-                    # testing
-                    accuracy = test(val_dataloader, model)
-
                     # save results to a summary file
                     information = {
                         "algorithm": "SL",
                         "seed": seed,
-                        "nb_epochs": epoch + 1,
+                        "nb_epochs": nb_epochs_done,
                         "batch_size": batch_size,
                         "learning_rate": learning_rate,
-                        "optimizer": optimizer,
+                        "optimizer": optimizer_name,
                         "dropout_rate": dropout_rate,
                         "size_val": size_val,
-                        "accuracy": accuracy,
+                        "accuracy": best_accuracy,
                         "model_file": model_file_name
                     }
-                    with open(f'results/{dataset}/param/summary_param.json', "a") as outfile:
+                    with open(f'results/{dataset}/summary_param.json', "a") as outfile:
                         json.dump(information, outfile)
                         outfile.write('\n')
-
-                    # print results
-                    print("############################################")
-                    print("Accuracy: {}".format(accuracy))
-                    print("############################################")
-
-                    if accuracy > best_accuracy:
-                        best_accuracy = accuracy
-                        counter = 0
-                    else:
-                        if counter >= 2:
-                            break
-                        counter += 1
