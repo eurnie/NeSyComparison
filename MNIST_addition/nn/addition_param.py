@@ -115,7 +115,7 @@ for dropout_rate in [0, 0.2]:
         for learning_rate in [0.001, 0.0001]:
             for batch_size in [2, 8, 32, 128]:
                 # generate name of file that holds the trained model
-                model_file_name = "SL_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
+                model_file_name = "NN_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
                     nb_epochs, size_val, dropout_rate, optimizer_name, learning_rate, batch_size)
                 model_file_location = f'results/{dataset}/param/{model_file_name}'
                 

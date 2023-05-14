@@ -1,3 +1,4 @@
+import os
 import random
 import numpy
 import sys
@@ -118,8 +119,13 @@ size_val = 0.1
 for dropout_rate in [0, 0.2]:
     for optimizer_name in ["Adam", "SGD"]:
         for learning_rate in [0.001, 0.0001]:
-            if (dropout_rate != 0) and (optimizer_name != "Adam") and (learning_rate != 0.001):
-                for batch_size in [2, 4, 8, 16, 32, 64]:
+            for batch_size in [2, 4, 8, 16, 32, 64]:
+                # generate name of file that holds the trained model
+                model_file_name = "SL_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
+                    nb_epochs, size_val, dropout_rate, optimizer_name, learning_rate, batch_size)
+                model_file_location = f'results/{dataset}/param/{model_file_name}'
+                
+                if not os.path.isfile(model_file_location):
                     # setting seeds for reproducibility
                     random.seed(seed)
                     numpy.random.seed(seed)
