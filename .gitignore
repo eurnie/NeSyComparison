@@ -39,6 +39,9 @@ Citeseer/data/Cora/*
 Citeseer/data/PubMed/*
 WarcraftShortestPath/data/Warcraft/*
 
+# ignore generated tables
+latex_table.txt
+
 # # files with logic for semantic loss
 # *.vtree
 # *.sdd
