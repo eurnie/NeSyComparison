@@ -40,9 +40,9 @@ def parse_data(dataset, filename, dataset_name, size_val):
         ),
     }
 
-    if dataset == "mnist":
+    if dataset == "MNIST":
         datasets = datasets_mnist
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         datasets = datasets_fashion_mnist
 
     split_index = round(size_val * 30000)
@@ -106,8 +106,8 @@ def test(dataloader, model):
     return correct / total
 
 ################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
+dataset = "MNIST"
+# dataset = "FashionMNIST"
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -119,7 +119,7 @@ size_val = 0.1
 for dropout_rate in [0, 0.2]:
     for optimizer_name in ["Adam", "SGD"]:
         for learning_rate in [0.001, 0.0001]:
-            for batch_size in [2, 4, 8, 16, 32, 64]:
+            for batch_size in [2, 8, 32, 128]:
                 # generate name of file that holds the trained model
                 model_file_name = "SL_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
                     nb_epochs, size_val, dropout_rate, optimizer_name, learning_rate, batch_size)
@@ -132,9 +132,9 @@ for dropout_rate in [0, 0.2]:
                     torch.manual_seed(seed)
 
                     # generate and shuffle dataset
-                    if dataset == "mnist":
+                    if dataset == "MNIST":
                         generate_dataset_mnist(seed, 0)
-                    elif dataset == "fashion_mnist":
+                    elif dataset == "FashionMNIST":
                         generate_dataset_fashion_mnist(seed, 0)
                     processed_data_path = f'../data/{dataset}/processed/'
 
@@ -179,7 +179,7 @@ for dropout_rate in [0, 0.2]:
                     os.remove("best_model.pickle")
 
                     # save trained model to a file
-                    with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
+                    with open(model_file_location, "wb") as handle:
                         pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
                         
                     # save results to a summary file
