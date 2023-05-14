@@ -41,9 +41,9 @@ def parse_data(dataset, filename, dataset_name, size_val):
         ),
     }
 
-    if dataset == "mnist":
+    if dataset == "MNIST":
         datasets = datasets_mnist
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         datasets = datasets_fashion_mnist
 
     split_index = round(size_val * 30000)
@@ -134,9 +134,9 @@ for seed in range(0, 10):
         torch.manual_seed(seed)
 
         # generate and shuffle dataset
-        if dataset == "mnist":
+        if dataset == "MNIST":
             generate_dataset_mnist(seed, label_noise)
-        elif dataset == "fashion_mnist":
+        elif dataset == "FashionMNIST":
             generate_dataset_fashion_mnist(seed, label_noise)
         processed_data_path = f'../data/{dataset}/processed/'
 
