@@ -154,7 +154,8 @@ for batch_size in [2, 4, 8, 16, 32, 64]:
     # create loss functions
     sl = SemanticLoss(f'constraints/{dataset}/constraint.sdd', f'constraints/{dataset}/constraint.vtree')
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    if optimizer == "Adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     best_accuracy = 0
 
