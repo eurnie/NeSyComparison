@@ -71,12 +71,12 @@ class MNIST_Images(object):
         self.dataset = dataset
 
     def __getitem__(self, item):
-        if self.dataset == "mnist":
+        if self.dataset == "MNIST":
             if self.subset == "val":
                 return datasets_mnist["train"][int(item[0]+2700)][0]
             else:
                 return datasets_mnist[self.subset][int(item[0])][0]
-        elif self.dataset == "fashion_mnist":
+        elif self.dataset == "FashionMNIST":
             if self.subset == "val":
                 return datasets_fashion_mnist["train"][int(item[0]+2700)][0]
             else:
@@ -169,13 +169,13 @@ class MNISTOperator(Dataset, TorchDataset):
         self.size = size
         self.arity = arity      
 
-        if dataset == "mnist":
+        if dataset == "MNIST":
             self.dataset = datasets_mnist[self.dataset_name]
             if dataset_name == "train":
                 self.data, self.labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
             elif dataset_name == "test":
                 self.data, self.labels = parse_data("../data/MNIST/processed/test.txt", 0, 5000)
-        elif dataset == "fashion_mnist":
+        elif dataset == "FashionMNIST":
             self.dataset = datasets_fashion_mnist[self.dataset_name]
             if dataset_name == "train":
                 self.data, self.labels = parse_data("../data/FashionMNIST/processed/train.txt", start_index, end_index)
@@ -246,10 +246,10 @@ class MNISTOperator(Dataset, TorchDataset):
     def __len__(self):
         return len(self.data)
 
-MNIST_train = MNIST_Images("mnist", "train")
-MNIST_val = MNIST_Images("mnist", "val")
-MNIST_test = MNIST_Images("mnist", "test")
+MNIST_train = MNIST_Images("MNIST", "train")
+MNIST_val = MNIST_Images("MNIST", "val")
+MNIST_test = MNIST_Images("MNIST", "test")
 
-FashionMNIST_train = MNIST_Images("fashion_mnist", "train")
-FashionMNIST_val = MNIST_Images("fashion_mnist", "val")
-FashionMNIST_test = MNIST_Images("fashion_mnist", "test")
+FashionMNIST_train = MNIST_Images("FashionMNIST", "train")
+FashionMNIST_val = MNIST_Images("FashionMNIST", "val")
+FashionMNIST_test = MNIST_Images("FashionMNIST", "test")
