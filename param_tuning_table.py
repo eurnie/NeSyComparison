@@ -2,13 +2,17 @@ import json
 
 #################
 dataset = "MNIST"
-method = "semantic_loss"
+method = "deepproblog"
+engine = "exact"
 #################
 
 if (dataset == "MNIST"):
-    param_tuning_file = f'MNIST_addition/{method}/results/MNIST/summary_param.json'
+    if (method == "deepproblog") or (method == "neurasp"):
+        param_tuning_file = f'MNIST_addition/{method}/results/{engine}/MNIST/summary_param.json'
+    else:
+        param_tuning_file = f'MNIST_addition/{method}/results/MNIST/summary_param.json'
 
-possible_parameter_list = ['dropout_rate', 'optimizer', 'learning_rate', 'batch_size', 'nb_epochs']
+possible_parameter_list = ['dropout_rate', 'optimizer', 'learning_rate', 'batch_size', 'loss_function']
 real_parameter_list = []
 
 with open(param_tuning_file) as f:
@@ -18,6 +22,7 @@ y = json.loads(lines[0])
 for parameter in possible_parameter_list:
     if parameter in y:
         real_parameter_list.append(parameter)
+real_parameter_list.append('nb_epochs')
 
 data = []
 accuracies = []
@@ -56,16 +61,17 @@ with open('latex_table.txt', 'w+') as f:
     f.write('\midrule\n')
     for i in range(len(data[0])):
         if i in indices:
-            f.write('\\textbf{{{}}}'.format(data[0][i]))
+            f.write('\\textbf{{{}}}'.format(str(data[0][i]).replace('_', '\_')))
             for j in range(1, len(data)):
-                f.write(' & \\textbf{{{}}}'.format(data[j][i]))
+                f.write(' & \\textbf{{{}}}'.format(str(data[j][i]).replace('_', '\_')))
             f.write(' & \\textbf{{{:,.2f}}}'.format(accuracies[i]))
         else:
-            f.write('{}'.format(data[0][i]))
+            f.write('{}'.format(str(data[0][i]).replace('_', '\_')))
             for j in range(1, len(data)):
-                f.write(f' & {data[j][i]}')
+                f.write(' & {}'.format(str(data[j][i]).replace('_', '\_')))
             f.write(' & {:,.2f}'.format(accuracies[i]))
         f.write(' \\\ \n')
+
     f.write('\\bottomrule\n')
     f.write('\end{tabular}\n')
     f.write('\end{adjustbox}\n')
