@@ -34,6 +34,8 @@ dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
+assert (dataset == "MNIST") or (dataset == "FashionMNIST")
+
 for seed in range(0, 10):
     # generate name of file that holds the trained model
     model_file_name = "DeepStochLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, 

@@ -1,4 +1,4 @@
-CiteSeer_dprogram = '''
+CiteSeer_dprogram2 = '''
 nn(label_neural(1,doc_1), [0,1,2,3,4,5]).
 nn(label_neural(1,doc_2), [0,1,2,3,4,5]).
 
@@ -10,10 +10,52 @@ document_label(X1,X2,Y1,Y1,1) :- Y1 = Y2, label_neural(0,X1,Y1), label_neural(0,
 # document_label(X1,X2,Y1,1) :- Y1 = Y2, label_neural(0,X1,Y1), label_neural(0,X2,Y2). 
 
 
-
-
-
-
+# cite(1,158).
+# cite(8,178).
+# cite(28,135).
+# cite(31,136).
+# cite(34,75).
+# cite(35,89).
+# cite(43,136).
+# cite(53,61).
+# cite(55,186).
+# cite(61,53).
+# cite(69,157).
+# cite(75,34).
+# cite(89,35).
+# cite(90,118).
+# cite(95,110).
+# cite(96,119).
+# cite(99,157).
+# cite(110,95).
+# cite(113,12).
+# cite(118,32).
+# cite(118,90).
+# cite(119,96).
+# cite(126,204).
+# cite(127,143).
+# cite(132,96).
+# cite(132,119).
+# cite(135,28).
+# cite(136,31).
+# cite(136,43).
+# cite(143,127).
+# cite(146,14).
+# cite(150,113).
+# cite(155,106).
+# cite(157,69).
+# cite(157,99).
+# cite(158,1).
+# cite(178,8).
+# cite(186,55).
+# cite(187,199).
+# cite(199,187).
+# cite(204,126).
+# cite(205,212).
+# cite(212,205).
+# cite(218,208).
+# cite(222,26).
+# cite(229,27).
 
 CiteSeer_dprogram3 = '''
 doc(doc_1; doc_2).
@@ -24,65 +66,23 @@ nn(label_neural(1,X), [0,1,2,3,4,5]) :- doc(X).
 
 label_combo(I,X,Y) :- label_neural(0,X,Y), ind_to_doc(I,X).
 
-:- label_combo(I1,X1,Y1), label_combo(I2,X2,Y2), cite(I1,I2), Y1 = Y2.
 
-cite(1,158).
-cite(8,178).
-cite(28,135).
-cite(31,136).
-cite(34,75).
-cite(35,89).
-cite(43,136).
-cite(53,61).
-cite(55,186).
-cite(61,53).
-cite(69,157).
-cite(75,34).
-cite(89,35).
-cite(90,118).
-cite(95,110).
-cite(96,119).
-cite(99,157).
-cite(110,95).
-cite(113,12).
-cite(118,32).
-cite(118,90).
-cite(119,96).
-cite(126,204).
-cite(127,143).
-cite(132,96).
-cite(132,119).
-cite(135,28).
-cite(136,31).
-cite(136,43).
-cite(143,127).
-cite(146,14).
-cite(150,113).
-cite(155,106).
-cite(157,69).
-cite(157,99).
-cite(158,1).
-cite(178,8).
-cite(186,55).
-cite(187,199).
-cite(199,187).
-cite(204,126).
-cite(205,212).
-cite(212,205).
-cite(218,208).
-cite(222,26).
-cite(229,27).
+
 '''
 
-CiteSeer_dprogram2 = '''
-doc(doc_1; doc_2).
-ind_to_doc(ind_1, doc_1; ind_2, doc_2).
+CiteSeer_dprogram = '''
+doc(doc_1).
+doc(doc_2).
+ind_to_doc(ind_1, doc_1).
+ind_to_doc(ind_2, doc_2).
 
 nn(label_neural(1,X), [0,1,2,3,4,5]) :- doc(X).
 
+% assign a label for each document
 label_combo(I,X,Y) :- label_neural(0,X,Y), ind_to_doc(I,X).
 
-:- label_combo(I1,X1,Y1), label_combo(I2,X2,Y2), cite(I1,I2), Y1 = Y2.
+% it's a mistake if two cited documents have a different label
+:- cite(I1,I2), label_combo(I1,X1,Y1), label_combo(I2,X2,Y2), Y1!=Y2.
 
 cite(0,628).
 cite(1,158).

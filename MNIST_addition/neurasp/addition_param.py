@@ -43,6 +43,8 @@ nb_epochs = 100
 size_val = 0.1
 #########################################################################################################
 
+assert (dataset == "MNIST") or (dataset == "FashionMNIST")
+
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')

@@ -109,6 +109,8 @@ nb_epochs = 100
 size_val = 0.1
 #########################################################################################################
 
+assert (dataset == "MNIST") or (dataset == "FashionMNIST")
+
 for dropout_rate in [0, 0.2]:
     for optimizer_name in ["Adam", "SGD"]:
         for learning_rate in [0.001, 0.0001]:

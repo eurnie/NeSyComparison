@@ -27,6 +27,8 @@ dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
+assert (dataset == "MNIST") or (dataset == "FashionMNIST")
+
 for dropout_rate in [0, 0.2]:
     for p_forall in [1, 2]:
         for p_exists in [1, 2]:
