@@ -78,12 +78,12 @@ nn(digit(1,X), [0,1,2,3,4,5,6,7,8,9]) :- img(X).
 
 for method in ['exact', 'sampling']:
     for dropout_rate in [0, 0.2]:
-        for opt in [True, False]:
+        for opt in [False, True]:
             for learning_rate in [0.001, 0.0001]:
                 for batch_size in [2, 8, 32, 128]:
                     # generate name of file that holds the trained model
                     model_file_name = "NeurASP_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
-                        nb_epochs, size_val, dropout_rate, opt, learning_rate, batch_size)
+                        nb_epochs, batch_size, learning_rate, dropout_rate, size_val, opt)
                     model_file_location = f'results/{method}/{dataset}/param/{model_file_name}'
 
                     if not os.path.isfile(model_file_location):
@@ -159,7 +159,7 @@ for method in ['exact', 'sampling']:
                             "algorithm": "NeurASP",
                             "seed": seed,
                             "method": method,
-                            "nb_epochs": epoch + 1,
+                            "nb_epochs": nb_epochs_done,
                             "batch_size": batch_size,
                             "learning_rate": learning_rate,
                             "opt": opt,

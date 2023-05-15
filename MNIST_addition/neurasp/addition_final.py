@@ -84,8 +84,8 @@ nn(digit(1,X), [0,1,2,3,4,5,6,7,8,9]) :- img(X).
 
 for seed in range(0, 10):
     # generate name of file that holds the trained model
-    model_file_name = "NeurASP_final_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, label_noise, nb_epochs, opt,
-        batch_size, learning_rate, dropout_rate, size_val)
+    model_file_name = "NeurASP_final_{}_{}_{}_{}_{}_{}_{}".format(seed, 
+        nb_epochs, batch_size, learning_rate, dropout_rate, size_val, opt)
     model_file_location = f'results/{method}/{dataset}/final/label_noise_{label_noise}/{model_file_name}'
     
     if not os.path.isfile(model_file_location):

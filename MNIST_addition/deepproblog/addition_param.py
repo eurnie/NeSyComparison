@@ -35,7 +35,7 @@ for method in ['exact', 'geometric_mean']:
                     # generate name of file that holds the trained model
                     model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
                         nb_epochs, size_val, dropout_rate, loss_function_name, learning_rate, batch_size)
-                    model_file_location = f'results/{method}/{dataset}/final/{model_file_name}'
+                    model_file_location = f'results/{method}/{dataset}/param/{model_file_name}'
 
                     if not os.path.isfile(model_file_location):
                         # setting seeds for reproducibility
@@ -107,7 +107,7 @@ for method in ['exact', 'geometric_mean']:
                             "algorithm": "DeepProbLog",
                             "seed": seed,
                             "method": method,
-                            "nb_epochs": epoch + 1,
+                            "nb_epochs": nb_epochs_done,
                             "batch_size": batch_size,
                             "learning_rate": learning_rate,
                             "loss_function": loss_function_name,

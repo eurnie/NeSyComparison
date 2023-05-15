@@ -38,7 +38,7 @@ for seed in range(0, 10):
     # generate name of file that holds the trained model
     model_file_name = "DeepStochLog_final_{}_{}_{}_{}_{}_{}_{}".format(seed, 
         nb_epochs, size_val, dropout_rate, epsilon, learning_rate, batch_size)
-    model_file_location = f'results/{dataset}/final/{model_file_name}'
+    model_file_location = f'results/{dataset}/final/label_noise_{label_noise}/{model_file_name}'
 
     if not os.path.isfile(model_file_location):
         # setting seeds for reproducibility
