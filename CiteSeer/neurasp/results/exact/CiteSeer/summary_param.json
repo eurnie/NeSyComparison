@@ -120,3 +120,4 @@
 {"algorithm": "NeurASP", "seed": 0, "nb_epochs": 2, "batch_size": 128, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.14166666666666666, "model_file": "NeurASP_param_0_2_128_0.001_0"}
 {"algorithm": "NeurASP", "seed": 0, "nb_epochs": 1, "batch_size": 128, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.14166666666666666, "model_file": "NeurASP_param_0_1_128_0.001_0"}
 {"algorithm": "NeurASP", "seed": 0, "nb_epochs": 2, "batch_size": 128, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.14166666666666666, "model_file": "NeurASP_param_0_2_128_0.001_0"}
+{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 7, "batch_size": 128, "learning_rate": 0.001, "opt": false, "dropout_rate": 0, "accuracy": 0.738, "model_file": "NeurASP_param_0_100_128_0.001_0_False"}

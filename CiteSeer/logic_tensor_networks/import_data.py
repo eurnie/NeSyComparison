@@ -3,15 +3,11 @@ import tensorflow as tf
 import torch_geometric
 from pathlib import Path
 
-# import the given dataset, shuffle it with the given seed and move the given ratio from the train
-# set to the test set 
-def import_datasets(dataset, move_to_test_set_ratio, batch_size, seed):
+# import the dataset, shuffle it with the seed and move examples from the train set to the unsupervised setting
+def import_datasets(dataset, to_unsupervised, batch_size, seed):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
     data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
     citation_graph = data[0]
-
-    # variable that holds the examples from the train set that will be added to the test set
-    test_set_to_add = []
 
     # create the train, val and test set
     for dataset_name in ["train", "val", "test"]:
@@ -32,19 +28,15 @@ def import_datasets(dataset, move_to_test_set_ratio, batch_size, seed):
 
         # move train examples to the test set according to the given ratio
         if dataset_name == "train":
-            if move_to_test_set_ratio > 0:
-                split_index = round(move_to_test_set_ratio * len(dataset))
+            if to_unsupervised > 0:
+                split_index = round(to_unsupervised * len(dataset))
                 train_set = dataset[split_index:]
-                for elem in dataset[:split_index]:
-                    test_set_to_add.append(elem)
             else:
                 train_set = dataset
         elif dataset_name == "val":
             val_set = dataset
         elif dataset_name == "test":
             test_set = dataset
-            for elem in test_set_to_add:
-                test_set.append(elem)
 
     print("The training set contains", len(train_set), "instances.")
     print("The validation set contains", len(val_set), "instances.")

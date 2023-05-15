@@ -1,4 +1,4 @@
-CiteSeer_dprogram2 = '''
+CiteSeer_dprogram3 = '''
 nn(label_neural(1,doc_1), [0,1,2,3,4,5]).
 nn(label_neural(1,doc_2), [0,1,2,3,4,5]).
 
@@ -57,13 +57,15 @@ document_label(X1,X2,Y1,Y1,1) :- Y1 = Y2, label_neural(0,X1,Y1), label_neural(0,
 # cite(222,26).
 # cite(229,27).
 
-CiteSeer_dprogram3 = '''
-doc(doc_1; doc_2).
+CiteSeer_dprogram2 = '''
+doc(doc_1).
+doc(doc_2).
 ind_to_doc(ind_1, doc_1).
 ind_to_doc(ind_2, doc_2).
 
 nn(label_neural(1,X), [0,1,2,3,4,5]) :- doc(X).
 
+% assign a label for each document
 label_combo(I,X,Y) :- label_neural(0,X,Y), ind_to_doc(I,X).
 
 
