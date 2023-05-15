@@ -1,0 +1,7 @@
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "p_forall": 1, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.4346666634082794, "model_file": "LTN_param_0_1_2_0.001_1_1_0_0.1"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 5, "batch_size": 8, "learning_rate": 0.001, "p_forall": 1, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.5076666474342346, "model_file": "LTN_param_0_5_8_0.001_1_1_0_0.1"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 12, "batch_size": 32, "learning_rate": 0.001, "p_forall": 1, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9670000076293945, "model_file": "LTN_param_0_12_32_0.001_1_1_0_0.1"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "p_forall": 2, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.02433333359658718, "model_file": "LTN_param_0_1_2_0.001_2_1_0_0.1"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 10, "batch_size": 8, "learning_rate": 0.001, "p_forall": 2, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9613333344459534, "model_file": "LTN_param_0_10_8_0.001_2_1_0_0.1"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs": 6, "batch_size": 32, "learning_rate": 0.001, "p_forall": 2, "p_exists": 1, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9636666774749756, "model_file": "LTN_param_0_6_32_0.001_2_1_0_0.1"}
+

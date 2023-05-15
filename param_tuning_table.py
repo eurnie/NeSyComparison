@@ -2,7 +2,7 @@ import json
 
 #################
 dataset = "MNIST"
-method = "nn"
+method = "semantic_loss"
 #################
 
 if (dataset == "MNIST"):

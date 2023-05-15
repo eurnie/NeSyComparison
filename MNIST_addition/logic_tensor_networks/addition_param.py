@@ -33,7 +33,7 @@ for dropout_rate in [0, 0.2]:
             for batch_size in [2, 8, 32, 128]:
                 # generate name of file that holds the trained model
                 model_file_name = "LTN_param_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, 
-                    nb_epochs, size_val, dropout_rate, learning_rate, p_forall, p_exists, batch_size)
+                    nb_epochs, batch_size, learning_rate, p_forall, p_exists, dropout_rate, size_val)
                 model_file_location = f'results/{dataset}/param/{model_file_name}'
 
                 if not os.path.isfile(model_file_location):
