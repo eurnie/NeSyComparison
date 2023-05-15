@@ -33,10 +33,10 @@ size_val = 0.1
 for dropout_rate in [0, 0.2]:
     for epsilon in [0.00000001, 0.0000001]:
         for learning_rate in [0.001, 0.0001]:
-            for batch_size in [2, 4, 8, 16, 32, 64]:
+            for batch_size in [2, 8, 32, 128]:
                 # generate name of file that holds the trained model
                 model_file_name = "DeepStochLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
-                    nb_epochs, size_val, dropout_rate, epsilon, learning_rate, batch_size)
+                    nb_epochs, batch_size, learning_rate, epsilon, dropout_rate, size_val)
                 model_file_location = f'results/{dataset}/param/{model_file_name}'
 
                 if not os.path.isfile(model_file_location):

@@ -1,0 +1,4 @@
+{"algorithm": "DeepStochLog", "seed": 0, "nb_epochs": 4, "batch_size": 2, "learning_rate": 0.001, "epsilon": 1e-08, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9753333333333334, "model_file": "DeepStochLog_param_0_4_2_0.001_1e-08_0_0.1"}
+{"algorithm": "DeepStochLog", "seed": 0, "nb_epochs": 6, "batch_size": 8, "learning_rate": 0.001, "epsilon": 1e-08, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.979, "model_file": "DeepStochLog_param_0_6_8_0.001_1e-08_0_0.1"}
+{"algorithm": "DeepStochLog", "seed": 0, "nb_epochs": 7, "batch_size": 32, "learning_rate": 0.001, "epsilon": 1e-08, "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.9733333333333334, "model_file": "DeepStochLog_param_0_7_32_0.001_1e-08_0_0.1"}
+
