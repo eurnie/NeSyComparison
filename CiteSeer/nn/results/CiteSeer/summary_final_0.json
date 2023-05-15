@@ -1,1 +1,0 @@
-{"algorithm": "NN", "seed": 0, "nb_epochs": 1, "batch_size": 32, "learning_rate": 0.001, "dropout_rate": 0, "accuracy": 0.735, "training_time": 9.005544424057007, "testing_time": 1.1018929481506348, "model_file": "NN_final_0_0_100_Adam_32_0.001_0"}
