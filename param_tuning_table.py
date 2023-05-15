@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "MNIST"
-method = "deepproblog"
+dataset = "CiteSeer"
+method = "nn"
 engine = "exact"
 #################
 
@@ -11,6 +11,11 @@ if (dataset == "MNIST"):
         param_tuning_file = f'MNIST_addition/{method}/results/{engine}/MNIST/summary_param.json'
     else:
         param_tuning_file = f'MNIST_addition/{method}/results/MNIST/summary_param.json'
+elif (dataset == "CiteSeer"):
+    if (method == "deepproblog") or (method == "neurasp"):
+        param_tuning_file = f'CiteSeer/{method}/results/{engine}/CiteSeer/summary_param.json'
+    else:
+        param_tuning_file = f'CiteSeer/{method}/results/CiteSeer/summary_param.json'
 
 possible_parameter_list = ['dropout_rate', 'optimizer', 'learning_rate', 'batch_size', 'loss_function']
 real_parameter_list = []
