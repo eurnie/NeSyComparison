@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "CiteSeer"
-method = "nn"
+dataset = "MNIST"
+method = "neurasp"
 engine = "exact"
 #################
 
@@ -17,7 +17,7 @@ elif (dataset == "CiteSeer"):
     else:
         param_tuning_file = f'CiteSeer/{method}/results/CiteSeer/summary_param.json'
 
-possible_parameter_list = ['dropout_rate', 'optimizer', 'learning_rate', 'batch_size', 'loss_function']
+possible_parameter_list = ['dropout_rate', 'optimizer', 'learning_rate', 'batch_size', 'loss_function', 'opt']
 real_parameter_list = []
 
 with open(param_tuning_file) as f:
