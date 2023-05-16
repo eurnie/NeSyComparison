@@ -1,3 +1,4 @@
+test
 source /opt/anaconda3/etc/profile.d/conda.sh;
 cd MNIST_addition;
 cd logic_tensor_networks;
