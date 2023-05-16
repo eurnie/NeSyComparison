@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "MNIST"
-method = "deepproblog"
+dataset = "CiteSeer"
+method = "nn"
 engine = "exact"
 #################
 
