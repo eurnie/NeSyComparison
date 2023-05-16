@@ -28,7 +28,7 @@ for method in ['exact', 'sampling']:
     for dropout_rate in [0, 0.2]:
         for opt in [False, True]:
             for learning_rate in [0.001, 0.0001]:
-                for batch_size in [128]:
+                for batch_size in [2]:
                     # generate name of file that holds the trained model
                     model_file_name = "NeurASP_param_{}_{}_{}_{}_{}_{}".format(seed, 
                         nb_epochs, batch_size, learning_rate, dropout_rate, opt)
@@ -56,24 +56,14 @@ for method in ['exact', 'sampling']:
 
                         trainDataset = []
                         valDataset = []
-                        ind_to_labels_train = []
-                        ind_to_labels_val = []
                         ind_to_features = torch.tensor([])
 
                         # import train and val set
                         for i in range(round(len(citation_graph.x))):
-                        # for i in range(240):
                             if citation_graph.train_mask[i]:
                                 trainDataset.append((i, citation_graph.x[i].unsqueeze(0), citation_graph.y[i]))
-                                ind_to_labels_train.append(citation_graph.y[i])
-                                ind_to_labels_val.append('no_label')
                             elif citation_graph.val_mask[i]:
                                 valDataset.append((i, citation_graph.x[i].unsqueeze(0), citation_graph.y[i]))
-                                ind_to_labels_train.append('no_label')
-                                ind_to_labels_val.append(citation_graph.y[i])
-                            elif citation_graph.test_mask[i]:
-                                ind_to_labels_train.append('no_label')
-                                ind_to_labels_val.append('no_label')
 
                             ind_to_features = torch.cat((ind_to_features, citation_graph.x[i].unsqueeze(0)), dim=0)
                             
@@ -93,23 +83,21 @@ for method in ['exact', 'sampling']:
                         for index_1, doc_1, label_1 in trainDataset:
                             is_cited = False
                             for i in range(0, len(cites_a)):
-                                    # if cites_b[i] < 240:#
-                                    
-                                    if (cites_a[i] == index_1):
+                                if (cites_a[i] == index_1):
                                         index_2 = cites_b[i]
                                         dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[index_2].unsqueeze(0), 'ind_1': index_1, 'ind_2': index_2})
-                                        obsList_train.append(f':- not label_combo(ind_1,doc_1,{label_1}).')
+                                        obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
                                         is_cited = True
 
                             if not is_cited:
                                 dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': index_2})
-                                obsList_train.append(f':- not label_combo(ind_1,doc_1,{label_1}).')
+                                obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
 
                         dataList_val = []
                         obsList_val = []
                         for index_1, doc_1, label_1 in valDataset:
                             dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': index_2})
-                            obsList_val.append(f':- not label_combo(ind_1,doc_1,{label_1}).')
+                            obsList_val.append(f':- not label(ind_1,doc_1,{label_1}).')
                         assert len(valDataset) == len(dataList_val)
 
                         # define nnMapping and optimizers, initialze NeurASP object

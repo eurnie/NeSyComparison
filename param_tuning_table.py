@@ -2,7 +2,7 @@ import json
 
 #################
 dataset = "MNIST"
-method = "neurasp"
+method = "deepproblog"
 engine = "exact"
 #################
 

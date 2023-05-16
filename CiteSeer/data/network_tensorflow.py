@@ -23,7 +23,7 @@ class Net_CiteSeer(tf.keras.Model):
     
 class Net_Cora(tf.keras.Model):
     def __init__(self, dropout_rate):
-        super(Net_CiteSeer, self).__init__()
+        super(Net_Cora, self).__init__()
         
         # dropout layer
         self.dropout_layer = layers.Dropout(rate=dropout_rate)
@@ -43,7 +43,7 @@ class Net_Cora(tf.keras.Model):
     
 class Net_PubMed(tf.keras.Model):
     def __init__(self, dropout_rate):
-        super(Net_CiteSeer, self).__init__()
+        super(Net_PubMed, self).__init__()
         
         # dropout layer
         self.dropout_layer = layers.Dropout(rate=dropout_rate)

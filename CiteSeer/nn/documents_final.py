@@ -58,8 +58,6 @@ def import_datasets(dataset, to_unsupervised, seed):
     print("The validation set contains", len(val_set), "instances.")
     print("The testing set contains", len(test_set), "instances.")
 
-    return train_set, val_set, test_set
-
     # print("--- Summary of dataset ---")
     # print("Dataset name:", dataset)
     # print("Length of the dataset:", len(dataset))
@@ -78,10 +76,12 @@ def import_datasets(dataset, to_unsupervised, seed):
     # write links to file
     # list_1 = citation_graph.edge_index[0]
     # list_2 = citation_graph.edge_index[1]
-    # with open("test.txt", "a") as f:
+    # with open("cites.txt", "a") as f:
     #     for i in range(0, len(list_1)):
     #             f.write("cite({},{}).".format(list_1[i], list_2[i]))
     #             f.write("\n")
+
+    return train_set, val_set, test_set
 
 # train the model
 def train(dataloader, model, loss_fn, optimizer):
@@ -108,11 +108,6 @@ def test(dataloader, model):
             total += len(x)
     return correct / total
 
-################################################# DATASET ###############################################
-dataset = "CiteSeer"
-to_unsupervised = 0
-#########################################################################################################
-
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
 batch_size = 32
@@ -121,91 +116,92 @@ learning_rate = 0.001
 dropout_rate = 0
 #########################################################################################################
 
-assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
-
-for seed in range(0, 10):
-    # generate name of file that holds the trained model
-    model_file_name = "NN_final_{}_{}_{}_{}_{}_{}_{}".format(seed, to_unsupervised, nb_epochs, optimizer_name,
-        batch_size, learning_rate, dropout_rate)
-    model_file_location = f'results/{dataset}/final/to_unsupervised_{to_unsupervised}/{model_file_name}'
-    
-    if not os.path.isfile(model_file_location):
-        # setting seeds for reproducibility
-        random.seed(seed)
-        numpy.random.seed(seed)
-        torch.manual_seed(seed)
-
-        # import train, val set and test set
-        train_set, val_set, test_set = import_datasets(dataset, to_unsupervised, seed)
-
-        # create model
-        if dataset == "CiteSeer":
-            model = Net_CiteSeer(dropout_rate)
-        elif dataset == "Cora":
-            model = Net_Cora(dropout_rate)
-        elif dataset == "PubMed":
-            model = Net_PubMed(dropout_rate)
-        loss_fn = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-        # create dataloaders
-        train_dataloader = DataLoader(train_set, batch_size=batch_size)
-        val_dataloader = DataLoader(val_set, batch_size=1)
-        test_dataloader = DataLoader(test_set, batch_size=1)
-
-        # training (with early stopping)
-        total_training_time = 0
-        best_accuracy = 0
-        counter = 0
-        for epoch in range(nb_epochs):
-            start_time = time.time()
-            train(train_dataloader, model, loss_fn, optimizer)
-            total_training_time += time.time() - start_time
-            val_accuracy = test(val_dataloader, model)
-            print("Val accuracy after epoch", epoch, ":", val_accuracy)
-            if val_accuracy > best_accuracy:
-                best_accuracy = val_accuracy
-                nb_epochs_done = epoch + 1
-                with open("best_model.pickle", "wb") as handle:
-                    pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                counter = 0
-            else:
-                if counter >= 2:
-                    break
-                counter += 1
-        with open("best_model.pickle", "rb") as handle:
-            model = pickle.load(handle)
-
-        os.remove("best_model.pickle")
-
-        # save trained model to a file
-        with open(model_file_location, "wb") as handle:
-            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                
-        # testing
-        start_time = time.time()
-        accuracy = test(test_dataloader, model)
-        testing_time = time.time() - start_time
+for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
+# for dataset, label_noise in [("CiteSeer", 0)]:
+    assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
+    for seed in range(0, 10):
+        # generate name of file that holds the trained model
+        model_file_name = "NN_final_{}_{}_{}_{}_{}_{}_{}".format(seed, to_unsupervised, nb_epochs, optimizer_name,
+            batch_size, learning_rate, dropout_rate)
+        model_file_location = f'results/{dataset}/final/to_unsupervised_{to_unsupervised}/{model_file_name}'
         
-        # save results to a summary file
-        information = {
-            "algorithm": "NN",
-            "seed": seed,
-            "nb_epochs": nb_epochs_done,
-            "batch_size": batch_size,
-            "learning_rate": learning_rate,
-            "dropout_rate": dropout_rate,
-            "accuracy": accuracy,
-            "training_time": total_training_time,
-            "testing_time": testing_time,
-            "model_file": model_file_name
-        }
-        with open(f'results/{dataset}/summary_final_{to_unsupervised}.json', "a") as outfile:
-            json.dump(information, outfile)
-            outfile.write('\n')
+        if not os.path.isfile(model_file_location):
+            # setting seeds for reproducibility
+            random.seed(seed)
+            numpy.random.seed(seed)
+            torch.manual_seed(seed)
 
-        # print results
-        print("############################################")
-        print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
-            total_training_time, testing_time))
-        print("############################################")
+            # import train, val set and test set
+            train_set, val_set, test_set = import_datasets(dataset, to_unsupervised, seed)
+
+            # create model
+            if dataset == "CiteSeer":
+                model = Net_CiteSeer(dropout_rate)
+            elif dataset == "Cora":
+                model = Net_Cora(dropout_rate)
+            elif dataset == "PubMed":
+                model = Net_PubMed(dropout_rate)
+            loss_fn = nn.CrossEntropyLoss()
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+            # create dataloaders
+            train_dataloader = DataLoader(train_set, batch_size=batch_size)
+            val_dataloader = DataLoader(val_set, batch_size=1)
+            test_dataloader = DataLoader(test_set, batch_size=1)
+
+            # training (with early stopping)
+            total_training_time = 0
+            best_accuracy = 0
+            counter = 0
+            for epoch in range(nb_epochs):
+                start_time = time.time()
+                train(train_dataloader, model, loss_fn, optimizer)
+                total_training_time += time.time() - start_time
+                val_accuracy = test(val_dataloader, model)
+                print("Val accuracy after epoch", epoch, ":", val_accuracy)
+                if val_accuracy > best_accuracy:
+                    best_accuracy = val_accuracy
+                    nb_epochs_done = epoch + 1
+                    with open("best_model.pickle", "wb") as handle:
+                        pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                    counter = 0
+                else:
+                    if counter >= 2:
+                        break
+                    counter += 1
+            with open("best_model.pickle", "rb") as handle:
+                model = pickle.load(handle)
+
+            os.remove("best_model.pickle")
+
+            # save trained model to a file
+            with open(model_file_location, "wb") as handle:
+                pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                    
+            # testing
+            start_time = time.time()
+            accuracy = test(test_dataloader, model)
+            testing_time = time.time() - start_time
+            
+            # save results to a summary file
+            information = {
+                "algorithm": "NN",
+                "seed": seed,
+                "nb_epochs": nb_epochs_done,
+                "batch_size": batch_size,
+                "learning_rate": learning_rate,
+                "dropout_rate": dropout_rate,
+                "accuracy": accuracy,
+                "training_time": total_training_time,
+                "testing_time": testing_time,
+                "model_file": model_file_name
+            }
+            with open(f'results/{dataset}/summary_final_{to_unsupervised}.json', "a") as outfile:
+                json.dump(information, outfile)
+                outfile.write('\n')
+
+            # print results
+            print("############################################")
+            print("Seed: {} \nAccuracy: {} \nTraining time: {} \nTesting time: {}".format(seed, accuracy, 
+                total_training_time, testing_time))
+            print("############################################")
