@@ -37,10 +37,10 @@ class MNIST_Addition(Dataset):
 ############################################### PARAMETERS ##############################################
 method = 'exact'
 nb_epochs = 100
-batch_size = 2
-learning_rate = 0.001
+batch_size = 8
+learning_rate = 0.0001
 opt = False
-dropout_rate = 0
+dropout_rate = 0.2
 size_val = 0.1
 #########################################################################################################
 

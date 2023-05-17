@@ -22,9 +22,9 @@ from data.network_torch import Net
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 64
-learning_rate = 0.001
-epsilon = 0.00000001
+batch_size = 2
+learning_rate = 0.0001
+epsilon = 0.0000001
 dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
