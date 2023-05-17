@@ -43,7 +43,7 @@ def train_and_test(dataset, model_file_name, train_set, val_set, test_set, metho
 
     # training (with early stopping)
     total_training_time = 0
-    best_accuracy = 0
+    best_accuracy = -1
     counter = 0
     for epoch in range(nb_epochs):
         start_time = time.time()

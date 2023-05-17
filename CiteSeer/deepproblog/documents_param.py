@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import random
@@ -24,80 +25,92 @@ move_to_test_set_ratio = 0
 seed = 0
 method = "exact"
 nb_epochs = 100
-batch_size = 32
-learning_rate = 0.001
-dropout_rate = 0
 #########################################################################################################
 
-for batch_size in [64, 32, 16, 8, 4, 2]:
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 
-    # import train and val set
-    train_set, val_set, _ = import_datasets(move_to_test_set_ratio, seed)
+for dropout_rate in [0, 0.2]:
+    for rely_on_nn in [0.4, 0.5]:
+        for learning_rate in [0.001, 0.0001]:
+            for batch_size in [2, 8, 32, 128]:
+                # generate name of file that holds the trained model
+                model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, 
+                    nb_epochs, batch_size, learning_rate, dropout_rate, rely_on_nn)
+                model_file_location = f'results/{method}/{dataset}/param/{model_file_name}'
 
-    if dataset == "CiteSeer":
-        network = Net_CiteSeer(dropout_rate)
-    elif dataset == "Cora":
-        network = Net_CiteSeer(dropout_rate)
-    elif dataset == "PubMed":
-        network = Net_CiteSeer(dropout_rate)
+                if not os.path.isfile(model_file_location):
+                    # setting seeds for reproducibility
+                    random.seed(seed)
+                    numpy.random.seed(seed)
+                    torch.manual_seed(seed)
 
-    net = Network(network, "document_net", batching=True)
-    net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
+                    # import train and val set
+                    train_set, val_set, _ = import_datasets(move_to_test_set_ratio, seed)
 
-    model = Model(f'documents_{dataset}.pl', [net])
-    if method == "exact":
-        model.set_engine(ExactEngine(model), cache=False)
-    elif method == "geometric_mean":
-        model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))   
+                    if dataset == "CiteSeer":
+                        network = Net_CiteSeer(dropout_rate)
+                    elif dataset == "Cora":
+                        network = Net_CiteSeer(dropout_rate)
+                    elif dataset == "PubMed":
+                        network = Net_CiteSeer(dropout_rate)
 
-    model.add_tensor_source("citeseer", citeseer_examples)
-    loader = DataLoader(train_set, batch_size, False)
+                    net = Network(network, "document_net", batching=True)
+                    net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
-    best_accuracy = 0
+                    model = Model(f'documents_{dataset}.pl', [net])
+                    if method == "exact":
+                        model.set_engine(ExactEngine(model), cache=False)
+                    elif method == "geometric_mean":
+                        model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))   
 
-    # training
-    for epoch in range(nb_epochs):
-        train_model(model, loader, 1, log_iter=100, profile=0)
+                    model.add_tensor_source("citeseer", citeseer_examples)
+                    loader = DataLoader(train_set, batch_size, False)
 
-        # generate name of file that holds the trained model
-        model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, method, epoch + 1, batch_size, 
-            learning_rate, dropout_rate)
+                    if not os.path.exists("best_model"):
+                        os.mkdir("best_model")
 
-        # save trained model to a file
-        model.save_state(f'results/{method}/{dataset}/param/{model_file_name}')
+                    # training (with early stopping)
+                    total_training_time = 0
+                    best_accuracy = -1
+                    counter = 0
+                    for epoch in range(nb_epochs):
+                        train = train_model(model, loader, 1, log_iter=100, profile=0)
+                        val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
+                        print("Val accuracy after epoch", epoch, ":", val_accuracy)
+                        if val_accuracy > best_accuracy:
+                            best_accuracy = val_accuracy
+                            train.model.save_state("best_model/state", complete=True)
+                            counter = 0
+                        else:
+                            if counter >= 2:
+                                break
+                            counter += 1
 
-        # testing
-        accuracy = get_confusion_matrix(model, val_set, verbose=0).accuracy()
+                    # early stopping: load best model and delete file
+                    model.load_state("best_model/state")
+                    os.remove("best_model/state")
+                    os.rmdir("best_model")
 
-        # save results to a summary file
-        information = {
-            "algorithm": "DeepProbLog",
-            "seed": seed,
-            "method": method,
-            "nb_epochs": epoch + 1,
-            "batch_size": batch_size,
-            "learning_rate": learning_rate,
-            "dropout_rate": dropout_rate,
-            "accuracy": accuracy,
-            "model_file": model_file_name
-        }
-        with open(f'results/{method}/{dataset}/summary_param.json', "a") as outfile:
-            json.dump(information, outfile)
-            outfile.write('\n')
+                    # save trained model to a file
+                    model.save_state(f'results/{method}/final/{model_file_name}')
 
-        # print results
-        print("############################################")
-        print("Accuracy: {}".format(accuracy))
-        print("############################################")
+                    # save results to a summary file
+                    information = {
+                        "algorithm": "DeepProbLog",
+                        "seed": seed,
+                        "method": method,
+                        "nb_epochs": epoch + 1,
+                        "batch_size": batch_size,
+                        "learning_rate": learning_rate,
+                        "dropout_rate": dropout_rate,
+                        "accuracy": best_accuracy,
+                        "model_file": model_file_name
+                    }
+                    with open(f'results/{method}/{dataset}/summary_param.json', "a") as outfile:
+                        json.dump(information, outfile)
+                        outfile.write('\n')
 
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            counter = 0
-        else:
-            if counter >= 2:
-                break
-            counter += 1
+                    # print results
+                    print("############################################")
+                    print("Accuracy: {}".format(best_accuracy))
+                    print("############################################")

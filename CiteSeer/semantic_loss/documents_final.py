@@ -154,7 +154,7 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
 
             # training (with early stopping)
             total_training_time = 0
-            best_accuracy = 0
+            best_accuracy = -1
             counter = 0
             nb_epochs_done = 0
             for epoch in range(nb_epochs):

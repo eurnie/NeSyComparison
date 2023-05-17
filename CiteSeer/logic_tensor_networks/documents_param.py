@@ -29,7 +29,7 @@ assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 for dropout_rate in [0, 0.2]:
     for p_forall in [1, 2]:
         for p_exists in [1, 2]:
-            for batch_size in [2, 8, 32, 128]:
+            for batch_size in [8, 32, 128, 512]:
                 p_forall_cites = p_forall
                 p_exists_cites = p_exists
 
@@ -137,7 +137,7 @@ for dropout_rate in [0, 0.2]:
                         metrics_dict['test_accuracy'](tf.reduce_mean(tf.cast(match,tf.float32)))
 
                     # training (with early stopping)
-                    best_accuracy = 0
+                    best_accuracy = -1
                     counter = 0
                     nb_epochs_done = 0
                     for epoch in range(nb_epochs):

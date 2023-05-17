@@ -32,7 +32,7 @@ assert (dataset == "MNIST") or (dataset == "FashionMNIST")
 for dropout_rate in [0, 0.2]:
     for p_forall in [1, 2]:
         for p_exists in [1, 2]:
-            for batch_size in [2, 8, 32, 128]:
+            for batch_size in [8, 32, 128, 512]:
                 # generate name of file that holds the trained model
                 model_file_name = "LTN_param_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, 
                     nb_epochs, batch_size, learning_rate, p_forall, p_exists, dropout_rate, size_val)
@@ -147,7 +147,7 @@ for dropout_rate in [0, 0.2]:
 
                     # save trained model to a file
                     with open(model_file_location, "wb") as handle:
-                        pickle.dump(logits_model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                        pickle.dump(logits_model.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)
                             
                     # save results to a summary file
                     information = {
