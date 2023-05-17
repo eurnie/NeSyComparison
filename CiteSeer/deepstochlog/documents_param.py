@@ -1,3 +1,4 @@
+import os
 import random
 import numpy
 import json
@@ -20,105 +21,115 @@ from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
 ################################################# DATASET ###############################################
 dataset = "CiteSeer"
-move_to_test_set_ratio = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
 nb_epochs = 100
-batch_size = 64
 learning_rate = 0.001
-epsilon = 0.00000001
-dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
 assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
+logger = print_logger
 
-for batch_size in [2, 4, 8, 16, 32, 64]:
-    logger = print_logger
+for dropout_rate in [0, 0.2]:
+    for rely_on_nn in [0.4, 0.5]:
+        for epsilon in [0.00000001, 0.0000001]:
+            for batch_size in [2, 8, 32, 128]:
+                # generate name of file that holds the trained model
+                model_file_name = "DeepStochLog_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
+                    nb_epochs, batch_size, learning_rate, dropout_rate, epsilon, rely_on_nn)
+                model_file_location = f'results/{dataset}/param/{model_file_name}'
 
-    # setting seeds for reproducibility
-    random.seed(seed)
-    numpy.random.seed(seed)
-    torch.manual_seed(seed)
+                if not os.path.isfile(model_file_location):
+                    # setting seeds for reproducibility
+                    random.seed(seed)
+                    numpy.random.seed(seed)
+                    torch.manual_seed(seed)
 
-    train_dataset, val_dataset, test_dataset, queries_for_model, citations = get_datasets(dataset, move_to_test_set_ratio, seed)
+                    train_dataset, val_dataset, test_dataset, queries_for_model, citations = get_datasets(dataset, 0, seed)
 
-    if dataset == "CiteSeer":
-        classifier_network = Network("classifier", Net_CiteSeer(dropout_rate), index_list=[Term(str(op)) for op in range(6)])
-    elif dataset == "Cora":
-        classifier_network = Network("classifier", Net_Cora(dropout_rate), index_list=[Term(str(op)) for op in range(7)])
-    elif dataset == "PubMed":
-        classifier_network = Network("classifier", Net_PubMed(dropout_rate), index_list=[Term(str(op)) for op in range(3)])
+                    if dataset == "CiteSeer":
+                        classifier_network = Network("classifier", Net_CiteSeer(dropout_rate), index_list=[Term(str(op)) for op in range(6)])
+                    elif dataset == "Cora":
+                        classifier_network = Network("classifier", Net_Cora(dropout_rate), index_list=[Term(str(op)) for op in range(7)])
+                    elif dataset == "PubMed":
+                        classifier_network = Network("classifier", Net_PubMed(dropout_rate), index_list=[Term(str(op)) for op in range(3)])
 
-    networks = NetworkStore(classifier_network)
+                    networks = NetworkStore(classifier_network)
 
-    proving_start = time.time()
-    root_path = Path(__file__).parent
-    model = DeepStochLogModel.from_file(
-        file_location=str((root_path / "documents.pl").absolute()),
-        query=queries_for_model,
-        networks=networks,
-        prolog_facts=citations,
-        verbose=False
-    )
-    proving_time = time.time() - proving_start
+                    proving_start = time.time()
+                    root_path = Path(__file__).parent
+                    model = DeepStochLogModel.from_file(
+                        file_location=str((root_path / f'{dataset}_documents_{rely_on_nn}.pl').absolute()),
+                        query=queries_for_model,
+                        networks=networks,
+                        prolog_facts=citations,
+                        verbose=False
+                    )
+                    proving_time = time.time() - proving_start
 
-    optimizer = Adam(model.get_all_net_parameters(), lr=learning_rate)
-    optimizer.zero_grad()
-    logger.print("\nProving the program took {:.2f} seconds".format(proving_time))
+                    optimizer = Adam(model.get_all_net_parameters(), lr=learning_rate)
+                    optimizer.zero_grad()
+                    logger.print("\nProving the program took {:.2f} seconds".format(proving_time))
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    dummy_dataloader = DataLoader([], batch_size=1, shuffle=False)
+                    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+                    dummy_dataloader = DataLoader([], batch_size=1, shuffle=False)
 
-    # create test functions
-    calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
+                    # create test functions
+                    calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
 
-    # training
-    trainer = DeepStochLogTrainer(log_freq=100, accuracy_tester=calculate_model_accuracy)
-    best_accuracy = 0
+                    # training (with early stopping)
+                    trainer = DeepStochLogTrainer(log_freq=10, accuracy_tester=calculate_model_accuracy)
+                    total_training_time = 0
+                    best_accuracy = 0
+                    counter = 0
+                    nb_epochs_done = 0
+                    for epoch in range(nb_epochs):
+                        total_training_time += trainer.train(model, optimizer, train_dataloader, 1, epsilon)
+                        print(f'Training for epoch {epoch + 1} done.')
+                        val_accuracy = calculate_accuracy(model, val_dataset)[0]
+                        print("Val accuracy after epoch", epoch + 1, ":", val_accuracy)
+                        if val_accuracy > best_accuracy:
+                            best_accuracy = val_accuracy
+                            with open("best_model.pickle", "wb") as handle:
+                                pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                            counter = 0
+                            nb_epochs_done = epoch + 1
+                        else:
+                            if counter >= 2:
+                                break
+                            counter += 1
+                    with open("best_model.pickle", "rb") as handle:
+                        neural_networks = pickle.load(handle)
+                    model.neural_networks = neural_networks
 
-    for epoch in range(nb_epochs):
-        trainer.train(model, optimizer, train_dataloader, 1, epsilon)
+                    os.remove("best_model.pickle")
 
-        # generate name of file that holds the trained model
-        model_file_name = "DeepStochLog_param_{}_{}_{}_{}_{}_{}".format(seed, epoch + 1, 
-            batch_size, learning_rate, epsilon, dropout_rate, size_val)
+                    # save trained model to a file
+                    with open(model_file_location, "wb") as handle:
+                        pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        # save trained model to a file
-        with open(f'results/{dataset}/param/{model_file_name}', "wb") as handle:
-            pickle.dump(model.neural_networks, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                    # save results to a summary file
+                    information = {
+                        "algorithm": "DeepStochLog",
+                        "seed": seed,
+                        "nb_epochs": nb_epochs_done,
+                        "batch_size": batch_size,
+                        "learning_rate": learning_rate,
+                        "epsilon": epsilon,
+                        "dropout_rate": dropout_rate,
+                        "rely_on_nn": rely_on_nn,
+                        "size_val": size_val,
+                        "accuracy": best_accuracy,
+                        "model_file": model_file_name
+                    }
+                    with open(f'results/{dataset}/summary_param.json', "a") as outfile:
+                        json.dump(information, outfile)
+                        outfile.write('\n')
 
-        # testing
-        accuracy = calculate_accuracy(model, val_dataset)[0]
-
-        # save results to a summary file
-        information = {
-            "algorithm": "DeepStochLog",
-            "seed": seed,
-            "nb_epochs": epoch + 1,
-            "batch_size": batch_size,
-            "learning_rate": learning_rate,
-            "epsilon": epsilon,
-            "dropout_rate": dropout_rate,
-            "size_val": size_val,
-            "accuracy": accuracy,
-            "model_file": model_file_name
-        }
-        with open(f'results/{dataset}/summary_param.json', "a") as outfile:
-            json.dump(information, outfile)
-            outfile.write('\n')
-
-        # print results
-        print("############################################")
-        print("Accuracy: {}".format(accuracy))
-        print("############################################")
-
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            counter = 0
-        else:
-            if counter >= 2:
-                break
-            counter += 1
+                    # print results
+                    print("############################################")
+                    print("Accuracy: {}".format(best_accuracy))
+                    print("############################################")

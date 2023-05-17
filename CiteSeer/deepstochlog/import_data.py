@@ -13,9 +13,9 @@ def create_indices(mask):
             indices.append(i)
     return indices
 
-def import_data(dataset, move_to_test_set_ratio, seed):
+def import_data(dataset, to_unsupervised, seed):
     DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
-    dataset = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
+    dataset = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
     citation_graph = dataset[0]
     documents = citation_graph.x
     labels = citation_graph.y.numpy()
@@ -24,13 +24,9 @@ def import_data(dataset, move_to_test_set_ratio, seed):
     val_ids = create_indices(citation_graph.val_mask)
     test_ids = create_indices(citation_graph.test_mask)
 
-    # move train examples to the test set according to the given ratio
-    if move_to_test_set_ratio > 0:
-        split_index = round(move_to_test_set_ratio * len(train_ids))
-        
-        for elem in train_ids[:split_index]:
-            test_ids.append(elem)
-
+    # move train examples to the unsupervised setting according to the given ratio
+    if to_unsupervised > 0:
+        split_index = round(to_unsupervised * len(train_ids))
         train_ids = train_ids[split_index:] 
 
     # shuffle train set
