@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "MNIST"
-method = "neurasp"
+dataset = "CiteSeer"
+method = "deepstochlog"
 engine = "exact"
 #################
 
