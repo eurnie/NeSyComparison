@@ -111,8 +111,8 @@ def test(dataloader, model):
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 8
-learning_rate = 0.001
+batch_size = 2
+learning_rate = 0.0001
 optimizer_name = "Adam"
 dropout_rate = 0
 #########################################################################################################
