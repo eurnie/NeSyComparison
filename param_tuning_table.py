@@ -2,7 +2,7 @@ import json
 
 #################
 dataset = "CiteSeer"
-method = "deepstochlog"
+method = "logic_tensor_networks"
 engine = "exact"
 #################
 
@@ -17,7 +17,7 @@ elif (dataset == "CiteSeer"):
     else:
         param_tuning_file = f'CiteSeer/{method}/results/CiteSeer/summary_param.json'
 
-possible_parameter_list = ['dropout_rate', 'epsilon', 'optimizer', 'learning_rate', 'batch_size', 'loss_function', 'opt']
+possible_parameter_list = ['dropout_rate', 'epsilon', 'optimizer', 'learning_rate', 'loss_function', 'opt', 'p_forall', 'p_exists', 'batch_size']
 real_parameter_list = []
 
 with open(param_tuning_file) as f:

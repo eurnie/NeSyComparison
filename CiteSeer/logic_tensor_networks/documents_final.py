@@ -17,7 +17,7 @@ from data.network_tensorflow import Net_CiteSeer, Net_Cora, Net_PubMed
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 256
+batch_size = 512
 learning_rate = 0.001
 p_forall = 2
 p_exists = 1
@@ -178,7 +178,7 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
             information = {
                 "algorithm": "LTN",
                 "seed": seed,
-                "nb_epochs_done": nb_epochs_done,
+                "nb_epochs": nb_epochs_done,
                 "batch_size": batch_size,
                 "learning_rate": learning_rate,
                 "p_forall": p_forall,

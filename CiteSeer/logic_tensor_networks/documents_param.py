@@ -175,7 +175,7 @@ for dropout_rate in [0, 0.2]:
                     information = {
                         "algorithm": "LTN",
                         "seed": seed,
-                        "nb_epochs_done": epoch + 1,
+                        "nb_epochs": nb_epochs_done,
                         "batch_size": batch_size,
                         "learning_rate": learning_rate,
                         "p_forall": p_forall,
