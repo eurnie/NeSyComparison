@@ -29,7 +29,7 @@ size_val = 0.1
 
 assert (dataset == "MNIST") or (dataset == "FashionMNIST")
 
-for method in ['geometric_mean', 'exact']:
+for method in ['exact', 'geometric_mean']:
     for dropout_rate in [0, 0.2]:
         for loss_function_name in ['cross_entropy', 'mse']:
             for learning_rate in [0.001, 0.0001]:

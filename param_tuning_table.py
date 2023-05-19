@@ -1,9 +1,9 @@
 import json
 
 #################
-dataset = "CiteSeer"
-method = "logic_tensor_networks"
-engine = "exact"
+dataset = "MNIST"
+method = "deepproblog"
+engine = "geometric_mean"
 #################
 
 if (dataset == "MNIST"):
