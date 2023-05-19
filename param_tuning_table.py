@@ -3,7 +3,7 @@ import json
 #################
 dataset = "MNIST"
 method = "deepproblog"
-engine = "geometric_mean"
+engine = "exact"
 #################
 
 if (dataset == "MNIST"):

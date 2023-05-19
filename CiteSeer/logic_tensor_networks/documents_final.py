@@ -34,7 +34,7 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
         model_file_name = "LTN_final_{}_{}_{}_{}_{}_{}_{}_{}_{}".format(seed, 
             nb_epochs, batch_size, learning_rate, p_forall, p_exists, p_forall_cites,
             p_exists_cites, dropout_rate)
-        model_file_location = f'results/{dataset}/final/{model_file_name}'
+        model_file_location = f'results/{dataset}/final/to_unsupervised_{to_unsupervised}/{model_file_name}'
 
         if not os.path.isfile(model_file_location):
             # setting seeds for reproducibility
