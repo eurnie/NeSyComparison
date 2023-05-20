@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "MNIST"
-method = "deepproblog"
+dataset = "CiteSeer"
+method = "logic_tensor_networks"
 engine = "exact"
 #################
 
@@ -50,7 +50,7 @@ for i in range(len(accuracies)):
 real_parameter_list = [str.replace("_", " ") for str in real_parameter_list]
 
 with open('latex_table.txt', 'w+') as f:
-    f.write('\\begin{table}\n')
+    f.write('\\begin{table}[H]\n')
     f.write('\\begin{adjustbox}{width=\\textwidth, pagecenter}\n')
     format = ['|c' if i == len(real_parameter_list) else 'c' for i in range(len(real_parameter_list) + 1)]
     format_string = ''.join(format)
