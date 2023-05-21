@@ -1,0 +1,2 @@
+{"algorithm": "LTN", "seed": 0, "nb_epochs_done": 11, "batch_size": 8, "learning_rate": 0.001, "p_forall": 1, "p_exists": 1, "p_forall_cites": 1, "p_exists_cites": 1, "dropout_rate": 0.2, "accuracy": 0.25, "model_file": "LTN_param_0_100_8_0.001_1_1_1_1_0.2"}
+{"algorithm": "LTN", "seed": 0, "nb_epochs_done": 15, "batch_size": 8, "learning_rate": 0.001, "p_forall": 2, "p_exists": 2, "p_forall_cites": 2, "p_exists_cites": 2, "dropout_rate": 0.2, "accuracy": 0.3769841194152832, "model_file": "LTN_param_0_100_8_0.001_2_2_2_2_0.2"}

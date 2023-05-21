@@ -18,7 +18,7 @@ from data.network_tensorflow import Net
 
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
-batch_size = 64
+batch_size = 32
 learning_rate = 0.001
 p_forall = 2
 p_exists = 1

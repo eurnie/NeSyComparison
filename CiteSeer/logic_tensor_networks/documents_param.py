@@ -29,7 +29,7 @@ assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 for dropout_rate in [0, 0.2]:
     for p_forall in [1, 2]:
         for p_exists in [1, 2]:
-            for batch_size in [8, 32, 128, 512]:
+            for batch_size in [8]:
                 p_forall_cites = p_forall
                 p_exists_cites = p_exists
 
