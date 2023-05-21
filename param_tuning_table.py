@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "CiteSeer"
-method = "logic_tensor_networks"
+dataset = "MNIST"
+method = "deepproblog"
 engine = "exact"
 #################
 
