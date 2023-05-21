@@ -1,0 +1,1 @@
+{"algorithm": "SL", "seed": 0, "nb_epochs": 17, "batch_size": 2, "learning_rate": 0.0001, "optimizer": "Adam", "dropout_rate": 0, "size_val": 0.1, "accuracy": 0.7384, "training_time": 4549.244450569153, "testing_time": 4.728288412094116, "model_file": "SL_final_0_0_100_Adam_2_0.0001_0_0.1"}
