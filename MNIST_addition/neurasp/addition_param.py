@@ -82,7 +82,7 @@ for method in ['exact', 'sampling']:
     for dropout_rate in [0, 0.2]:
         for opt in [False, True]:
             for learning_rate in [0.001, 0.0001]:
-                for batch_size in [8, 32, 128]:
+                for batch_size in [2, 8, 32, 128]:
                     # generate name of file that holds the trained model
                     model_file_name = "NeurASP_param_{}_{}_{}_{}_{}_{}_{}".format(seed, 
                         nb_epochs, batch_size, learning_rate, dropout_rate, size_val, opt)
