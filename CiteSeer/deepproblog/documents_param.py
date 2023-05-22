@@ -45,7 +45,7 @@ for method in ['exact', 'geometric_mean']:
                         torch.manual_seed(seed)
 
                         # import train and val set
-                        train_set, val_set, _ = import_datasets(to_unsupervised, seed)
+                        train_set, val_set, _ = import_datasets(dataset, to_unsupervised, seed)
 
                         if dataset == "CiteSeer":
                             network = Net_CiteSeer(dropout_rate)
