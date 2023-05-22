@@ -19,11 +19,11 @@ from data.generate_dataset import generate_dataset_mnist, generate_dataset_fashi
 from data.network_torch import Net
 
 ############################################### PARAMETERS ##############################################
-method = "exact"
+method = "geometric_mean"
 nb_epochs = 100
 batch_size = 8
 learning_rate = 0.001
-dropout_rate = 0
+dropout_rate = 0.2
 loss_function_name = "cross_entropy"
 size_val = 0.1
 #########################################################################################################

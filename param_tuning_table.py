@@ -1,8 +1,8 @@
 import json
 
 #################
-dataset = "MNIST"
-method = "deepproblog"
+dataset = "CiteSeer"
+method = "semantic_loss"
 engine = "exact"
 #################
 
@@ -17,7 +17,7 @@ elif (dataset == "CiteSeer"):
     else:
         param_tuning_file = f'CiteSeer/{method}/results/CiteSeer/summary_param.json'
 
-possible_parameter_list = ['dropout_rate', 'epsilon', 'optimizer', 'learning_rate', 'loss_function', 'opt', 'p_forall', 'p_exists', 'batch_size']
+possible_parameter_list = ['dropout_rate', 'epsilon', 'optimizer', 'learning_rate', 'loss_function', 'opt', 'p_forall', 'p_exists', 'rely_on_nn', 'batch_size']
 real_parameter_list = []
 
 with open(param_tuning_file) as f:

@@ -11,106 +11,112 @@ from deepproblog.model import Model
 from deepproblog.network import Network
 from deepproblog.train import train_model
 from deepproblog.evaluate import get_confusion_matrix
-from import_data import import_datasets, citeseer_examples
+from import_data import import_datasets, citeseer_examples, cora_examples
 
 sys.path.append("..")
 from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
 ################################################# DATASET ###############################################
 dataset = "CiteSeer"
-move_to_test_set_ratio = 0
+to_unsupervised = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-method = "exact"
 nb_epochs = 100
 #########################################################################################################
 
 assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 
-for dropout_rate in [0, 0.2]:
-    for rely_on_nn in [0.4, 0.5]:
-        for learning_rate in [0.001, 0.0001]:
-            for batch_size in [2, 8, 32, 128]:
-                # generate name of file that holds the trained model
-                model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, 
-                    nb_epochs, batch_size, learning_rate, dropout_rate, rely_on_nn)
-                model_file_location = f'results/{method}/{dataset}/param/{model_file_name}'
+for method in ['exact', 'geometric_mean']:
+    for dropout_rate in [0, 0.2]:
+        for rely_on_nn in [0.4, 0.5]:
+            for learning_rate in [0.001, 0.0001]:
+                for batch_size in [2, 8, 32, 128]:
+                    # generate name of file that holds the trained model
+                    model_file_name = "DeepProbLog_param_{}_{}_{}_{}_{}_{}".format(seed, 
+                        nb_epochs, batch_size, learning_rate, dropout_rate, rely_on_nn)
+                    model_file_location = f'results/{method}/{dataset}/param/{model_file_name}'
 
-                if not os.path.isfile(model_file_location):
-                    # setting seeds for reproducibility
-                    random.seed(seed)
-                    numpy.random.seed(seed)
-                    torch.manual_seed(seed)
+                    if not os.path.isfile(model_file_location):
+                        # setting seeds for reproducibility
+                        random.seed(seed)
+                        numpy.random.seed(seed)
+                        torch.manual_seed(seed)
 
-                    # import train and val set
-                    train_set, val_set, _ = import_datasets(move_to_test_set_ratio, seed)
+                        # import train and val set
+                        train_set, val_set, _ = import_datasets(to_unsupervised, seed)
 
-                    if dataset == "CiteSeer":
-                        network = Net_CiteSeer(dropout_rate)
-                    elif dataset == "Cora":
-                        network = Net_CiteSeer(dropout_rate)
-                    elif dataset == "PubMed":
-                        network = Net_CiteSeer(dropout_rate)
+                        if dataset == "CiteSeer":
+                            network = Net_CiteSeer(dropout_rate)
+                        elif dataset == "Cora":
+                            network = Net_Cora(dropout_rate)
+                        elif dataset == "PubMed":
+                            network = Net_PubMed(dropout_rate)
 
-                    net = Network(network, "document_net", batching=True)
-                    net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
+                        net = Network(network, "document_net", batching=True)
+                        net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
-                    model = Model(f'documents_{dataset}.pl', [net])
-                    if method == "exact":
-                        model.set_engine(ExactEngine(model), cache=False)
-                    elif method == "geometric_mean":
-                        model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))   
+                        model = Model(f'{dataset}_documents_{rely_on_nn}.pl', [net])
+                        if method == "exact":
+                            model.set_engine(ExactEngine(model), cache=False)
+                        elif method == "geometric_mean":
+                            model.set_engine(ApproximateEngine(model, 1, geometric_mean, exploration=False))   
 
-                    model.add_tensor_source("citeseer", citeseer_examples)
-                    loader = DataLoader(train_set, batch_size, False)
+                        if dataset == "CiteSeer":
+                            model.add_tensor_source("citeseer", citeseer_examples)
+                        elif dataset == "Cora":
+                            model.add_tensor_source("cora", cora_examples)
+                        loader = DataLoader(train_set, batch_size, False)
 
-                    if not os.path.exists("best_model"):
-                        os.mkdir("best_model")
+                        if not os.path.exists("best_model"):
+                            os.mkdir("best_model")
 
-                    # training (with early stopping)
-                    total_training_time = 0
-                    best_accuracy = -1
-                    counter = 0
-                    for epoch in range(nb_epochs):
-                        train = train_model(model, loader, 1, log_iter=100, profile=0)
-                        val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
-                        print("Val accuracy after epoch", epoch, ":", val_accuracy)
-                        if val_accuracy > best_accuracy:
-                            best_accuracy = val_accuracy
-                            train.model.save_state("best_model/state", complete=True)
-                            counter = 0
-                        else:
-                            if counter >= 2:
-                                break
-                            counter += 1
+                        # training (with early stopping)
+                        total_training_time = 0
+                        best_accuracy = -1
+                        counter = 0
+                        nb_epochs_done = 0
+                        for epoch in range(nb_epochs):
+                            train = train_model(model, loader, 1, log_iter=100, profile=0)
+                            val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
+                            print("Val accuracy after epoch", epoch, ":", val_accuracy)
+                            if val_accuracy > best_accuracy:
+                                best_accuracy = val_accuracy
+                                train.model.save_state("best_model/state", complete=True)
+                                counter = 0
+                                nb_epochs_done = epoch + 1
+                            else:
+                                if counter >= 2:
+                                    break
+                                counter += 1
 
-                    # early stopping: load best model and delete file
-                    model.load_state("best_model/state")
-                    os.remove("best_model/state")
-                    os.rmdir("best_model")
+                        # early stopping: load best model and delete file
+                        model.load_state("best_model/state")
+                        os.remove("best_model/state")
+                        os.rmdir("best_model")
 
-                    # save trained model to a file
-                    model.save_state(f'results/{method}/final/{model_file_name}')
+                        # save trained model to a file
+                        model.save_state(model_file_location)
 
-                    # save results to a summary file
-                    information = {
-                        "algorithm": "DeepProbLog",
-                        "seed": seed,
-                        "method": method,
-                        "nb_epochs": epoch + 1,
-                        "batch_size": batch_size,
-                        "learning_rate": learning_rate,
-                        "dropout_rate": dropout_rate,
-                        "accuracy": best_accuracy,
-                        "model_file": model_file_name
-                    }
-                    with open(f'results/{method}/{dataset}/summary_param.json', "a") as outfile:
-                        json.dump(information, outfile)
-                        outfile.write('\n')
+                        # save results to a summary file
+                        information = {
+                            "algorithm": "DeepProbLog",
+                            "seed": seed,
+                            "method": method,
+                            "nb_epochs": nb_epochs_done,
+                            "batch_size": batch_size,
+                            "rely_on_nn": rely_on_nn,
+                            "learning_rate": learning_rate,
+                            "dropout_rate": dropout_rate,
+                            "accuracy": best_accuracy,
+                            "model_file": model_file_name
+                        }
+                        with open(f'results/{method}/{dataset}/summary_param.json', "a") as outfile:
+                            json.dump(information, outfile)
+                            outfile.write('\n')
 
-                    # print results
-                    print("############################################")
-                    print("Accuracy: {}".format(best_accuracy))
-                    print("############################################")
+                        # print results
+                        print("############################################")
+                        print("Accuracy: {}".format(best_accuracy))
+                        print("############################################")

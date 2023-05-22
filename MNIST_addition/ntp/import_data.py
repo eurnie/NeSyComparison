@@ -67,9 +67,9 @@ def write_to_file_txt(dataset, filename):
             f.write('\n')
 
 def create_datasets(train_path, test_path, size_val):
-    percentage_of_original_train_dataset = 0.001
-    percentage_of_original_val_dataset = 0.001
-    percentage_of_original_test_dataset = 0.001
+    percentage_of_original_train_dataset = 0.01
+    percentage_of_original_val_dataset = 0.01
+    percentage_of_original_test_dataset = 0.01
     split_index = round(size_val * 30000)
 
     for dataset_name in ["train", "val", "test"]:
@@ -123,9 +123,9 @@ def create_datasets(train_path, test_path, size_val):
                 outfile.write('\n')
 
 def generate_dataset(dataset, label_noise, size_val, seed):
-    if dataset == "mnist":
+    if dataset == "MNIST":
         generate_dataset_mnist(seed, label_noise)
         create_datasets("../data/MNIST/processed/train.txt", "../data/MNIST/processed/test.txt", size_val)
-    elif dataset == "fashion_mnist":
+    elif dataset == "FashionMNIST":
         generate_dataset_fashion_mnist(seed, label_noise)
         create_datasets("../data/FashionMNIST/processed/train.txt", "../data/FashionMNIST/processed/test.txt", size_val)

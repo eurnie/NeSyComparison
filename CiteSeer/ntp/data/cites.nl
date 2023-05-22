@@ -1,0 +1,16 @@
+cite(doc_12,doc_113).
+cite(doc_32,doc_118).
+cite(doc_34,doc_75).
+cite(doc_35,doc_89).
+cite(doc_53,doc_61).
+cite(doc_61,doc_53).
+cite(doc_75,doc_34).
+cite(doc_89,doc_35).
+cite(doc_90,doc_118).
+cite(doc_95,doc_110).
+cite(doc_96,doc_119).
+cite(doc_110,doc_95).
+cite(doc_113,doc_12).
+cite(doc_118,doc_32).
+cite(doc_118,doc_90).
+cite(doc_119,doc_96).

@@ -1,39 +1,40 @@
+import sys
+import copy
+import torch
+import random
+import logging
+import numpy as np
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+tf.disable_eager_execution()
+
 from ntp.kb import Atom, load_from_file, normalize
 from ntp.nkb import kb2nkb, augment_with_templates, embed_symbol, rule2struct
 from ntp.prover import prove, representation_match, is_tensor, is_parameter, neural_link_predict
 from ntp.tp import rule2string
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
-tf.disable_eager_execution()
 from ntp.jtr.train import train
 from ntp.jtr.util.hooks import LossHook, ExamplesPerSecHook, ETAHook, TensorHook
 from ntp.jtr.preprocess.batch import GeneratorWithRestart
 from ntp.jtr.util.util import get_timestamped_dir, load_conf, save_conf, tfprint
 from ntp.experiments.util import kb_ids2known_facts
 
-import numpy as np
-import random
-import copy
-import sys
 from tabulate import tabulate
 from tensorflow.python import debug as tf_debug
-import logging
-import torch
 from import_data import generate_dataset
 from network_NTP import Net_NTP
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 ################################################# DATASET ###############################################
-dataset = "mnist"
-# dataset = "fashion_mnist"
+dataset = "MNIST"
 label_noise = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 10
-batch_size = 64
+nb_epochs = 100
+batch_size = 256
 learning_rate = 0.001
 dropout_rate = 0
 size_val = 0.1
@@ -47,7 +48,7 @@ for seed in range(0, 1):
     tf.set_random_seed(seed)
 
     # generate and shuffle dataset
-    # generate_dataset(dataset, label_noise, size_val, seed)
+    generate_dataset(dataset, label_noise, size_val, seed)
 
     conf = load_conf("default.conf")
     experiment_prefix = "mnist_addition"
@@ -69,15 +70,17 @@ for seed in range(0, 1):
     # size of predicate embeddings
     INPUT_SIZE = 10
 
-    ################################################
-
-    # clip gradient during learning
+    # clip gradient during learning (None of no clipping)
     CLIP = None
 
-    OUTPUT_PREDICTIONS = True
+    # train embeddings
+    TRAIN = True
+
+    ################################################
+    OUTPUT_PREDICTIONS = False
     CHECK_NUMERICS = conf["meta"]["check_numerics"]
     TFDBG = conf["meta"]["tfdbg"]
-    TRAIN = True
+    
     TEST_TIME_NEURAL_LINK_PREDICTION = \
         conf["meta"]["test_time_neural_link_prediction"]
     TEST_TIME_BATCHING = conf["meta"]["test_time_batching"]
@@ -128,7 +131,7 @@ for seed in range(0, 1):
         kb = augment_with_templates(kb, rule_templates)
     kb = normalize(kb)
 
-    nkb, kb_ids, vocab, emb, predicate_ids, constant_ids = \
+    nkb, kb_ids, vocab, emb_modified, predicate_ids, constant_ids = \
         kb2nkb(kb, INPUT_SIZE, unit_normalize=UNIT_NORMALIZE,
                keep_prob=KEEP_PROB, emb=Net_NTP, dataset=dataset, dropout_rate=dropout_rate)
     
@@ -158,7 +161,7 @@ for seed in range(0, 1):
     mask_indices = tf.placeholder("int32", [POS_PER_BATCH, 2], name="mask_indices")
     goal_placeholder = [tf.placeholder("int32", [BATCH_SIZE], name="goal_%d" % i)
                         for i in range(0, len(goal_struct[0]))]
-    goal_emb = embed(goal_placeholder, emb)
+    goal_emb = embed(goal_placeholder, emb_modified)
 
     num_facts = len(kb_ids[goal_struct][0][0])
     mask = tf.Variable(np.ones([num_facts, BATCH_SIZE], np.float32),
@@ -346,8 +349,13 @@ for seed in range(0, 1):
 
     summary_writer = tf.summary.FileWriter(experiment_dir)
 
+    trainable_vars = tf.trainable_variables()
+
+    # for var in trainable_vars:
+    #     print(var.name)
+
     optim = tf.train.AdamOptimizer(learning_rate, epsilon=EPSILON)
-    gradients = optim.compute_gradients(loss)
+    gradients = optim.compute_gradients(loss, var_list=trainable_vars)
     variables = [x[1] for x in gradients]
     gradients = [x[0] for x in gradients]
 
@@ -380,7 +388,8 @@ for seed in range(0, 1):
     else:
         sess.run(tf.global_variables_initializer())
 
-    def decode(x, emb, vocab, valid_ids, sess):
+    def decode(x, emb_modified, vocab, valid_ids, sess):
+        emb = emb_modified.update_embedding_matrix()
         valid_ids = set(valid_ids)
 
         num_rules = int(x.get_shape()[0])
@@ -452,7 +461,7 @@ for seed in range(0, 1):
                     for i, sym in enumerate(atom):
                         if is_tensor(sym):
                             valid_ids = predicate_ids if i == 0 else constant_ids
-                            atom_sym.append(decode(sym, emb, vocab, valid_ids, sess))
+                            atom_sym.append(decode(sym, emb_modified, vocab, valid_ids, sess))
                         else:
                             atom_sym.append(sym[0])
                     rule_sym.append(Atom(atom_sym[0], atom_sym[1:]))
@@ -476,7 +485,7 @@ for seed in range(0, 1):
             tf.placeholder("int32", [1], name="goal_%d" % i)
             for i in range(0, len(goal_struct[0]))]
 
-        goal_emb = embed(goal_placeholder, emb, keep_prob=1.0)
+        goal_emb = embed(goal_placeholder, emb_modified, keep_prob=1.0)
 
         if TEST_TIME_BATCHING:
             copies = BATCH_SIZE
@@ -499,7 +508,7 @@ for seed in range(0, 1):
         table = []
         for sym in vocab.sym2id:
             id = vocab.sym2id[sym]
-            vec = sess.run(emb[id])
+            vec = sess.run(emb_modified.embedding_matrix[id])
             table.append([sym, id, vec])
 
         def predict(predicate, arg1, arg2):
@@ -562,7 +571,7 @@ for seed in range(0, 1):
         tf.placeholder("int32", [nb_possible_results], name="goal_%d" % i)
         for i in range(0, len(goal_struct[0]))]
 
-    goal_emb = embed(goal_placeholder, emb, keep_prob=1.0)
+    goal_emb = embed(goal_placeholder, emb_modified, keep_prob=1.0)
 
     prove_success_test_time = \
         prove(nkb, goal_emb, goal_struct, mask_var=None, trace=True,

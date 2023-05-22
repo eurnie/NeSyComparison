@@ -9,20 +9,38 @@ from deepproblog.query import Query
 from deepproblog.dataset import Dataset
 
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
-data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
-citation_graph = data[0]
-x_values = citation_graph.x
-y_values = citation_graph.y
+data_citeseer = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="CiteSeer", split="full")
+citation_graph_citeseer = data_citeseer[0]
+x_values_citeseer = citation_graph_citeseer.x
+y_values_citeseer = citation_graph_citeseer.y
 
-cite_a = citation_graph.edge_index[0]
-cite_b = citation_graph.edge_index[1]
+cite_a_citeseer = citation_graph_citeseer.edge_index[0]
+cite_b_citeseer = citation_graph_citeseer.edge_index[1]
 
-def import_indices(dataset, move_to_test_set_ratio, seed):
-    if (dataset == "train"):
+DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
+data_cora = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="Cora", split="full")
+citation_graph_cora = data_cora[0]
+x_values_cora = citation_graph_cora.x
+y_values_cora = citation_graph_cora.y
+
+cite_a_cora = citation_graph_cora.edge_index[0]
+cite_b_cora = citation_graph_cora.edge_index[1]
+
+def import_indices(used_dataset, split, move_to_unsupervised, seed):
+    if used_dataset == "CiteSeer":
+        citation_graph = citation_graph_citeseer
+        x_values = x_values_citeseer
+        y_values = y_values_citeseer
+    elif used_dataset == "Cora":
+        citation_graph = citation_graph_cora
+        x_values = x_values_cora
+        y_values = y_values_cora
+
+    if (split == "train"):
         criteria = citation_graph.train_mask
-    elif (dataset == "val"):
+    elif (split == "val"):
         criteria = citation_graph.val_mask
-    elif (dataset == "test"):
+    elif (split == "test"):
         criteria = citation_graph.test_mask
 
     indices = []
@@ -32,27 +50,12 @@ def import_indices(dataset, move_to_test_set_ratio, seed):
             indices.append(i)
             labels.append(y_values[i])
 
-    # move train examples to the test set according to the given ratio
-    if move_to_test_set_ratio > 0:
-        if dataset == "train":
-            split_index = round(move_to_test_set_ratio * len(labels))
+    # move train examples to the unsupervised setting according to the given ratio
+    if move_to_unsupervised > 0:
+        if split == "train":
+            split_index = round(move_to_unsupervised * len(labels))
             indices = indices[split_index:]
             labels = labels[split_index:]
-        elif dataset == "test":
-            indices_train = []
-            labels_train = []
-            for i in range(len(x_values)):
-                if citation_graph.train_mask[i]:
-                    indices_train.append(i)
-                    labels_train.append(y_values[i])
-
-            split_index = round(move_to_test_set_ratio * len(labels_train))
-        
-            for index in indices_train[:split_index]:
-                indices.append(index)
-
-            for label in labels_train[:split_index]:
-                labels.append(label)
 
     temp = list(zip(indices, labels))
     rng = random.Random(seed)
@@ -61,7 +64,7 @@ def import_indices(dataset, move_to_test_set_ratio, seed):
     indices, labels = list(indices), list(labels)
 
     assert len(labels) == len(indices)
-    print(f'The {dataset} set contains', len(labels), "instances.")
+    print(f'The {split} set contains', len(labels), "instances.")
 
     return indices, labels
 
@@ -70,7 +73,7 @@ class Citeseer_Documents(object):
         self.data = x
 
     def __getitem__(self, item):
-        return x_values[int(item[0])]
+        return self.data[int(item[0])]
     
 # class Citeseer_Cites(object):
 #     def __init__(self, cite_a, cite_b):
@@ -92,29 +95,36 @@ class Citeseer_Documents(object):
 
 #         return return_values
 
-def import_datasets(move_to_test_set_ratio, seed):
+def import_datasets(dataset, move_to_test_set_ratio, seed):
     train_set = CiteseerOperator(
         dataset_name="train",
         function_name="document_label",
         move_to_test_set_ratio=move_to_test_set_ratio,
-        seed=seed
+        seed=seed,
+        dataset=dataset
     )
     val_set = CiteseerOperator(
         dataset_name="val",
         function_name="document_label",
         move_to_test_set_ratio=move_to_test_set_ratio,
-        seed=seed
+        seed=seed,
+        dataset=dataset
     )
     test_set = CiteseerOperator(
         dataset_name="test",
         function_name="document_label",
         move_to_test_set_ratio=move_to_test_set_ratio,
-        seed=seed
+        seed=seed,
+        dataset=dataset
     )
     return train_set, val_set, test_set
 
 class CiteseerOperator(Dataset, TorchDataset):
     def __getitem__(self, index: int) -> Tuple[list, list, int]:
+        if self.used_dataset == "CiteSeer":
+            x_values = x_values_citeseer
+        elif self.used_dataset == "Cora":
+            x_values = x_values_cora
         ind = self.data[index]
         x_values[ind]
         label = self._get_label(index)
@@ -125,15 +135,20 @@ class CiteseerOperator(Dataset, TorchDataset):
         dataset_name: str,
         function_name: str,
         move_to_test_set_ratio=0,
-        seed=0
+        seed=0,
+        dataset="CiteSeer"
     ):
         super(CiteseerOperator, self).__init__()
+        self.used_dataset = dataset
         self.dataset_name = dataset_name
-        self.dataset = x_values
+        if self.used_dataset == "CiteSeer":
+            self.dataset = x_values_citeseer
+        elif self.used_dataset == "Cora":
+            self.dataset = x_values_cora
         self.function_name = function_name
         self.move_to_test_set_ratio = move_to_test_set_ratio
         self.seed = seed
-        self.data, self.labels = import_indices(self.dataset_name, self.move_to_test_set_ratio, self.seed)
+        self.data, self.labels = import_indices(self.used_dataset, self.dataset_name, self.move_to_test_set_ratio, self.seed)
 
     def to_query(self, i: int) -> Query:
         citeseer_ind = self.data[i]
@@ -153,5 +168,6 @@ class CiteseerOperator(Dataset, TorchDataset):
     def __len__(self):
         return len(self.data)
 
-citeseer_examples = Citeseer_Documents(x_values)
+citeseer_examples = Citeseer_Documents(x_values_citeseer)
+cora_examples = Citeseer_Documents(x_values_cora)
 # citeseer_cites = Citeseer_Cites(cite_a, cite_b)

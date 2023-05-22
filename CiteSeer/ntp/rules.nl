@@ -1,0 +1,1 @@
+document_label(X,Y) :- cite(X,Z), document_label(Z,Y).
