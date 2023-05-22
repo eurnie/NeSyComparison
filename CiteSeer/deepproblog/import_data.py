@@ -1,5 +1,6 @@
 import torch_geometric
 import random
+import numpy as np
 from pathlib import Path
 from typing import Tuple
 from torch.utils.data import Dataset as TorchDataset
@@ -17,6 +18,11 @@ y_values_citeseer = citation_graph_citeseer.y
 cite_a_citeseer = citation_graph_citeseer.edge_index[0]
 cite_b_citeseer = citation_graph_citeseer.edge_index[1]
 
+docs_too_much_cites_citeseer = []
+for i in range(len(x_values_citeseer)):
+    if np.count_nonzero(cite_a_citeseer.numpy() == i) > 17:
+        docs_too_much_cites_citeseer.append(i)
+
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 data_cora = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="Cora", split="full")
 citation_graph_cora = data_cora[0]
@@ -26,15 +32,22 @@ y_values_cora = citation_graph_cora.y
 cite_a_cora = citation_graph_cora.edge_index[0]
 cite_b_cora = citation_graph_cora.edge_index[1]
 
+docs_too_much_cites_cora = []
+for i in range(len(x_values_cora)):
+    if np.count_nonzero(cite_a_cora.numpy() == i) > 17:
+        docs_too_much_cites_cora.append(i)
+
 def import_indices(used_dataset, split, move_to_unsupervised, seed):
     if used_dataset == "CiteSeer":
         citation_graph = citation_graph_citeseer
         x_values = x_values_citeseer
         y_values = y_values_citeseer
+        docs_too_much_cites = docs_too_much_cites_citeseer
     elif used_dataset == "Cora":
         citation_graph = citation_graph_cora
         x_values = x_values_cora
         y_values = y_values_cora
+        docs_too_much_cites = docs_too_much_cites_cora
 
     if (split == "train"):
         criteria = citation_graph.train_mask
@@ -47,8 +60,9 @@ def import_indices(used_dataset, split, move_to_unsupervised, seed):
     labels = []
     for i in range(len(x_values)):
         if criteria[i]:
-            indices.append(i)
-            labels.append(y_values[i])
+            if (split == 'train') or (not i in docs_too_much_cites):
+                indices.append(i)
+                labels.append(y_values[i])
 
     # move train examples to the unsupervised setting according to the given ratio
     if move_to_unsupervised > 0:

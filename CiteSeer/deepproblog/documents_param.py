@@ -11,14 +11,24 @@ from deepproblog.model import Model
 from deepproblog.network import Network
 from deepproblog.train import train_model
 from deepproblog.evaluate import get_confusion_matrix
-from import_data import import_datasets, citeseer_examples, cora_examples
+from import_data import import_datasets, citeseer_examples, cora_examples, docs_too_much_cites_citeseer, docs_too_much_cites_cora
 
 sys.path.append("..")
 from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 
+def calculate_accuracy(dataset, model, data):
+    if dataset == "CiteSeer":
+        docs_too_much_cites = docs_too_much_cites_citeseer
+    elif dataset == "Cora":
+        docs_too_much_cites = docs_too_much_cites_cora
+
+    accuracy = get_confusion_matrix(model, data).accuracy()
+    correct_docs = accuracy * len(data)
+    accuracy = correct_docs / (len(data) + len(docs_too_much_cites))
+    return accuracy
+
 ################################################# DATASET ###############################################
 dataset = "CiteSeer"
-to_unsupervised = 0
 #########################################################################################################
 
 ############################################### PARAMETERS ##############################################
@@ -45,7 +55,7 @@ for method in ['exact', 'geometric_mean']:
                         torch.manual_seed(seed)
 
                         # import train and val set
-                        train_set, val_set, _ = import_datasets(dataset, to_unsupervised, seed)
+                        train_set, val_set, _ = import_datasets(dataset, 0, seed)
 
                         if dataset == "CiteSeer":
                             network = Net_CiteSeer(dropout_rate)
@@ -79,7 +89,7 @@ for method in ['exact', 'geometric_mean']:
                         nb_epochs_done = 0
                         for epoch in range(nb_epochs):
                             train = train_model(model, loader, 1, log_iter=100, profile=0)
-                            val_accuracy = get_confusion_matrix(train.model, val_set).accuracy()
+                            val_accuracy = calculate_accuracy(dataset, train.model, val_set)
                             print("Val accuracy after epoch", epoch, ":", val_accuracy)
                             if val_accuracy > best_accuracy:
                                 best_accuracy = val_accuracy
