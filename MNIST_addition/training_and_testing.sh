@@ -1,5 +1,5 @@
-#source /home/arne/miniconda3/etc/profile.d/conda.sh;
-source /opt/anaconda3/etc/profile.d/conda.sh;
+source /home/arne/miniconda3/etc/profile.d/conda.sh;
+#source /opt/anaconda3/etc/profile.d/conda.sh;
 cd nn;
 python3 addition_final.py;
 cd ..;
