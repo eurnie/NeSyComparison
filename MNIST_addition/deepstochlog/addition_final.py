@@ -86,7 +86,7 @@ for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25
             calculate_model_accuracy = create_model_accuracy_calculator(model, dummy_dataloader,  time.time())
 
             # training (with early stopping)
-            trainer = DeepStochLogTrainer(log_freq=100000, accuracy_tester=calculate_model_accuracy)
+            trainer = DeepStochLogTrainer(log_freq=100, accuracy_tester=calculate_model_accuracy)
             total_training_time = 0
             best_accuracy = 0
             counter = 0

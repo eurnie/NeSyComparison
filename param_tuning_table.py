@@ -2,7 +2,7 @@ import json
 
 #################
 dataset = "CiteSeer"
-method = "semantic_loss"
+method = "neurasp"
 engine = "exact"
 #################
 
