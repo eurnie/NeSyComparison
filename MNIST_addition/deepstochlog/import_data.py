@@ -48,7 +48,7 @@ class SimpleAdditionDataset(Sequence):
                 dataset, labels = parse_data("../data/MNIST/processed/train.txt", start_index, end_index)
             elif (dataset_name == "test"):
                 dataset, labels = parse_data("../data/MNIST/processed/test.txt", start_index, end_index)
-        elif self.dataset == "FashioMNIST":
+        elif self.dataset == "FashionMNIST":
             if (dataset_name == "train"):
                 dataset, labels = parse_data("../data/FashionMNIST/processed/train.txt", start_index, end_index)
             elif (dataset_name == "test"):
