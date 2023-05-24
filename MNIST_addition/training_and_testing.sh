@@ -21,4 +21,5 @@ python3 addition_final.py;
 cd ..;
 cd deepproblog;
 conda activate deepproblog;
+python3 addition_final_app.py;
 python3 addition_final.py;
