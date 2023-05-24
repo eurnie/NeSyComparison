@@ -88,26 +88,26 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
                 is_cited = False
                 for i in range(0, len(cites_a)):
                     if (cites_a[i] == index_1):
-                            index_2 = cites_b[i]
+                            index_2 = cites_b[i].item()
                             dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[index_2].unsqueeze(0), 'ind_1': index_1, 'ind_2': index_2})
                             obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
                             is_cited = True
 
                 if not is_cited:
-                    dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': index_2})
+                    dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
                     obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
 
             dataList_val = []
             obsList_val = []
             for index_1, doc_1, label_1 in valDataset:
-                dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': index_2})
+                dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
                 obsList_val.append(f':- not label(ind_1,doc_1,{label_1}).')
             assert len(valDataset) == len(dataList_val)
 
             dataList_test = []
             obsList_test = []
             for index_1, doc_1, label_1 in testDataset:
-                dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': index_2})
+                dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
                 obsList_test.append(f':- not label(ind_1,doc_1,{label_1}).')
             assert len(testDataset) == len(dataList_test)
 
