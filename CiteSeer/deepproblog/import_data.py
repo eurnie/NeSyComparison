@@ -20,7 +20,7 @@ cite_b_citeseer = citation_graph_citeseer.edge_index[1]
 
 docs_too_much_cites_citeseer = []
 for i in range(len(x_values_citeseer)):
-    if np.count_nonzero(cite_a_citeseer.numpy() == i) > 13:
+    if np.count_nonzero(cite_a_citeseer.numpy() == i) > 10:
         docs_too_much_cites_citeseer.append(i)
 
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
@@ -34,7 +34,7 @@ cite_b_cora = citation_graph_cora.edge_index[1]
 
 docs_too_much_cites_cora = []
 for i in range(len(x_values_cora)):
-    if np.count_nonzero(cite_a_cora.numpy() == i) > 13:
+    if np.count_nonzero(cite_a_cora.numpy() == i) > 10:
         docs_too_much_cites_cora.append(i)
 
 def import_indices(used_dataset, split, move_to_unsupervised, seed):
