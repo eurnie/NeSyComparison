@@ -58,13 +58,22 @@ for dataset, to_unsupervised in [("CiteSeer", 0)]:
 
             proving_start = time.time()
             root_path = Path(__file__).parent
-            model = DeepStochLogModel.from_file(
-                file_location=str((root_path / f'{dataset}_documents_{rely_on_nn}.pl').absolute()),
-                query=queries_for_model,
-                networks=networks,
-                prolog_facts= citations,
-                verbose=False
-            )
+            if rely_on_nn is not None:
+                model = DeepStochLogModel.from_file(
+                    file_location=str((root_path / f'{dataset}_documents_{rely_on_nn}.pl').absolute()),
+                    query=queries_for_model,
+                    networks=networks,
+                    prolog_facts=citations,
+                    verbose=False
+                )
+            else:
+                model = DeepStochLogModel.from_file(
+                    file_location=str((root_path / f'{dataset}_documents.pl').absolute()),
+                    query=queries_for_model,
+                    networks=networks,
+                    prolog_facts=citations,
+                    verbose=False
+                )
             proving_time = time.time() - proving_start
 
             optimizer = Adam(model.get_all_net_parameters(), lr=learning_rate)

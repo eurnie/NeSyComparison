@@ -42,7 +42,7 @@ assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 
 for method in ['exact', 'geometric_mean']:
     for dropout_rate in [0, 0.2]:
-        for rely_on_nn in [0.4, 0.5]:
+        for rely_on_nn in [None, 0.4]:
             for learning_rate in [0.001, 0.0001]:
                 for batch_size in [2, 8, 32, 128]:
                     # generate name of file that holds the trained model
@@ -69,7 +69,10 @@ for method in ['exact', 'geometric_mean']:
                         net = Network(network, "document_net", batching=True)
                         net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
-                        model = Model(f'{dataset}_documents_{rely_on_nn}.pl', [net])
+                        if rely_on_nn is not None:
+                            model = Model(f'{dataset}_documents_{rely_on_nn}.pl', [net])
+                        else:
+                            model = Model(f'{dataset}_documents.pl', [net])
                         if method == "exact":
                             model.set_engine(ExactEngine(model), cache=False)
                         elif method == "geometric_mean":

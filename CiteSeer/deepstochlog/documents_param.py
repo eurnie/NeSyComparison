@@ -34,7 +34,7 @@ assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 logger = print_logger
 
 for dropout_rate in [0, 0.2]:
-    for rely_on_nn in [0.4, 0.5]:
+    for rely_on_nn in [None, 0.4]:
         for epsilon in [0.00000001, 0.0000001]:
             for batch_size in [2, 8, 32, 128]:
                 # generate name of file that holds the trained model
@@ -61,13 +61,22 @@ for dropout_rate in [0, 0.2]:
 
                     proving_start = time.time()
                     root_path = Path(__file__).parent
-                    model = DeepStochLogModel.from_file(
-                        file_location=str((root_path / f'{dataset}_documents_{rely_on_nn}.pl').absolute()),
-                        query=queries_for_model,
-                        networks=networks,
-                        prolog_facts=citations,
-                        verbose=False
-                    )
+                    if rely_on_nn is not None:
+                        model = DeepStochLogModel.from_file(
+                            file_location=str((root_path / f'{dataset}_documents_{rely_on_nn}.pl').absolute()),
+                            query=queries_for_model,
+                            networks=networks,
+                            prolog_facts=citations,
+                            verbose=False
+                        )
+                    else:
+                        model = DeepStochLogModel.from_file(
+                            file_location=str((root_path / f'{dataset}_documents.pl').absolute()),
+                            query=queries_for_model,
+                            networks=networks,
+                            prolog_facts=citations,
+                            verbose=False
+                        )
                     proving_time = time.time() - proving_start
 
                     optimizer = Adam(model.get_all_net_parameters(), lr=learning_rate)

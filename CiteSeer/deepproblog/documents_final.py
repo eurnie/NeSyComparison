@@ -68,7 +68,10 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
             net = Network(network, "document_net", batching=True)
             net.optimizer = torch.optim.Adam(network.parameters(), lr=learning_rate)
 
-            model = Model(f'{dataset}_documents_{rely_on_nn}.pl', [net])
+            if rely_on_nn is not None:
+                model = Model(f'{dataset}_documents_{rely_on_nn}.pl', [net])
+            else:
+                model = Model(f'{dataset}_documents.pl', [net])
             if method == "exact":
                 model.set_engine(ExactEngine(model), cache=False)
             elif method == "geometric_mean":
