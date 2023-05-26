@@ -35,7 +35,7 @@ elif dataset == "CiteSeer":
 elif dataset == "Cora":
     data_deepproblog = []
     data_deepproblog_app = []
-    data_deepstochlog = [83.40, 82.00, 83.10, 82.70, 84.00, 82.30, 84.40, 83.00, 82.80, 83.70]
+    data_deepstochlog = []
     data_ltn = []
     data_neurasp = []
     data_nn = [31.90, 35.80, 35.00, 42.30, 35.30, 31.90, 31.80, 31.90, 32.90, 31.90]
