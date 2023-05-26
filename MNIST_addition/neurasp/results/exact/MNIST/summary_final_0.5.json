@@ -1,0 +1,1 @@
+{"algorithm": "NeurASP", "seed": 0, "nb_epochs": 18, "batch_size": 8, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0.2, "size_val": 0.1, "accuracy": 0.9638, "training_time": 4010.636391878128, "testing_time": 37.31861400604248, "model_file": "NeurASP_final_0_100_8_0.0001_0.2_0.1_False"}
