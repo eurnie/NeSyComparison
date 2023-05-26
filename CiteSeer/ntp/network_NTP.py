@@ -40,12 +40,12 @@ class Net_NTP(tf.keras.Model):
     # update the embeddings by giving all the documents to the neural network
     def update_embedding_matrix(self):
 
-        id = []
-        id.append(self.vocab.get_id('doc_100'))
+        #id = []
+        #id.append(self.vocab.get_id('doc_100'))
 
-        print(f'This is the initial embedding of doc_100 (with index {id[0]}):')
-        symbol_embedded = tf.nn.embedding_lookup(params=self.embedding_matrix, ids=id)
-        tf.print(symbol_embedded)
+        #print(f'This is the initial embedding of doc_100 (with index {id[0]}):')
+        #symbol_embedded = tf.nn.embedding_lookup(params=self.embedding_matrix, ids=id)
+        #tf.print(symbol_embedded)
 
         for i in range(len(self.vocab)):
             sym = self.vocab.get_sym(i)
@@ -66,9 +66,9 @@ class Net_NTP(tf.keras.Model):
                 a = self.embedding_matrix
                 self.embedding_matrix = tf.concat(axis=0, values=[a[:i], x, a[i+1:]])
 
-        print(f'This is the new embedding of doc_100 (with index {id[0]}):')
-        symbol_embedded = tf.nn.embedding_lookup(params=self.embedding_matrix, ids=id)
-        tf.print(symbol_embedded)
+        #print(f'This is the new embedding of doc_100 (with index {id[0]}):')
+        #symbol_embedded = tf.nn.embedding_lookup(params=self.embedding_matrix, ids=id)
+        #tf.print(symbol_embedded)
 
         print('-- embedding matrix updated --')
         return self.embedding_matrix

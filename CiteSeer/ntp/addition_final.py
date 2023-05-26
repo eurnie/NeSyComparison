@@ -75,7 +75,14 @@ for seed in range(0, 1):
     CLIP = None
 
     # train embeddings
-    TRAIN = True
+    TRAIN = False
+    
+    TRAIN_0NTP = True
+    TRAIN_NTP = TRAIN_0NTP or TEMPLATES_PATH is not None
+    
+    NEURL_LINK_PREDICTOR = "ComplEx"
+    if NEURL_LINK_PREDICTOR is None and not TRAIN_0NTP:
+        raise AttributeError("Can't train non-0NTP without link predictor")
 
     ################################################
     OUTPUT_PREDICTIONS = False
@@ -93,13 +100,12 @@ for seed in range(0, 1):
     # normalize embeddings
     UNIT_NORMALIZE = False
     K_MAX = conf["model"]["k_max"]
-    NEURL_LINK_PREDICTOR = conf["model"]["neural_link_predictor"]
-    TRAIN_0NTP = conf["model"]["train_0ntp"]
+    
+    
     KEEP_PROB = conf["model"]["keep_prob"]
     MAX_DEPTH = conf["model"]["max_depth"]
-    TRAIN_NTP = TRAIN_0NTP or TEMPLATES_PATH is not None
-    if NEURL_LINK_PREDICTOR is None and not TRAIN_0NTP:
-        raise AttributeError("Can't train non-0NTP without link predictor")
+    
+
     REPORT_INTERVAL = conf["training"]["report_interval"]
     NUM_EPOCHS = nb_epochs
     POS_PER_BATCH = conf["training"]["pos_per_batch"]
@@ -615,8 +621,9 @@ for seed in range(0, 1):
     correct = 0
     for i in range(len(test_x)):
         scores = predict(test_x[i])
+        print(scores)
         print(np.argmax(scores), 'vs', test_y[i])
-        if np.argmax(scores) == test_y[i][i]:
+        if np.argmax(scores) == test_y[i]:
             correct += 1
 
     accuracy = correct / len(test_x)

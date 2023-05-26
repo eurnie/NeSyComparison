@@ -75,6 +75,7 @@ for seed in range(0, 1):
 
     # train embeddings
     TRAIN = True
+    TRAIN_0NTP = True
 
     ################################################
     OUTPUT_PREDICTIONS = False
@@ -93,7 +94,7 @@ for seed in range(0, 1):
     UNIT_NORMALIZE = False
     K_MAX = conf["model"]["k_max"]
     NEURL_LINK_PREDICTOR = conf["model"]["neural_link_predictor"]
-    TRAIN_0NTP = conf["model"]["train_0ntp"]
+    
     KEEP_PROB = conf["model"]["keep_prob"]
     MAX_DEPTH = conf["model"]["max_depth"]
     TRAIN_NTP = TRAIN_0NTP or TEMPLATES_PATH is not None

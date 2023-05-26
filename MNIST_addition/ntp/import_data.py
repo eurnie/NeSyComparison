@@ -67,9 +67,9 @@ def write_to_file_txt(dataset, filename):
             f.write('\n')
 
 def create_datasets(train_path, test_path, size_val):
-    percentage_of_original_train_dataset = 0.01
-    percentage_of_original_val_dataset = 0.01
-    percentage_of_original_test_dataset = 0.01
+    percentage_of_original_train_dataset = 0.001
+    percentage_of_original_val_dataset = 0.001
+    percentage_of_original_test_dataset = 0.001
     split_index = round(size_val * 30000)
 
     for dataset_name in ["train", "val", "test"]:

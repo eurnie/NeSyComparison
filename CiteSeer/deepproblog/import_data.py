@@ -18,10 +18,7 @@ y_values_citeseer = citation_graph_citeseer.y
 cite_a_citeseer = citation_graph_citeseer.edge_index[0]
 cite_b_citeseer = citation_graph_citeseer.edge_index[1]
 
-docs_too_much_cites_citeseer = []
-for i in range(len(x_values_citeseer)):
-    if np.count_nonzero(cite_a_citeseer.numpy() == i) > 10:
-        docs_too_much_cites_citeseer.append(i)
+
 
 DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
 data_cora = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name="Cora", split="full")
@@ -32,22 +29,44 @@ y_values_cora = citation_graph_cora.y
 cite_a_cora = citation_graph_cora.edge_index[0]
 cite_b_cora = citation_graph_cora.edge_index[1]
 
-docs_too_much_cites_cora = []
-for i in range(len(x_values_cora)):
-    if np.count_nonzero(cite_a_cora.numpy() == i) > 10:
-        docs_too_much_cites_cora.append(i)
+def create_docs_too_much_cites(dataset):
+    docs_too_much_cites = []
+    train_counter = 0
+    val_counter = 0
+    test_counter = 0
+    if dataset == "CiteSeer":
+        for i in range(len(x_values_citeseer)):
+            if np.count_nonzero(cite_a_citeseer.numpy() == i) > 10:
+                docs_too_much_cites.append(i)
+
+        for i in docs_too_much_cites:
+            if citation_graph_citeseer.train_mask[i]:
+                train_counter += 1
+            elif citation_graph_citeseer.val_mask[i]:
+                val_counter += 1
+            elif citation_graph_citeseer.test_mask[i]:
+                test_counter += 1
+    elif dataset == "Cora":
+        for i in range(len(x_values_cora)):
+            if np.count_nonzero(cite_a_cora.numpy() == i) > 10:
+                docs_too_much_cites.append(i)
+    print(len(docs_too_much_cites), "instances will create out of memory error:")
+    print(train_counter, "training instances")
+    print(val_counter, "validation instances")
+    print(test_counter, "test instances")
+
+    return docs_too_much_cites, train_counter, val_counter, test_counter
 
 def import_indices(used_dataset, split, move_to_unsupervised, seed):
+    docs_too_much_cites, _, _, _ = create_docs_too_much_cites(used_dataset)
     if used_dataset == "CiteSeer":
         citation_graph = citation_graph_citeseer
         x_values = x_values_citeseer
         y_values = y_values_citeseer
-        docs_too_much_cites = docs_too_much_cites_citeseer
     elif used_dataset == "Cora":
         citation_graph = citation_graph_cora
         x_values = x_values_cora
         y_values = y_values_cora
-        docs_too_much_cites = docs_too_much_cites_cora
 
     if (split == "train"):
         criteria = citation_graph.train_mask

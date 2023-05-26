@@ -35,7 +35,7 @@ class MNIST_Addition(Dataset):
         return self.dataset[i1][0], self.dataset[i2][0], l
 
 ############################################### PARAMETERS ##############################################
-method = 'exact'
+method = 'sampling'
 nb_epochs = 100
 batch_size = 8
 learning_rate = 0.0001
