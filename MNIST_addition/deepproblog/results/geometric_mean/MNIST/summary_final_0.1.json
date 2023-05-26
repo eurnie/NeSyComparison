@@ -1,0 +1,1 @@
+{"algorithm": "DeepProbLog", "seed": 0, "method": "geometric_mean", "nb_epochs": 9, "batch_size": 8, "learning_rate": 0.001, "loss_function": "cross_entropy", "dropout_rate": 0.2, "size_val": 0.1, "accuracy": 0.597, "model_files": "DeepProbLog_final_0_100_0.1_0.2_cross_entropy_0.001_8"}
