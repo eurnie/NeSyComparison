@@ -120,7 +120,7 @@ for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25
                 "loss_function": loss_function_name,
                 "dropout_rate": dropout_rate,
                 "size_val": size_val,
-                "accuracy": best_accuracy,
+                "accuracy": accuracy,
                 "training_time": total_training_time,
                 "testing_time": testing_time,
                 "model_files": model_file_name
