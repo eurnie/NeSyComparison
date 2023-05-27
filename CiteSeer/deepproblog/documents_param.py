@@ -40,7 +40,7 @@ nb_epochs = 100
 
 assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 
-for method in ['exact', 'geometric_mean']:
+for method in ['geometric_mean', 'exact']:
     for dropout_rate in [0, 0.2]:
         for rely_on_nn in [None, 0.4]:
             for learning_rate in [0.001, 0.0001]:

@@ -28,8 +28,8 @@ loss_function_name = "cross_entropy"
 size_val = 0.1
 #########################################################################################################
 
-for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25), ("MNIST", 0.5)]:
-# for dataset, label_noise in [("MNIST", 0)]:
+# for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25), ("MNIST", 0.5)]:
+for dataset, label_noise in [("MNIST", 0)]:
     assert (dataset == "MNIST") or (dataset == "FashionMNIST")
     for seed in range(0, 10):
         # generate name of file that holds the trained model
@@ -121,6 +121,8 @@ for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25
                 "dropout_rate": dropout_rate,
                 "size_val": size_val,
                 "accuracy": best_accuracy,
+                "training_time": total_training_time,
+                "testing_time": testing_time,
                 "model_files": model_file_name
             }
             with open(f'results/{method}/{dataset}/summary_final_{label_noise}.json', "a") as outfile:
