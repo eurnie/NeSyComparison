@@ -33,9 +33,9 @@ def calculate_accuracy(dataset, model, data, split):
 ############################################### PARAMETERS ##############################################
 method = "geometric_mean"
 nb_epochs = 100
-batch_size = 2
-learning_rate = 0.001
-dropout_rate = 0
+batch_size = 32
+learning_rate = 0.0001
+dropout_rate = 0.2
 loss_function_name = "cross_entropy"
 #########################################################################################################
 

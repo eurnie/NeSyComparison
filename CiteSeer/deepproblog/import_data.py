@@ -50,6 +50,14 @@ def create_docs_too_much_cites(dataset):
         for i in range(len(x_values_cora)):
             if np.count_nonzero(cite_a_cora.numpy() == i) > 10:
                 docs_too_much_cites.append(i)
+
+        for i in docs_too_much_cites:
+            if citation_graph_cora.train_mask[i]:
+                train_counter += 1
+            elif citation_graph_cora.val_mask[i]:
+                val_counter += 1
+            elif citation_graph_cora.test_mask[i]:
+                test_counter += 1
     print(len(docs_too_much_cites), "instances will create out of memory error:")
     print(train_counter, "training instances")
     print(val_counter, "validation instances")

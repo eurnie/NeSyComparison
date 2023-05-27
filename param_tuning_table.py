@@ -2,8 +2,8 @@ import json
 
 #################
 dataset = "CiteSeer"
-method = "deepstochlog"
-engine = "exact"
+method = "deepproblog"
+engine = "geometric_mean"
 #################
 
 if (dataset == "MNIST"):
