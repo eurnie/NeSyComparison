@@ -43,9 +43,9 @@ for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25
             tf.random.set_seed(seed)
 
             # generate and shuffle dataset
-            if dataset == "mnist":
+            if dataset == "MNIST":
                 generate_dataset_mnist(seed, label_noise)
-            elif dataset == "fashion_mnist":
+            elif dataset == "FashionMNIST":
                 generate_dataset_fashion_mnist(seed, label_noise)
 
             # import train, val and test set
