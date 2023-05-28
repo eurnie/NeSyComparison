@@ -26,8 +26,8 @@ dropout_rate = 0
 size_val = 0.1
 #########################################################################################################
 
-# for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25), ("MNIST", 0.5)]:
-for dataset, label_noise in [("MNIST", 0)]:
+for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25), ("MNIST", 0.5)]:
+# for dataset, label_noise in [("MNIST", 0)]:
     assert (dataset == "MNIST") or (dataset == "FashionMNIST")
     for seed in range(0, 10):
         # generate name of file that holds the trained model
