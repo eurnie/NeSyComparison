@@ -3,7 +3,7 @@ source /home/arne/miniconda3/etc/profile.d/conda.sh;
 cd deepproblog;
 conda activate deepproblog;
 python3 addition_final_app.py;
-# python3 addition_final.py;
+python3 addition_final.py;
 cd ..;
 cd deepstochlog;
 conda activate deepstochlog;
