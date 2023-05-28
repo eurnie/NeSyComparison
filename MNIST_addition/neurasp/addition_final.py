@@ -81,6 +81,7 @@ for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25
 # for dataset, label_noise in [("MNIST", 0)]:
     assert (dataset == "MNIST") or (dataset == "FashionMNIST")
     for seed in range(0, 10):
+        seed = 9 - seed
         # generate name of file that holds the trained model
         model_file_name = "NeurASP_final_{}_{}_{}_{}_{}_{}_{}".format(seed, 
             nb_epochs, batch_size, learning_rate, dropout_rate, size_val, opt)
