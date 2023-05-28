@@ -34,9 +34,9 @@ def calculate_accuracy(dataset, model, data, split):
 method = "exact"
 nb_epochs = 100
 batch_size = 2
-learning_rate = 0.001
-dropout_rate = 0
-rely_on_nn = 0.5
+learning_rate = 0.0001
+dropout_rate = 0.2
+rely_on_nn = 0.4
 #########################################################################################################
 
 for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:

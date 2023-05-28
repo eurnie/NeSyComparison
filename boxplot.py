@@ -10,7 +10,7 @@ assert dataset == "MNIST" or dataset == "FashionMNIST"
  
 if dataset == "MNIST":
 	data_deepproblog = [97.90, 97.66, 97.94, 97.64, 97.62, 97.84, 97.76, 97.82, 97.80, 97.80]
-	data_deepproblog_app = []
+	data_deepproblog_app = [98.06, 65.66, 65.74, 65.20, 98.02, 63.24, 97.96, 97.90, 51.06, 98.18]
 	data_deepstochlog = [97.72, 97.66, 98.00, 97.48, 97.88, 97.80, 97.78, 97.68, 97.80, 97.46]
 	data_ltn = [96.24, 79.66, 97.20, 80.26, 96.86, 95.56, 97.76, 97.30, 80.34, 79.96]
 	data_neurasp = [98.34, 97.02, 97.74, 98.08, 98.02, 98.16, 98.18, 98.00, 97.80, 98.62]
@@ -41,8 +41,8 @@ elif dataset == "Cora":
     data_nn = [31.90, 35.80, 35.00, 42.30, 35.30, 31.90, 31.80, 31.90, 32.90, 31.90]
     data_sl = [81.40, 82.80, 81.70, 83.90, 83.60, 81.90, 82.50, 82.20, 81.70, 83.20]
 
-data = [data_deepproblog, data_deepproblog_app, data_deepstochlog, data_ltn, data_neurasp, data_nn, data_sl]
-methods = ['DeepProbLog', 'DeepProbLog (approximate)', 'DeepStochLog', 'Logic Tensor Networks', 'NeurASP', 'NN baseline', 'Semantic Loss']
+data = [data_neurasp, data_deepstochlog, data_deepproblog_app, data_deepproblog, data_ltn, data_sl, data_nn]
+methods = ['NeurASP', 'DeepStochLog', 'DeepProbLog\n(approximate)', 'DeepProbLog', 'Logic\nTensor\nNetworks', 'Semantic\nLoss', 'NN\nbaseline']
 
 # create latex table
 with open('latex_table.txt', 'w+') as f:
@@ -80,13 +80,13 @@ with open('latex_table.txt', 'w+') as f:
     f.write('\end{table}\n')
 
 # create boxplot
-# fig = plt.figure(figsize =(10, 7))
-# plt.rcParams['font.size'] = '20'
-# ax = fig.add_subplot(111)
+fig = plt.figure(figsize =(10, 7))
+plt.rcParams['font.size'] = '20'
+ax = fig.add_subplot(111)
 
-# bp = ax.boxplot(data, vert = 0)
+bp = ax.boxplot(data, vert = 0)
 
-# ax.set_yticklabels(['NN\nbaseline', 'DeepProbLog', 'DeepProblog\n(approximate)', 'DeepStochLog', 'Logic\nTensor\nNetworks', 'NeurASP', 'Semantic\nLoss'])
-# # plt.title("MNIST addition")
-# plt.xlabel("Accuracy test set (%)")
-# plt.show()
+ax.set_yticklabels(methods)
+plt.title("Fashion-MNIST addition")
+plt.xlabel("Accuracy test set (%)")
+plt.show()

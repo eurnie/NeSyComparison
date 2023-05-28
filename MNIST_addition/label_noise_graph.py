@@ -7,7 +7,7 @@ alpha = 0.2
 font_size = '20'
 
 deepproblog_000 = [97.90, 97.66, 97.94, 97.64, 97.62, 97.84, 97.76, 97.82, 97.80, 97.80]
-deepproblog_app_000 = []
+deepproblog_app_000 = [98.06, 65.66, 65.74, 65.20, 98.02, 63.24, 97.96, 97.90, 51.06, 98.18]
 deepstochlog_000 = [97.72, 97.66, 98.00, 97.48, 97.88, 97.80, 97.78, 97.68, 97.80, 97.46]
 ltn_000 = [96.24, 79.66, 97.20, 80.26, 96.86, 95.56, 97.76, 97.30, 80.34, 79.96]
 neurasp_000 = [98.34, 97.02, 97.74, 98.08, 98.02, 98.16, 98.18, 98.00, 97.80, 98.62]
@@ -99,8 +99,8 @@ if fill_between:
     plt.fill_between(x, min_sl, max_sl, alpha=alpha)
 plt.xlabel("Label noise rate")
 plt.ylabel("Accuracy on test set")
-# plt.title("MNIST addition with label noise")
+plt.title("MNIST addition with label noise")
 plt.yticks(np.arange(0, 101, 5))
 # plt.ylim([50, 100])
-plt.legend(loc="lower right")
+plt.legend(loc="lower left")
 plt.show()

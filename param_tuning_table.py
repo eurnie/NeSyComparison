@@ -3,7 +3,7 @@ import json
 #################
 dataset = "CiteSeer"
 method = "deepproblog"
-engine = "geometric_mean"
+engine = "exact"
 #################
 
 if (dataset == "MNIST"):
