@@ -76,6 +76,15 @@ max_sl = [max(lst) for lst in sl_results]
 
 plt.rcParams['font.size'] = font_size
 
+plt.plot(x, avg_nn, label='NN baseline')
+if fill_between:
+    plt.fill_between(x, min_nn, max_nn, alpha=alpha)
+plt.plot(x, avg_sl, label='Semantic Loss')
+if fill_between:
+    plt.fill_between(x, min_sl, max_sl, alpha=alpha)
+plt.plot(x, avg_ltn, label='Logic Tensor Networks')
+if fill_between:
+    plt.fill_between(x, min_ltn, max_ltn, alpha=alpha)
 plt.plot(x, avg_deepproblog, label='DeepProbLog')
 if fill_between:
     plt.fill_between(x, min_deepproblog, max_deepproblog, alpha=alpha)
@@ -85,18 +94,10 @@ if fill_between:
 plt.plot(x, avg_deepstochlog, label='DeepStochLog')
 if fill_between:
     plt.fill_between(x, min_deepstochlog, max_deepstochlog, alpha=alpha)
-plt.plot(x, avg_ltn, label='Logic Tensor Networks')
-if fill_between:
-    plt.fill_between(x, min_ltn, max_ltn, alpha=alpha)
 plt.plot(x, avg_neurasp, label='NeurASP')
 if fill_between:
     plt.fill_between(x, min_neurasp, max_neurasp, alpha=alpha)
-plt.plot(x, avg_nn, label='NN baseline')
-if fill_between:
-    plt.fill_between(x, min_nn, max_nn, alpha=alpha)
-plt.plot(x, avg_sl, label='Semantic Loss')
-if fill_between:
-    plt.fill_between(x, min_sl, max_sl, alpha=alpha)
+
 plt.xlabel("Label noise rate")
 plt.ylabel("Accuracy on test set")
 plt.title("MNIST addition with label noise")

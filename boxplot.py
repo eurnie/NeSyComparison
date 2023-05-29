@@ -1,12 +1,10 @@
-import statistics
 import matplotlib.pyplot as plt
 
 #################
-# dataset = "MNIST"
-dataset = "FashionMNIST"
+dataset = "Cora"
 #################
 
-assert dataset == "MNIST" or dataset == "FashionMNIST"
+assert dataset == "MNIST" or dataset == "FashionMNIST" or dataset == "CiteSeer" or dataset == "Cora"
  
 if dataset == "MNIST":
 	data_deepproblog = [97.90, 97.66, 97.94, 97.64, 97.62, 97.84, 97.76, 97.82, 97.80, 97.80]
@@ -26,7 +24,7 @@ elif dataset == "FashionMNIST":
     data_sl = [73.84, 74.38, 75.74, 77.44, 73.64, 76.04, 71.16, 75.30, 76.28, 73.92]
 elif dataset == "CiteSeer":
     data_deepproblog = []
-    data_deepproblog_app = []
+    data_deepproblog_app = [72.00, 73.40, 70.90, 71.90, 72.50, 72.60, 72.70, 72.60, 71.40, 71.10]
     data_deepstochlog = [77.30, 77.50, 77.30, 78.60, 78.60, 79.50, 78.20, 77.80, 78.90, 78.90]
     data_ltn = [76.40, 75.12, 74.81, 69.63, 76.01, 75.96, 76.59, 66.62, 72.76, 76.04]
     data_neurasp = []
@@ -44,40 +42,40 @@ elif dataset == "Cora":
 data = [data_neurasp, data_deepstochlog, data_deepproblog_app, data_deepproblog, data_ltn, data_sl, data_nn]
 methods = ['NeurASP', 'DeepStochLog', 'DeepProbLog\n(approximate)', 'DeepProbLog', 'Logic\nTensor\nNetworks', 'Semantic\nLoss', 'NN\nbaseline']
 
-# create latex table
-with open('latex_table.txt', 'w+') as f:
-    f.write('\\begin{table}\n')
-    f.write('\\begin{adjustbox}{width=1.3\\textwidth, pagecenter}\n')
-    f.write('\\begin{tabular}{lcccccccccccc}\n')
-    f.write('\\toprule\n')
-    f.write(f'\multicolumn{{1}}{{c}}{{}}')
-    for i in range(12):
-        if i == 10:
-            f.write(f' & \\textbf{{AVG}}')
-        elif i == 11:
-            f.write(f' & \\textbf{{STD}}')
-        else:
-            f.write(f' & {i}')
-    f.write(' \\\ \n')
-    f.write('\midrule\n')
-    for i in range(len(methods)):
-        accuracies = data[i]
-        assert len(accuracies) == 10
-        method = methods[i]
-        f.write(method)
-        for acc in accuracies:
-             f.write(' & {:,.2f}'.format(acc))
-        avg = sum(accuracies) / len(accuracies)
-        f.write(' & \\textbf{{{:,.2f}}}'.format(avg))
-        std = statistics.stdev(accuracies)
-        f.write(' & \\textbf{{{:,.2f}}}'.format(std))
-        f.write(' \\\ \n')
-    f.write('\\bottomrule\n')
-    f.write('\end{tabular}\n')
-    f.write('\end{adjustbox}\n')
-    f.write(f'\caption{{Accuracy on the test set for the {dataset} addition problem. The columns indicate the seed that was used for shuffling the training dataset and initializing the neural networks. The final two columns show the average accuracy and the standard deviation for each method.}}\n')
-    f.write(f'\label{{tab:{dataset}_final}}\n')  
-    f.write('\end{table}\n')
+# # create latex table
+# with open('latex_table.txt', 'w+') as f:
+#     f.write('\\begin{table}\n')
+#     f.write('\\begin{adjustbox}{width=1.3\\textwidth, pagecenter}\n')
+#     f.write('\\begin{tabular}{lcccccccccccc}\n')
+#     f.write('\\toprule\n')
+#     f.write(f'\multicolumn{{1}}{{c}}{{}}')
+#     for i in range(12):
+#         if i == 10:
+#             f.write(f' & \\textbf{{AVG}}')
+#         elif i == 11:
+#             f.write(f' & \\textbf{{STD}}')
+#         else:
+#             f.write(f' & {i}')
+#     f.write(' \\\ \n')
+#     f.write('\midrule\n')
+#     for i in range(len(methods)):
+#         accuracies = data[i]
+#         assert len(accuracies) == 10
+#         method = methods[i]
+#         f.write(method)
+#         for acc in accuracies:
+#              f.write(' & {:,.2f}'.format(acc))
+#         avg = sum(accuracies) / len(accuracies)
+#         f.write(' & \\textbf{{{:,.2f}}}'.format(avg))
+#         std = statistics.stdev(accuracies)
+#         f.write(' & \\textbf{{{:,.2f}}}'.format(std))
+#         f.write(' \\\ \n')
+#     f.write('\\bottomrule\n')
+#     f.write('\end{tabular}\n')
+#     f.write('\end{adjustbox}\n')
+#     f.write(f'\caption{{Accuracy on the test set for the {dataset} addition problem. The columns indicate the seed that was used for shuffling the training dataset and initializing the neural networks. The final two columns show the average accuracy and the standard deviation for each method.}}\n')
+#     f.write(f'\label{{tab:{dataset}_final}}\n')  
+#     f.write('\end{table}\n')
 
 # create boxplot
 fig = plt.figure(figsize =(10, 7))
@@ -87,6 +85,6 @@ ax = fig.add_subplot(111)
 bp = ax.boxplot(data, vert = 0)
 
 ax.set_yticklabels(methods)
-plt.title("Fashion-MNIST addition")
+plt.title("Cora")
 plt.xlabel("Accuracy test set (%)")
 plt.show()
