@@ -29,3 +29,4 @@
 {"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 10, "batch_size": 128, "rely_on_nn": 0.4, "learning_rate": 0.0001, "dropout_rate": 0, "accuracy": 0.78, "model_file": "DeepProbLog_param_0_100_128_0.0001_0_0.4"}
 {"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 6, "batch_size": 32, "rely_on_nn": 0.4, "learning_rate": 0.0001, "dropout_rate": 0.2, "accuracy": 0.788, "model_file": "DeepProbLog_param_0_100_32_0.0001_0.2_0.4"}
 {"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 11, "batch_size": 128, "rely_on_nn": null, "learning_rate": 0.0001, "dropout_rate": 0.2, "accuracy": 0.778, "model_file": "DeepProbLog_param_0_100_128_0.0001_0.2_None"}
+{"algorithm": "DeepProbLog", "seed": 0, "method": "exact", "nb_epochs": 12, "batch_size": 128, "rely_on_nn": 0.4, "learning_rate": 0.0001, "dropout_rate": 0.2, "accuracy": 0.786, "model_file": "DeepProbLog_param_0_100_128_0.0001_0.2_0.4"}
