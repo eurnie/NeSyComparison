@@ -117,8 +117,8 @@ optimizer_name = "Adam"
 dropout_rate = 0
 #########################################################################################################
 
-# for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
-for dataset, to_unsupervised in [("CiteSeer", 0)]:
+for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
+# for dataset, to_unsupervised in [("CiteSeer", 0)]:
     assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
     for seed in range(0, 10):
         # generate name of file that holds the trained model
