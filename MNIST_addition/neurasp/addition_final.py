@@ -77,8 +77,7 @@ addition(A,B,N) :- digit(0,A,N1), digit(0,B,N2), N=N1+N2.
 nn(digit(1,X), [0,1,2,3,4,5,6,7,8,9]) :- img(X).
 '''
 
-for dataset, label_noise in [("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25), ("MNIST", 0.5)]:
-# for dataset, label_noise in [("MNIST", 0)]:
+for dataset, label_noise in [("MNIST", 0), ("FashionMNIST", 0), ("MNIST", 0.1), ("MNIST", 0.25), ("MNIST", 0.5)]:
     assert (dataset == "MNIST") or (dataset == "FashionMNIST")
     for seed in range(0, 10):
         seed = 9 - seed

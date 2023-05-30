@@ -25,8 +25,7 @@ opt = False
 dropout_rate = 0
 #########################################################################################################
 
-for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
-# for dataset, to_unsupervised in [("CiteSeer", 0)]:
+for dataset, to_unsupervised in [("CiteSeer", 0), ("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
     assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 
     if dataset == "CiteSeer":

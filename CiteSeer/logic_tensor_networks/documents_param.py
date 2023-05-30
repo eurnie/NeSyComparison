@@ -20,7 +20,7 @@ dataset = "CiteSeer"
 
 ############################################### PARAMETERS ##############################################
 seed = 0
-nb_epochs = 1
+nb_epochs = 100
 learning_rate = 0.001
 #########################################################################################################
 
@@ -29,7 +29,7 @@ assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 for dropout_rate in [0, 0.2]:
     for p_forall in [1, 2]:
         for p_exists in [1, 2]:
-            for batch_size in [8]:
+            for batch_size in [32, 128, 512, 2048]:
                 p_forall_cites = p_forall
                 p_exists_cites = p_exists
 
@@ -40,6 +40,7 @@ for dropout_rate in [0, 0.2]:
                 model_file_location = f'results/{dataset}/param/{model_file_name}'
 
                 if not os.path.isfile(model_file_location):
+                    print(model_file_location)
                     # setting seeds for reproducibility
                     random.seed(seed)
                     numpy.random.seed(seed)

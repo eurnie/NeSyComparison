@@ -40,7 +40,7 @@ elif dataset == "Cora":
 elif dataset == "PubMed":
     program = PubMed_dprogram
 
-for method in ['exact', 'sampling']:
+for method in ['exact']:
     for dropout_rate in [0, 0.2]:
         for opt in [False, True]:
             for learning_rate in [0.001, 0.0001]:
