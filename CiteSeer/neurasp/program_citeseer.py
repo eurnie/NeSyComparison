@@ -1,9 +1,5 @@
 CiteSeer_dprogram = '''
-doc(doc_1).
-doc(doc_2).
-ind_to_doc(ind_1, doc_1).
-ind_to_doc(ind_2, doc_2).
-
+doc(doc_1). doc(doc_2).
 nn(label_neural(1,X), [0,1,2,3,4,5]) :- doc(X).
 
 % assign a label for each document

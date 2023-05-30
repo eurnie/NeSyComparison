@@ -7,7 +7,9 @@ import torch
 import pickle
 import torch_geometric
 from pathlib import Path
-from program import CiteSeer_dprogram, Cora_dprogram, PubMed_dprogram
+from program_citeseer import CiteSeer_dprogram
+from program_cora import Cora_dprogram
+from program_pubmed import PubMed_dprogram
 from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
@@ -24,6 +26,20 @@ nb_epochs = 100
 
 assert (dataset == "CiteSeer") or (dataset == "Cora") or (dataset == "PubMed")
 
+DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
+data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
+citation_graph = data[0]
+
+cites_a = citation_graph.edge_index[0]
+cites_b = citation_graph.edge_index[1]
+
+if dataset == "CiteSeer":
+    program = CiteSeer_dprogram
+elif dataset == "Cora":
+    program = Cora_dprogram
+elif dataset == "PubMed":
+    program = PubMed_dprogram
+
 for method in ['exact', 'sampling']:
     for dropout_rate in [0, 0.2]:
         for opt in [False, True]:
@@ -39,20 +55,6 @@ for method in ['exact', 'sampling']:
                         random.seed(seed)
                         numpy.random.seed(seed)
                         torch.manual_seed(seed)
-
-                        if dataset == "CiteSeer":
-                            program = CiteSeer_dprogram
-                        elif dataset == "Cora":
-                            program = Cora_dprogram
-                        elif dataset == "PubMed":
-                            program = PubMed_dprogram
-
-                        DATA_ROOT = Path(__file__).parent.parent.joinpath('data')
-                        data = torch_geometric.datasets.Planetoid(root=str(DATA_ROOT), name=dataset, split="full")
-                        citation_graph = data[0]
-
-                        cites_a = citation_graph.edge_index[0]
-                        cites_b = citation_graph.edge_index[1]
 
                         trainDataset = []
                         valDataset = []
@@ -85,19 +87,33 @@ for method in ['exact', 'sampling']:
                             for i in range(0, len(cites_a)):
                                 if (cites_a[i] == index_1):
                                         index_2 = cites_b[i].item()
-                                        dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[index_2].unsqueeze(0), 'ind_1': index_1, 'ind_2': index_2})
-                                        obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
+                                        dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[index_2].unsqueeze(0)})
+                                        obs_string = ''
+                                        obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                                        obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                                        obs_string += '\nind_to_doc({},doc_2).'.format(int(index_2))
+                                        obsList_train.append(obs_string)
                                         is_cited = True
 
                             if not is_cited:
-                                dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
-                                obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
+                                dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+                                obs_string = ''
+                                obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                                obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                                obsList_train.append(obs_string)
 
                         dataList_val = []
                         obsList_val = []
+                        extra_rules_val = []
                         for index_1, doc_1, label_1 in valDataset:
-                            dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
-                            obsList_val.append(f':- not label(ind_1,doc_1,{label_1}).')
+                            dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+                            obs_string = ''
+                            obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                            obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                            obsList_val.append(obs_string)
+                            rules_string = ''
+                            rules_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                            extra_rules_val.append(rules_string)
                         assert len(valDataset) == len(dataList_val)
 
                         # define nnMapping and optimizers, initialze NeurASP object
@@ -118,9 +134,10 @@ for method in ['exact', 'sampling']:
                         nb_epochs_done = 0
 
                         for epoch in range(nb_epochs):
+                            # print(NeurASPobj.nnOutputs)
                             NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=1, smPickle=None, 
-                                bar=True, batchSize=batch_size, opt=opt, method=method)
-                            val_accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
+                                bar=True, batchSize=batch_size, opt=opt, method=method, accEpoch=10000)
+                            val_accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val, extra_rules=extra_rules_val) / 100
                             print("Val accuracy after epoch", epoch, ":", val_accuracy)
                             if val_accuracy > best_accuracy:
                                 best_accuracy = val_accuracy

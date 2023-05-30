@@ -8,7 +8,9 @@ import torch
 import pickle
 import torch_geometric
 from pathlib import Path
-from program import CiteSeer_dprogram, Cora_dprogram, PubMed_dprogram
+from program_citeseer import CiteSeer_dprogram
+from program_cora import Cora_dprogram
+from program_pubmed import PubMed_dprogram
 from neurasp.neurasp import NeurASP
 
 sys.path.append("..")
@@ -89,26 +91,47 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
                 for i in range(0, len(cites_a)):
                     if (cites_a[i] == index_1):
                             index_2 = cites_b[i].item()
-                            dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[index_2].unsqueeze(0), 'ind_1': index_1, 'ind_2': index_2})
-                            obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
+                            dataList_train.append({'doc_1': doc_1, 'doc_2': ind_to_features[index_2].unsqueeze(0)})
+                            obs_string = ''
+                            obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                            obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                            obs_string += '\nind_to_doc({},doc_2).'.format(int(index_2))
+                            obsList_train.append(obs_string)
                             is_cited = True
 
                 if not is_cited:
-                    dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
-                    obsList_train.append(f':- not label(ind_1,doc_1,{label_1}).')
+                    dataList_train.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+                    obs_string = ''
+                    obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                    obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                    obsList_train.append(obs_string)
 
             dataList_val = []
             obsList_val = []
+            extra_rules_val = []
             for index_1, doc_1, label_1 in valDataset:
-                dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
-                obsList_val.append(f':- not label(ind_1,doc_1,{label_1}).')
+                dataList_val.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+                obs_string = ''
+                obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                obsList_val.append(obs_string)
+                rules_string = ''
+                rules_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                extra_rules_val.append(rules_string)
             assert len(valDataset) == len(dataList_val)
 
             dataList_test = []
             obsList_test = []
+            extra_rules_test = []
             for index_1, doc_1, label_1 in testDataset:
-                dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc, 'ind_1': index_1, 'ind_2': len(citation_graph.train_mask)})
-                obsList_test.append(f':- not label(ind_1,doc_1,{label_1}).')
+                dataList_test.append({'doc_1': doc_1, 'doc_2': dummy_doc})
+                obs_string = ''
+                obs_string += ':- not label({},doc_1,{}).'.format(int(index_1), int(label_1))
+                obs_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                obsList_test.append(obs_string)
+                rules_string = ''
+                rules_string += '\nind_to_doc({},doc_1).'.format(int(index_1))
+                extra_rules_test.append(rules_string)
             assert len(testDataset) == len(dataList_test)
 
             # define nnMapping and optimizers, initialze NeurASP object
@@ -133,7 +156,7 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
                 NeurASPobj.learn(dataList=dataList_train, obsList=obsList_train, epoch=1, smPickle=None, 
                     bar=True, batchSize=batch_size, opt=opt, method=method)
                 total_training_time += time.time() - start_time
-                val_accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val) / 100
+                val_accuracy = NeurASPobj.testInferenceResults(dataList_val, obsList_val, extra_rules=extra_rules_val) / 100
                 print("Val accuracy after epoch", epoch, ":", val_accuracy)
                 if val_accuracy > best_accuracy:
                     best_accuracy = val_accuracy
@@ -156,7 +179,7 @@ for dataset, to_unsupervised in [("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.
 
             # testing
             start_time = time.time()
-            accuracy = BestNeurASPobj.testInferenceResults(dataList_test, obsList_test) / 100
+            accuracy = BestNeurASPobj.testInferenceResults(dataList_test, obsList_test, extra_rules=extra_rules_test) / 100
             testing_time = time.time() - start_time
 
             # save results to a summary file

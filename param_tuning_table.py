@@ -2,7 +2,7 @@ import json
 
 #################
 dataset = "CiteSeer"
-method = "deepproblog"
+method = "neurasp"
 engine = "exact"
 #################
 
