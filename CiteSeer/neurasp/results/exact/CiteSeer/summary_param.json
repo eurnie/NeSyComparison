@@ -4,7 +4,8 @@
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 2, "batch_size": 128, "learning_rate": 0.001, "opt": false, "dropout_rate": 0, "accuracy": 0.768, "model_file": "NeurASP_param_0_100_128_0.001_0_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0, "accuracy": 0.7559999999999999, "model_file": "NeurASP_param_0_100_2_0.0001_0_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 3, "batch_size": 8, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0, "accuracy": 0.758, "model_file": "NeurASP_param_0_100_8_0.0001_0_False"}
-
+{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 4, "batch_size": 32, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0, "accuracy": 0.768, "model_file": "NeurASP_param_0_100_32_0.0001_0_False"}
+{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 11, "batch_size": 128, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0, "accuracy": 0.782, "model_file": "NeurASP_param_0_100_128_0.0001_0_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "opt": true, "dropout_rate": 0, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_2_0.001_0_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 8, "learning_rate": 0.001, "opt": true, "dropout_rate": 0, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_8_0.001_0_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 32, "learning_rate": 0.001, "opt": true, "dropout_rate": 0, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_32_0.001_0_True"}
@@ -19,14 +20,13 @@
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 2, "batch_size": 128, "learning_rate": 0.001, "opt": false, "dropout_rate": 0.2, "accuracy": 0.764, "model_file": "NeurASP_param_0_100_128_0.001_0.2_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 2, "batch_size": 2, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0.2, "accuracy": 0.7559999999999999, "model_file": "NeurASP_param_0_100_2_0.0001_0.2_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 3, "batch_size": 8, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0.2, "accuracy": 0.768, "model_file": "NeurASP_param_0_100_8_0.0001_0.2_False"}
-
+{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 7, "batch_size": 32, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0.2, "accuracy": 0.7759999999999999, "model_file": "NeurASP_param_0_100_32_0.0001_0.2_False"}
+{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 12, "batch_size": 128, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0.2, "accuracy": 0.774, "model_file": "NeurASP_param_0_100_128_0.0001_0.2_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_2_0.001_0.2_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 8, "learning_rate": 0.001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_8_0.001_0.2_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 32, "learning_rate": 0.001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_32_0.001_0.2_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 128, "learning_rate": 0.001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_128_0.001_0.2_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 2, "learning_rate": 0.0001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_2_0.0001_0.2_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 8, "learning_rate": 0.0001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_8_0.0001_0.2_True"}
-{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 7, "batch_size": 32, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0.2, "accuracy": 0.7759999999999999, "model_file": "NeurASP_param_0_100_32_0.0001_0.2_False"}
-{"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 4, "batch_size": 32, "learning_rate": 0.0001, "opt": false, "dropout_rate": 0, "accuracy": 0.768, "model_file": "NeurASP_param_0_100_32_0.0001_0_False"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 32, "learning_rate": 0.0001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_32_0.0001_0.2_True"}
 {"algorithm": "NeurASP", "seed": 0, "method": "exact", "nb_epochs": 1, "batch_size": 128, "learning_rate": 0.0001, "opt": true, "dropout_rate": 0.2, "accuracy": 0.188, "model_file": "NeurASP_param_0_100_128_0.0001_0.2_True"}

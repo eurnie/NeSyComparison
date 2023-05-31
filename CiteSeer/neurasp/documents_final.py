@@ -19,10 +19,10 @@ from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
 method = "exact"
-batch_size = 2
-learning_rate = 0.001
+batch_size = 32
+learning_rate = 0.0001
 opt = False
-dropout_rate = 0
+dropout_rate = 0.2
 #########################################################################################################
 
 for dataset, to_unsupervised in [("CiteSeer", 0), ("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
@@ -75,7 +75,6 @@ for dataset, to_unsupervised in [("CiteSeer", 0), ("Cora", 0), ("CiteSeer", 0.1)
             if to_unsupervised > 0:
                 split_index = round(to_unsupervised * len(trainDataset))
                 trainDataset = trainDataset[split_index:]
-                ind_to_labels_train = ind_to_labels_train[split_index:]
                 
             print("The training set contains", len(trainDataset), "instances.")
             print("The validation set contains", len(valDataset), "instances.")
