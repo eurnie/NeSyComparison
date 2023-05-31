@@ -19,10 +19,10 @@ from data.network_torch import Net_CiteSeer, Net_Cora, Net_PubMed
 ############################################### PARAMETERS ##############################################
 nb_epochs = 100
 method = "exact"
-batch_size = 32
+batch_size = 128
 learning_rate = 0.0001
 opt = False
-dropout_rate = 0.2
+dropout_rate = 0
 #########################################################################################################
 
 for dataset, to_unsupervised in [("CiteSeer", 0), ("Cora", 0), ("CiteSeer", 0.1), ("CiteSeer", 0.25), ("CiteSeer", 0.5)]:
