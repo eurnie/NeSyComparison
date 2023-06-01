@@ -146,7 +146,10 @@ for dataset, label_noise in [("MNIST", 0), ("FashionMNIST", 0), ("MNIST", 0.1), 
             sl = []
             for sum in range(19):
                 sl.append(SemanticLoss(f'constraints/sum_{sum}/constraint.sdd', f'constraints/sum_{sum}/constraint.vtree'))
-            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+            if optimizer_name == "Adam":
+                optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+            elif optimizer_name == "SGD":
+                optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
             train_dataloader = DataLoader(train_set, batch_size=batch_size)
             val_dataloader = DataLoader(val_set, batch_size=1)
