@@ -46,9 +46,9 @@ neurasp_results = [neurasp_000, neurasp_010, neurasp_025, neurasp_050]
 nn_results = [nn_000, nn_010, nn_025, nn_050]
 sl_results = [sl_000, sl_010, sl_025, sl_050]
 
-# avg_deepproblog = [sum(lst) / len(lst) for lst in deepproblog_results]
-# min_deepproblog = [min(lst) for lst in deepproblog_results]
-# max_deepproblog = [max(lst) for lst in deepproblog_results]
+avg_deepproblog = [sum(lst) / len(lst) for lst in deepproblog_results]
+min_deepproblog = [min(lst) for lst in deepproblog_results]
+max_deepproblog = [max(lst) for lst in deepproblog_results]
 
 avg_deepproblog_app = [sum(lst) / len(lst) for lst in deepproblog_app_results]
 min_deepproblog_app = [min(lst) for lst in deepproblog_app_results]
@@ -62,9 +62,9 @@ avg_ltn = [sum(lst) / len(lst) for lst in ltn_results]
 min_ltn = [min(lst) for lst in ltn_results]
 max_ltn = [max(lst) for lst in ltn_results]
 
-# avg_neurasp = [sum(lst) / len(lst) for lst in neurasp_results]
-# min_neurasp = [min(lst) for lst in neurasp_results]
-# max_neurasp = [max(lst) for lst in neurasp_results]
+avg_neurasp = [sum(lst) / len(lst) for lst in neurasp_results]
+min_neurasp = [min(lst) for lst in neurasp_results]
+max_neurasp = [max(lst) for lst in neurasp_results]
 
 avg_nn = [sum(lst) / len(lst) for lst in nn_results]
 min_nn = [min(lst) for lst in nn_results]
@@ -85,18 +85,18 @@ if fill_between:
 plt.plot(x, avg_ltn, label='Logic Tensor Networks')
 if fill_between:
     plt.fill_between(x, min_ltn, max_ltn, alpha=alpha)
-# plt.plot(x, avg_deepproblog, label='DeepProbLog')
-# if fill_between:
-#     plt.fill_between(x, min_deepproblog, max_deepproblog, alpha=alpha)
+plt.plot(x, avg_deepproblog, label='DeepProbLog')
+if fill_between:
+    plt.fill_between(x, min_deepproblog, max_deepproblog, alpha=alpha)
 plt.plot(x, avg_deepproblog_app, label='DeepProbLog (approximate)')
 if fill_between:
     plt.fill_between(x, min_deepproblog_app, max_deepproblog_app, alpha=alpha)
 plt.plot(x, avg_deepstochlog, label='DeepStochLog')
 if fill_between:
     plt.fill_between(x, min_deepstochlog, max_deepstochlog, alpha=alpha)
-# plt.plot(x, avg_neurasp, label='NeurASP')
-# if fill_between:
-#     plt.fill_between(x, min_neurasp, max_neurasp, alpha=alpha)
+plt.plot(x, avg_neurasp, label='NeurASP')
+if fill_between:
+    plt.fill_between(x, min_neurasp, max_neurasp, alpha=alpha)
 
 plt.xlabel("% of original training set")
 plt.ylabel("Accuracy on test set")
