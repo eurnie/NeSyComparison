@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
+import scipy.stats as stats
 
 #################
-dataset = "Cora"
+dataset = "CiteSeer"
 #################
 
 assert dataset == "MNIST" or dataset == "FashionMNIST" or dataset == "CiteSeer" or dataset == "Cora"
@@ -41,6 +42,55 @@ elif dataset == "Cora":
 
 data = [data_neurasp, data_deepstochlog, data_deepproblog_app, data_deepproblog, data_ltn, data_sl, data_nn]
 methods = ['NeurASP', 'DeepStochLog', 'DeepProbLog\n(approximate)', 'DeepProbLog', 'Logic\nTensor\nNetworks', 'Semantic\nLoss', 'NN\nbaseline']
+methods2 = ['NeurASP', 'DeepStochLog', 'DeepProbLog (approximate)', 'DeepProbLog', 'Logic Tensor Networks', 'Semantic Loss', 'NN baseline']
+
+
+# Shapiro-Wilk: (metric, p-value)
+# If the p-value is more higher the threshold alpha(0.05),
+#       then we fail to reject the null hypothesis 
+#       i.e. we do not have sufficient evidence to say 
+#       that sample does not come from a normal distribution.
+# print(stats.shapiro(data_nn))
+# print(stats.shapiro(data_sl))
+# print(stats.shapiro(data_ltn))
+# print(stats.shapiro(data_deepproblog))
+# print(stats.shapiro(data_deepproblog_app))
+# print(stats.shapiro(data_deepstochlog))
+# print(stats.shapiro(data_neurasp))
+
+for i in range(len(data)):
+	print_string_1 = f'The average performance of {methods2[i]} is equal to:\n'
+	print_string_2 = f'The average performance of {methods2[i]} is NOT equal to:\n'
+	data_1 = data[i]
+	for j in range(len(data)):
+		data_2 = data[j]
+		if stats.shapiro(data_1)[1] > 0.05:
+			data_1_normal = True
+		else:
+			data_1_normal = False
+		if stats.shapiro(data_2)[1] > 0.05:
+			data_2_normal = True
+		else:
+			data_2_normal = False
+
+		# if data_1_normal and data_2_normal:
+		test = 't-test'
+		# value = stats.ttest_ind(data_1, data_2, equal_var=False)[1]
+		value = stats.ttest_rel(data_1, data_2)[1]
+		# else:
+		# 	test = 'Mann–Whitney U test'
+		# 	value = stats.mannwhitneyu(data_1, data_2, alternative='two-sided', method='exact')[1]
+
+		if (i != j) and (test == 't-test') and (value > 0.05):
+			print_string_1 += f'{methods2[j]} ({test}: {value})\n'
+		else:
+			print_string_2 += f'{methods2[j]} ({test}: {value})\n'
+		# elif (i != j) and (test == 'Mann–Whitney U test') and (value > 0.05):
+		# 	print_string += f'{methods2[j]} ({test}: {value})\n'
+	print('\n')
+	print(print_string_1)
+	print('\n')
+	print(print_string_2)
 
 # # create latex table
 # with open('latex_table.txt', 'w+') as f:
@@ -78,13 +128,13 @@ methods = ['NeurASP', 'DeepStochLog', 'DeepProbLog\n(approximate)', 'DeepProbLog
 #     f.write('\end{table}\n')
 
 # create boxplot
-fig = plt.figure(figsize =(10, 7))
-plt.rcParams['font.size'] = '20'
-ax = fig.add_subplot(111)
+# fig = plt.figure(figsize =(10, 7))
+# plt.rcParams['font.size'] = '20'
+# ax = fig.add_subplot(111)
 
-bp = ax.boxplot(data, vert = 0)
+# bp = ax.boxplot(data, vert = 0)
 
-ax.set_yticklabels(methods)
-plt.title("Cora")
-plt.xlabel("Accuracy test set (%)")
-plt.show()
+# ax.set_yticklabels(methods)
+# plt.title("Cora")
+# plt.xlabel("Accuracy test set (%)")
+# plt.show()
